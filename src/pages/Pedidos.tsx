@@ -21,9 +21,10 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Search, Clock, Package as PackageIcon } from "lucide-react";
+import { Plus, Search, Package as PackageIcon } from "lucide-react";
 import { PedidosSummaryCards } from "@/components/pedidos/PedidosSummaryCards";
 import { PedidoDetailsSheet } from "@/components/pedidos/PedidoDetailsSheet";
+import { EtapasVisuais } from "@/components/pedidos/EtapasVisuais";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -371,13 +372,9 @@ export default function Pedidos() {
                 <TableRow>
                   <TableHead className="w-[100px]">#OP</TableHead>
                   <TableHead>Cliente</TableHead>
-                  <TableHead>Produto</TableHead>
-                  <TableHead className="text-right">Qtd</TableHead>
-                  <TableHead className="w-[200px]">Etapa Atual</TableHead>
-                  <TableHead className="w-[120px]">Progresso</TableHead>
-                  <TableHead>Prazo</TableHead>
+                  <TableHead>Produto / Referência</TableHead>
+                  <TableHead className="w-[300px]">Etapas de Produção</TableHead>
                   <TableHead>Situação</TableHead>
-                  <TableHead>Última Atualização</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -385,17 +382,15 @@ export default function Pedidos() {
                   <TableRow
                     key={pedido.id}
                     className="cursor-pointer hover:bg-muted/50"
+                    onClick={() => handleRowClick(pedido)}
                   >
-                    <TableCell
-                      className="font-mono text-xs"
-                      onClick={() => handleRowClick(pedido)}
-                    >
+                    <TableCell className="font-mono text-xs">
                       {pedido.id.slice(0, 8)}
                     </TableCell>
-                    <TableCell onClick={() => handleRowClick(pedido)}>
+                    <TableCell className="font-medium">
                       {pedido.clientes?.nome}
                     </TableCell>
-                    <TableCell onClick={() => handleRowClick(pedido)}>
+                    <TableCell>
                       <div>
                         <p className="font-medium">{pedido.produto_modelo}</p>
                         <p className="text-xs text-muted-foreground">
@@ -403,61 +398,14 @@ export default function Pedidos() {
                         </p>
                       </div>
                     </TableCell>
-                    <TableCell
-                      className="text-right font-semibold"
-                      onClick={() => handleRowClick(pedido)}
-                    >
-                      {pedido.quantidade_total}
+                    <TableCell>
+                      <EtapasVisuais
+                        etapas={pedido.etapas_producao || []}
+                        statusGeral={pedido.status_geral}
+                      />
                     </TableCell>
-                    <TableCell onClick={(e) => e.stopPropagation()}>
-                      <Select
-                        value={
-                          pedido.status_geral === "concluido"
-                            ? "concluido"
-                            : pedido.etapas_producao?.find((e) => e.status === "em_andamento")
-                                ?.tipo_etapa || ""
-                        }
-                        onValueChange={(value) => handleAtualizarEtapa(pedido.id, value)}
-                        disabled={pedido.status_geral === "concluido"}
-                      >
-                        <SelectTrigger className="w-full">
-                          <SelectValue placeholder="Selecionar etapa" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {pedido.etapas_producao
-                            ?.sort((a, b) => a.ordem - b.ordem)
-                            .map((etapa) => (
-                              <SelectItem key={etapa.id} value={etapa.tipo_etapa}>
-                                {getEtapaLabel(etapa.tipo_etapa)}
-                              </SelectItem>
-                            ))}
-                          <SelectItem value="concluido">Concluído</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </TableCell>
-                    <TableCell onClick={() => handleRowClick(pedido)}>
-                      <div className="space-y-1">
-                        <Progress value={pedido.progresso_percentual} className="h-2" />
-                        <p className="text-xs text-center font-semibold">
-                          {pedido.progresso_percentual}%
-                        </p>
-                      </div>
-                    </TableCell>
-                    <TableCell onClick={() => handleRowClick(pedido)}>
-                      {format(new Date(pedido.prazo_final), "dd/MM/yyyy", {
-                        locale: ptBR,
-                      })}
-                    </TableCell>
-                    <TableCell onClick={() => handleRowClick(pedido)}>
+                    <TableCell>
                       {getSituacaoBadge(pedido)}
-                    </TableCell>
-                    <TableCell
-                      className="text-xs text-muted-foreground"
-                      onClick={() => handleRowClick(pedido)}
-                    >
-                      {format(new Date(pedido.updated_at), "dd/MM/yyyy HH:mm", {
-                        locale: ptBR,
-                      })}
                     </TableCell>
                   </TableRow>
                 ))}
