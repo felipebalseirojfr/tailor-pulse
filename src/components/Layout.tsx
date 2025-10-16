@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { CalendarSidebar } from "@/components/calendar/CalendarSidebar";
 
 interface LayoutProps {
   children: ReactNode;
@@ -76,6 +77,8 @@ export default function Layout({ children }: LayoutProps) {
     { name: "Pedidos", href: "/pedidos", icon: Package },
     { name: "Clientes", href: "/clientes", icon: Users },
   ];
+
+  const showCalendar = location.pathname === "/pedidos";
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -187,11 +190,18 @@ export default function Layout({ children }: LayoutProps) {
       </div>
 
       {/* Main content */}
-      <main className="w-full lg:pl-64">
+      <main className={`w-full ${showCalendar ? "lg:pl-64 lg:pr-80" : "lg:pl-64"}`}>
         <div className="px-4 py-6 sm:px-6 lg:px-8 lg:py-8 pt-20 lg:pt-8">
           {children}
         </div>
       </main>
+
+      {/* Calendar Sidebar - Only on Pedidos page */}
+      {showCalendar && (
+        <div className="hidden lg:block fixed right-0 inset-y-0">
+          <CalendarSidebar />
+        </div>
+      )}
     </div>
   );
 }

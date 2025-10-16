@@ -458,8 +458,8 @@ export default function Pedidos() {
                     <TableCell>
                       {pedido.status_geral !== "concluido" && (
                         <Button
-                          size="sm"
-                          variant="ghost"
+                          size="icon"
+                          className="bg-primary text-primary-foreground hover:bg-primary/90"
                           onClick={(e) => {
                             e.stopPropagation();
                             const etapaAtual = pedido.etapas_producao?.find(

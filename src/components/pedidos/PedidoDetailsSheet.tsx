@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CheckCircle2, ChevronRight, Edit2, Save, X } from "lucide-react";
+import { CheckCircle2, ChevronRight, Edit2, Save, X, ChevronLeft } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -81,6 +81,49 @@ export function PedidoDetailsSheet({
 
   const handleCancelEdit = () => {
     setIsEditing(false);
+  };
+
+  const handleVoltarEtapa = async () => {
+    const etapasOrdenadas = [...etapas].sort((a: any, b: any) => a.ordem - b.ordem);
+    const etapaAtualIndex = etapasOrdenadas.findIndex((e: any) => e.status === "em_andamento");
+
+    if (etapaAtualIndex <= 0) {
+      toast.error("Não é possível voltar. Esta é a primeira etapa ou não há etapa em andamento.");
+      return;
+    }
+
+    const etapaAtualObj = etapasOrdenadas[etapaAtualIndex];
+    const etapaAnterior = etapasOrdenadas[etapaAtualIndex - 1];
+
+    setLoading(true);
+    try {
+      // Marcar etapa atual como pendente
+      await supabase
+        .from("etapas_producao")
+        .update({ 
+          status: "pendente", 
+          data_inicio: null, 
+          data_termino: null 
+        })
+        .eq("id", etapaAtualObj.id);
+
+      // Marcar etapa anterior como em andamento
+      await supabase
+        .from("etapas_producao")
+        .update({ 
+          status: "em_andamento", 
+          data_termino: null 
+        })
+        .eq("id", etapaAnterior.id);
+
+      toast.success("Etapa retrocedida com sucesso!");
+      onUpdate();
+    } catch (error) {
+      console.error("Erro ao voltar etapa:", error);
+      toast.error("Erro ao voltar etapa");
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleMoverProximaEtapa = async () => {
@@ -200,23 +243,34 @@ export function PedidoDetailsSheet({
         <SheetHeader>
           <div className="flex items-center justify-between">
             <SheetTitle>Detalhes do Pedido</SheetTitle>
-            {!isEditing ? (
-              <Button size="sm" variant="outline" onClick={handleEditClick}>
-                <Edit2 className="mr-2 h-4 w-4" />
-                Editar
+            <div className="flex gap-2">
+              <Button 
+                size="sm" 
+                variant="outline" 
+                onClick={handleVoltarEtapa}
+                disabled={loading}
+                title="Voltar etapa"
+              >
+                <ChevronLeft className="h-4 w-4" />
               </Button>
-            ) : (
-              <div className="flex gap-2">
-                <Button size="sm" variant="outline" onClick={handleCancelEdit}>
-                  <X className="mr-2 h-4 w-4" />
-                  Cancelar
+              {!isEditing ? (
+                <Button size="sm" variant="outline" onClick={handleEditClick}>
+                  <Edit2 className="mr-2 h-4 w-4" />
+                  Editar
                 </Button>
-                <Button size="sm" onClick={handleSaveEdit} disabled={loading}>
-                  <Save className="mr-2 h-4 w-4" />
-                  Salvar
-                </Button>
-              </div>
-            )}
+              ) : (
+                <div className="flex gap-2">
+                  <Button size="sm" variant="outline" onClick={handleCancelEdit}>
+                    <X className="mr-2 h-4 w-4" />
+                    Cancelar
+                  </Button>
+                  <Button size="sm" onClick={handleSaveEdit} disabled={loading}>
+                    <Save className="mr-2 h-4 w-4" />
+                    Salvar
+                  </Button>
+                </div>
+              )}
+            </div>
           </div>
         </SheetHeader>
 
