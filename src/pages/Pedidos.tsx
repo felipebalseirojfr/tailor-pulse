@@ -13,7 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, Clock, Package as PackageIcon } from "lucide-react";
+import { Plus, Search, Clock, Package as PackageIcon, ArrowUpDown } from "lucide-react";
 
 interface Pedido {
   id: string;
@@ -23,10 +23,18 @@ interface Pedido {
   progresso_percentual: number;
   prazo_final: string;
   status_geral: string;
+  prioridade: string;
   created_at: string;
   clientes: {
     nome: string;
   };
+  profiles: {
+    nome: string;
+  };
+  etapas_producao: Array<{
+    tipo_etapa: string;
+    status: string;
+  }>;
 }
 
 export default function Pedidos() {
@@ -35,6 +43,8 @@ export default function Pedidos() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
+  const [prioridadeFilter, setPrioridadeFilter] = useState("todos");
+  const [ordenacao, setOrdenacao] = useState("prazo");
 
   useEffect(() => {
     fetchPedidos();
@@ -42,13 +52,13 @@ export default function Pedidos() {
 
   useEffect(() => {
     filterPedidos();
-  }, [pedidos, searchTerm, statusFilter]);
+  }, [pedidos, searchTerm, statusFilter, prioridadeFilter, ordenacao]);
 
   const fetchPedidos = async () => {
     try {
       const { data, error } = await supabase
         .from("pedidos")
-        .select("*, clientes(nome)")
+        .select("*, clientes(nome), profiles(nome), etapas_producao(tipo_etapa, status)")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
@@ -85,6 +95,29 @@ export default function Pedidos() {
       }
     }
 
+    // Filtro por prioridade
+    if (prioridadeFilter !== "todos") {
+      filtered = filtered.filter((p) => p.prioridade === prioridadeFilter);
+    }
+
+    // Ordenação
+    filtered.sort((a, b) => {
+      switch (ordenacao) {
+        case "prazo":
+          return new Date(a.prazo_final).getTime() - new Date(b.prazo_final).getTime();
+        case "prioridade":
+          const prioridadeOrdem = { alta: 1, media: 2, baixa: 3 };
+          return (prioridadeOrdem[a.prioridade as keyof typeof prioridadeOrdem] || 2) - 
+                 (prioridadeOrdem[b.prioridade as keyof typeof prioridadeOrdem] || 2);
+        case "progresso":
+          return b.progresso_percentual - a.progresso_percentual;
+        case "cliente":
+          return (a.clientes?.nome || "").localeCompare(b.clientes?.nome || "");
+        default:
+          return 0;
+      }
+    });
+
     setFilteredPedidos(filtered);
   };
 
@@ -110,6 +143,55 @@ export default function Pedidos() {
     }
 
     return <Badge variant="secondary">Aguardando</Badge>;
+  };
+
+  const getPrioridadeColor = (prioridade: string) => {
+    switch (prioridade) {
+      case "alta":
+        return "bg-destructive text-destructive-foreground";
+      case "media":
+        return "bg-warning text-warning-foreground";
+      default:
+        return "bg-secondary text-secondary-foreground";
+    }
+  };
+
+  const getEtapaAtual = (pedido: Pedido) => {
+    const etapaEmAndamento = pedido.etapas_producao?.find(
+      (e) => e.status === "em_andamento"
+    );
+    if (etapaEmAndamento) {
+      const nomes: Record<string, string> = {
+        lacre_piloto: "Lacre de Piloto",
+        liberacao_corte: "Liberação de Corte",
+        corte: "Corte",
+        personalizacao: "Personalização",
+        costura: "Costura",
+        acabamento: "Acabamento",
+        entrega: "Entrega",
+      };
+      return nomes[etapaEmAndamento.tipo_etapa] || etapaEmAndamento.tipo_etapa;
+    }
+    return "Aguardando início";
+  };
+
+  const getCardBorderColor = (pedido: Pedido) => {
+    const hoje = new Date().toISOString().split("T")[0];
+    
+    if (pedido.status_geral === "concluido") {
+      return "border-l-4 border-l-success";
+    }
+    
+    if (pedido.prazo_final < hoje) {
+      return "border-l-4 border-l-destructive";
+    }
+    
+    const etapaAtual = pedido.etapas_producao?.find((e) => e.status === "em_andamento");
+    if (etapaAtual) {
+      return "border-l-4 border-l-warning";
+    }
+    
+    return "";
   };
 
   if (loading) {
@@ -140,28 +222,53 @@ export default function Pedidos() {
       {/* Filtros */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-col gap-4 md:flex-row">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder="Buscar por produto ou cliente..."
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
-              />
+          <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 md:flex-row">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar por produto ou cliente..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos os status</SelectItem>
+                  <SelectItem value="aguardando">Aguardando</SelectItem>
+                  <SelectItem value="em_producao">Em Produção</SelectItem>
+                  <SelectItem value="concluido">Concluído</SelectItem>
+                  <SelectItem value="atrasado">Atrasados</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={prioridadeFilter} onValueChange={setPrioridadeFilter}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                  <SelectValue placeholder="Prioridade" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todas</SelectItem>
+                  <SelectItem value="alta">Alta</SelectItem>
+                  <SelectItem value="media">Média</SelectItem>
+                  <SelectItem value="baixa">Baixa</SelectItem>
+                </SelectContent>
+              </Select>
+              <Select value={ordenacao} onValueChange={setOrdenacao}>
+                <SelectTrigger className="w-full md:w-[180px]">
+                  <ArrowUpDown className="mr-2 h-4 w-4" />
+                  <SelectValue placeholder="Ordenar" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="prazo">Prazo</SelectItem>
+                  <SelectItem value="prioridade">Prioridade</SelectItem>
+                  <SelectItem value="progresso">Progresso</SelectItem>
+                  <SelectItem value="cliente">Cliente</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-[200px]">
-                <SelectValue placeholder="Filtrar por status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos os status</SelectItem>
-                <SelectItem value="aguardando">Aguardando</SelectItem>
-                <SelectItem value="em_producao">Em Produção</SelectItem>
-                <SelectItem value="concluido">Concluído</SelectItem>
-                <SelectItem value="atrasado">Atrasados</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </CardContent>
       </Card>
@@ -195,19 +302,29 @@ export default function Pedidos() {
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           {filteredPedidos.map((pedido) => (
             <Link key={pedido.id} to={`/pedidos/${pedido.id}`}>
-              <Card className="transition-all hover:shadow-lg">
+              <Card className={`transition-all hover:shadow-lg ${getCardBorderColor(pedido)}`}>
                 <CardHeader>
                   <div className="flex items-start justify-between gap-2">
                     <CardTitle className="text-lg">
                       {pedido.produto_modelo}
                     </CardTitle>
-                    {getStatusBadge(pedido)}
+                    <div className="flex flex-col gap-1 items-end">
+                      {getStatusBadge(pedido)}
+                      {pedido.prioridade && (
+                        <Badge className={getPrioridadeColor(pedido.prioridade)} variant="outline">
+                          {pedido.prioridade === "alta" ? "Alta" : pedido.prioridade === "media" ? "Média" : "Baixa"}
+                        </Badge>
+                      )}
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-1 text-sm">
                     <p className="text-muted-foreground">
                       Cliente: <span className="font-medium text-foreground">{pedido.clientes?.nome}</span>
+                    </p>
+                    <p className="text-muted-foreground">
+                      Etapa: <span className="font-medium text-foreground">{getEtapaAtual(pedido)}</span>
                     </p>
                     <p className="text-muted-foreground">
                       Tipo: <span className="font-medium text-foreground">{pedido.tipo_peca}</span>
@@ -219,6 +336,9 @@ export default function Pedidos() {
                       Prazo: <span className="font-medium text-foreground">
                         {new Date(pedido.prazo_final).toLocaleDateString("pt-BR")}
                       </span>
+                    </p>
+                    <p className="text-muted-foreground">
+                      Responsável: <span className="font-medium text-foreground">{pedido.profiles?.nome}</span>
                     </p>
                   </div>
                   <div className="space-y-2">

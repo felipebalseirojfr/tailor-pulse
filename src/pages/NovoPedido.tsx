@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
 
@@ -43,6 +44,7 @@ export default function NovoPedido() {
     data_inicio: new Date().toISOString().split("T")[0],
     prazo_final: "",
     responsavel_comercial_id: "",
+    prioridade: "media",
   });
 
   useEffect(() => {
@@ -81,6 +83,7 @@ export default function NovoPedido() {
         {
           ...formData,
           quantidade_total: parseInt(formData.quantidade_total),
+          prioridade: formData.prioridade as "alta" | "media" | "baixa",
         },
       ]);
 
@@ -272,6 +275,36 @@ export default function NovoPedido() {
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Prioridade *</Label>
+              <RadioGroup
+                value={formData.prioridade}
+                onValueChange={(value) =>
+                  setFormData({ ...formData, prioridade: value })
+                }
+                className="flex gap-6"
+              >
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="baixa" id="baixa" />
+                  <Label htmlFor="baixa" className="font-normal cursor-pointer">
+                    Baixa
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="media" id="media" />
+                  <Label htmlFor="media" className="font-normal cursor-pointer">
+                    Média
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="alta" id="alta" />
+                  <Label htmlFor="alta" className="font-normal cursor-pointer">
+                    Alta
+                  </Label>
+                </div>
+              </RadioGroup>
             </div>
 
             <div className="flex gap-4">

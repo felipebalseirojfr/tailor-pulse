@@ -167,6 +167,49 @@ export default function DetalhesPedido() {
     }
   };
 
+  const avancarEtapa = async (etapaId: string) => {
+    try {
+      const etapaAtual = etapas.find((e) => e.id === etapaId);
+      if (!etapaAtual) return;
+
+      // Marcar etapa atual como concluída
+      const { error } = await supabase
+        .from("etapas_producao")
+        .update({
+          status: "concluido",
+          data_termino: new Date().toISOString(),
+        })
+        .eq("id", etapaId);
+
+      if (error) throw error;
+
+      // Liberar próxima etapa (se existir)
+      const proximaEtapa = etapas.find((e) => e.ordem === etapaAtual.ordem + 1);
+      if (proximaEtapa && proximaEtapa.status === "pendente") {
+        await supabase
+          .from("etapas_producao")
+          .update({
+            status: "em_andamento",
+            data_inicio: new Date().toISOString(),
+          })
+          .eq("id", proximaEtapa.id);
+      }
+
+      toast({
+        title: "Etapa avançada",
+        description: "Etapa concluída e próxima etapa liberada automaticamente.",
+      });
+
+      fetchPedidoDetails();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao avançar",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -327,7 +370,7 @@ export default function DetalhesPedido() {
                   </div>
                   <div className="flex-1 space-y-4 rounded-lg border border-border p-4">
                     <div className="flex items-start justify-between gap-4">
-                      <div>
+                      <div className="flex-1">
                         <h3 className="font-semibold">
                           {ETAPAS_NOMES[etapa.tipo_etapa]}
                         </h3>
@@ -344,7 +387,18 @@ export default function DetalhesPedido() {
                           </p>
                         )}
                       </div>
-                      {getStatusBadge(etapa.status)}
+                      <div className="flex items-center gap-2">
+                        {getStatusBadge(etapa.status)}
+                        {etapa.status !== "concluido" && (
+                          <Button
+                            size="sm"
+                            onClick={() => avancarEtapa(etapa.id)}
+                            className="whitespace-nowrap"
+                          >
+                            Avançar Etapa
+                          </Button>
+                        )}
+                      </div>
                     </div>
 
                     <div className="grid gap-4 md:grid-cols-2">
