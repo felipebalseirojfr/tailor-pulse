@@ -180,7 +180,9 @@ export default function Pedidos() {
       lacre_piloto: "Lacre de Piloto",
       liberacao_corte: "Liberação de Corte",
       corte: "Corte",
-      personalizacao: "Personalização",
+      estampa: "Estampa",
+      bordado: "Bordado",
+      lavado: "Lavado",
       costura: "Costura",
       acabamento: "Acabamento",
       entrega: "Entrega",
@@ -462,17 +464,24 @@ export default function Pedidos() {
                           className="bg-primary text-primary-foreground hover:bg-primary/90"
                           onClick={(e) => {
                             e.stopPropagation();
-                            const etapaAtual = pedido.etapas_producao?.find(
+                            const etapas = pedido.etapas_producao?.sort((a: any, b: any) => a.ordem - b.ordem);
+                            const etapaAtual = etapas?.find(
                               (et: any) => et.status === "em_andamento"
                             );
+                            
                             if (etapaAtual) {
-                              const proximaEtapa = pedido.etapas_producao
-                                ?.sort((a: any, b: any) => a.ordem - b.ordem)
-                                .find((et: any) => et.ordem === etapaAtual.ordem + 1);
+                              // Se há etapa em andamento, avançar para a próxima
+                              const proximaEtapa = etapas?.find((et: any) => et.ordem === etapaAtual.ordem + 1);
                               handleAtualizarEtapa(
                                 pedido.id,
                                 proximaEtapa ? proximaEtapa.tipo_etapa : "concluido"
                               );
+                            } else {
+                              // Se não há etapa em andamento (aguardando início), iniciar a primeira etapa
+                              const primeiraEtapa = etapas?.[0];
+                              if (primeiraEtapa) {
+                                handleAtualizarEtapa(pedido.id, primeiraEtapa.tipo_etapa);
+                              }
                             }
                           }}
                         >
