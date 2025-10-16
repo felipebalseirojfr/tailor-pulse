@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +13,20 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Search, Clock, Package as PackageIcon, ArrowUpDown } from "lucide-react";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { Plus, Search, Clock, Package as PackageIcon } from "lucide-react";
+import { PedidosSummaryCards } from "@/components/pedidos/PedidosSummaryCards";
+import { PedidoDetailsSheet } from "@/components/pedidos/PedidoDetailsSheet";
+import { toast } from "sonner";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 
 interface Pedido {
   id: string;
@@ -22,9 +35,13 @@ interface Pedido {
   quantidade_total: number;
   progresso_percentual: number;
   prazo_final: string;
+  data_inicio: string;
   status_geral: string;
   prioridade: string;
   created_at: string;
+  updated_at: string;
+  tecido?: string;
+  aviamentos?: string;
   clientes: {
     nome: string;
   };
@@ -32,8 +49,13 @@ interface Pedido {
     nome: string;
   };
   etapas_producao: Array<{
+    id: string;
     tipo_etapa: string;
     status: string;
+    ordem: number;
+    data_inicio?: string;
+    data_termino?: string;
+    observacoes?: string;
   }>;
 }
 
@@ -43,8 +65,8 @@ export default function Pedidos() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
-  const [prioridadeFilter, setPrioridadeFilter] = useState("todos");
-  const [ordenacao, setOrdenacao] = useState("prazo");
+  const [selectedPedido, setSelectedPedido] = useState<Pedido | null>(null);
+  const [sheetOpen, setSheetOpen] = useState(false);
 
   useEffect(() => {
     fetchPedidos();
@@ -52,20 +74,26 @@ export default function Pedidos() {
 
   useEffect(() => {
     filterPedidos();
-  }, [pedidos, searchTerm, statusFilter, prioridadeFilter, ordenacao]);
+  }, [pedidos, searchTerm, statusFilter]);
 
   const fetchPedidos = async () => {
     try {
       const { data, error } = await supabase
         .from("pedidos")
-        .select("*, clientes(nome), profiles(nome), etapas_producao(tipo_etapa, status)")
-        .order("created_at", { ascending: false });
+        .select(`
+          *,
+          clientes(nome),
+          profiles(nome),
+          etapas_producao(id, tipo_etapa, status, ordem, data_inicio, data_termino, observacoes)
+        `)
+        .order("prazo_final", { ascending: true });
 
       if (error) throw error;
 
       setPedidos(data || []);
     } catch (error) {
       console.error("Erro ao buscar pedidos:", error);
+      toast.error("Erro ao carregar pedidos");
     } finally {
       setLoading(false);
     }
@@ -79,7 +107,8 @@ export default function Pedidos() {
       filtered = filtered.filter(
         (p) =>
           p.produto_modelo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          p.clientes?.nome?.toLowerCase().includes(searchTerm.toLowerCase())
+          p.clientes?.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          p.id.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -95,104 +124,154 @@ export default function Pedidos() {
       }
     }
 
-    // Filtro por prioridade
-    if (prioridadeFilter !== "todos") {
-      filtered = filtered.filter((p) => p.prioridade === prioridadeFilter);
-    }
-
-    // Ordenação
-    filtered.sort((a, b) => {
-      switch (ordenacao) {
-        case "prazo":
-          return new Date(a.prazo_final).getTime() - new Date(b.prazo_final).getTime();
-        case "prioridade":
-          const prioridadeOrdem = { alta: 1, media: 2, baixa: 3 };
-          return (prioridadeOrdem[a.prioridade as keyof typeof prioridadeOrdem] || 2) - 
-                 (prioridadeOrdem[b.prioridade as keyof typeof prioridadeOrdem] || 2);
-        case "progresso":
-          return b.progresso_percentual - a.progresso_percentual;
-        case "cliente":
-          return (a.clientes?.nome || "").localeCompare(b.clientes?.nome || "");
-        default:
-          return 0;
-      }
-    });
-
     setFilteredPedidos(filtered);
   };
 
-  const getStatusBadge = (pedido: Pedido) => {
+  const getSituacaoBadge = (pedido: Pedido) => {
     const hoje = new Date().toISOString().split("T")[0];
     const atrasado = pedido.prazo_final < hoje && pedido.status_geral !== "concluido";
 
     if (atrasado) {
-      return (
-        <Badge variant="destructive">
-          <Clock className="mr-1 h-3 w-3" />
-          Atrasado
-        </Badge>
-      );
+      return <Badge variant="destructive">Atrasado</Badge>;
     }
 
     if (pedido.status_geral === "concluido") {
       return <Badge className="bg-success text-success-foreground">Concluído</Badge>;
     }
 
-    if (pedido.status_geral === "em_producao") {
-      return <Badge className="bg-warning text-warning-foreground">Em Produção</Badge>;
+    // Calcular dias até o prazo
+    const diasRestantes = Math.ceil(
+      (new Date(pedido.prazo_final).getTime() - new Date(hoje).getTime()) /
+        (1000 * 60 * 60 * 24)
+    );
+
+    if (diasRestantes <= 3) {
+      return <Badge className="bg-warning text-warning-foreground">Próximo do prazo</Badge>;
     }
 
-    return <Badge variant="secondary">Aguardando</Badge>;
+    return <Badge className="bg-info text-info-foreground">No prazo</Badge>;
   };
 
-  const getPrioridadeColor = (prioridade: string) => {
-    switch (prioridade) {
-      case "alta":
-        return "bg-destructive text-destructive-foreground";
-      case "media":
-        return "bg-warning text-warning-foreground";
-      default:
-        return "bg-secondary text-secondary-foreground";
-    }
+  const getEtapaLabel = (tipo: string) => {
+    const labels: Record<string, string> = {
+      lacre_piloto: "Lacre de Piloto",
+      liberacao_corte: "Liberação de Corte",
+      corte: "Corte",
+      personalizacao: "Personalização",
+      costura: "Costura",
+      acabamento: "Acabamento",
+      entrega: "Entrega",
+    };
+    return labels[tipo] || tipo;
   };
 
   const getEtapaAtual = (pedido: Pedido) => {
+    if (pedido.status_geral === "concluido") {
+      return "Concluído";
+    }
+
     const etapaEmAndamento = pedido.etapas_producao?.find(
       (e) => e.status === "em_andamento"
     );
+
     if (etapaEmAndamento) {
-      const nomes: Record<string, string> = {
-        lacre_piloto: "Lacre de Piloto",
-        liberacao_corte: "Liberação de Corte",
-        corte: "Corte",
-        personalizacao: "Personalização",
-        costura: "Costura",
-        acabamento: "Acabamento",
-        entrega: "Entrega",
-      };
-      return nomes[etapaEmAndamento.tipo_etapa] || etapaEmAndamento.tipo_etapa;
+      return getEtapaLabel(etapaEmAndamento.tipo_etapa);
     }
+
     return "Aguardando início";
   };
 
-  const getCardBorderColor = (pedido: Pedido) => {
-    const hoje = new Date().toISOString().split("T")[0];
-    
-    if (pedido.status_geral === "concluido") {
-      return "border-l-4 border-l-success";
+  const handleAtualizarEtapa = async (pedidoId: string, novaEtapa: string) => {
+    try {
+      const pedido = pedidos.find((p) => p.id === pedidoId);
+      if (!pedido) return;
+
+      const etapas = pedido.etapas_producao.sort((a, b) => a.ordem - b.ordem);
+      const etapaAtual = etapas.find((e) => e.status === "em_andamento");
+
+      // Se estiver marcando como concluído
+      if (novaEtapa === "concluido") {
+        await supabase
+          .from("pedidos")
+          .update({
+            status_geral: "concluido",
+            progresso_percentual: 100,
+          })
+          .eq("id", pedidoId);
+
+        // Marcar todas as etapas como concluídas
+        await supabase
+          .from("etapas_producao")
+          .update({
+            status: "concluido",
+            data_termino: new Date().toISOString(),
+          })
+          .eq("pedido_id", pedidoId)
+          .neq("status", "concluido");
+
+        toast.success("Pedido marcado como concluído!");
+        fetchPedidos();
+        return;
+      }
+
+      // Encontrar a etapa alvo
+      const etapaAlvo = etapas.find((e) => e.tipo_etapa === novaEtapa);
+      if (!etapaAlvo) return;
+
+      // Marcar etapa atual como concluída se existir
+      if (etapaAtual) {
+        await supabase
+          .from("etapas_producao")
+          .update({
+            status: "concluido",
+            data_termino: new Date().toISOString(),
+          })
+          .eq("id", etapaAtual.id);
+      }
+
+      // Marcar nova etapa como em andamento
+      await supabase
+        .from("etapas_producao")
+        .update({
+          status: "em_andamento",
+          data_inicio: new Date().toISOString(),
+        })
+        .eq("id", etapaAlvo.id);
+
+      // Atualizar status do pedido
+      await supabase
+        .from("pedidos")
+        .update({
+          status_geral: "em_producao",
+        })
+        .eq("id", pedidoId);
+
+      toast.success("Etapa atualizada com sucesso!");
+      fetchPedidos();
+    } catch (error) {
+      console.error("Erro ao atualizar etapa:", error);
+      toast.error("Erro ao atualizar etapa");
     }
-    
-    if (pedido.prazo_final < hoje) {
-      return "border-l-4 border-l-destructive";
-    }
-    
-    const etapaAtual = pedido.etapas_producao?.find((e) => e.status === "em_andamento");
-    if (etapaAtual) {
-      return "border-l-4 border-l-warning";
-    }
-    
-    return "";
   };
+
+  const handleRowClick = (pedido: Pedido) => {
+    setSelectedPedido(pedido);
+    setSheetOpen(true);
+  };
+
+  const getSummaryData = () => {
+    const hoje = new Date().toISOString().split("T")[0];
+    return {
+      total: pedidos.length,
+      emProducao: pedidos.filter((p) => p.status_geral === "em_producao").length,
+      concluidos: pedidos.filter((p) => p.status_geral === "concluido").length,
+      atrasados: pedidos.filter(
+        (p) => p.prazo_final < hoje && p.status_geral !== "concluido"
+      ).length,
+    };
+  };
+
+  const summaryData = getSummaryData();
 
   if (loading) {
     return (
@@ -206,9 +285,11 @@ export default function Pedidos() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Pedidos</h1>
+          <h1 className="text-3xl font-bold tracking-tight">
+            Controle de Produção – Visão Geral
+          </h1>
           <p className="text-muted-foreground">
-            Gerencie todos os pedidos de produção
+            Acompanhe e atualize todos os pedidos em produção
           </p>
         </div>
         <Link to="/pedidos/novo">
@@ -219,61 +300,45 @@ export default function Pedidos() {
         </Link>
       </div>
 
+      {/* Cards de Resumo */}
+      <PedidosSummaryCards
+        total={summaryData.total}
+        emProducao={summaryData.emProducao}
+        concluidos={summaryData.concluidos}
+        atrasados={summaryData.atrasados}
+        onFilterClick={setStatusFilter}
+        activeFilter={statusFilter}
+      />
+
       {/* Filtros */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-col gap-4 md:flex-row">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar por produto ou cliente..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full md:w-[180px]">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos os status</SelectItem>
-                  <SelectItem value="aguardando">Aguardando</SelectItem>
-                  <SelectItem value="em_producao">Em Produção</SelectItem>
-                  <SelectItem value="concluido">Concluído</SelectItem>
-                  <SelectItem value="atrasado">Atrasados</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={prioridadeFilter} onValueChange={setPrioridadeFilter}>
-                <SelectTrigger className="w-full md:w-[180px]">
-                  <SelectValue placeholder="Prioridade" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todas</SelectItem>
-                  <SelectItem value="alta">Alta</SelectItem>
-                  <SelectItem value="media">Média</SelectItem>
-                  <SelectItem value="baixa">Baixa</SelectItem>
-                </SelectContent>
-              </Select>
-              <Select value={ordenacao} onValueChange={setOrdenacao}>
-                <SelectTrigger className="w-full md:w-[180px]">
-                  <ArrowUpDown className="mr-2 h-4 w-4" />
-                  <SelectValue placeholder="Ordenar" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="prazo">Prazo</SelectItem>
-                  <SelectItem value="prioridade">Prioridade</SelectItem>
-                  <SelectItem value="progresso">Progresso</SelectItem>
-                  <SelectItem value="cliente">Cliente</SelectItem>
-                </SelectContent>
-              </Select>
+          <div className="flex flex-col gap-4 md:flex-row">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                placeholder="Buscar por #OP, produto ou cliente..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9"
+              />
             </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-full md:w-[200px]">
+                <SelectValue placeholder="Filtrar por status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos os status</SelectItem>
+                <SelectItem value="em_producao">Em Produção</SelectItem>
+                <SelectItem value="concluido">Concluído</SelectItem>
+                <SelectItem value="atrasado">Atrasados</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
         </CardContent>
       </Card>
 
-      {/* Lista de Pedidos */}
+      {/* Tabela de Pedidos */}
       {filteredPedidos.length === 0 ? (
         <Card>
           <CardContent className="py-16 text-center">
@@ -299,63 +364,116 @@ export default function Pedidos() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {filteredPedidos.map((pedido) => (
-            <Link key={pedido.id} to={`/pedidos/${pedido.id}`}>
-              <Card className={`transition-all hover:shadow-lg ${getCardBorderColor(pedido)}`}>
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="text-lg">
-                      {pedido.produto_modelo}
-                    </CardTitle>
-                    <div className="flex flex-col gap-1 items-end">
-                      {getStatusBadge(pedido)}
-                      {pedido.prioridade && (
-                        <Badge className={getPrioridadeColor(pedido.prioridade)} variant="outline">
-                          {pedido.prioridade === "alta" ? "Alta" : pedido.prioridade === "media" ? "Média" : "Baixa"}
-                        </Badge>
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-1 text-sm">
-                    <p className="text-muted-foreground">
-                      Cliente: <span className="font-medium text-foreground">{pedido.clientes?.nome}</span>
-                    </p>
-                    <p className="text-muted-foreground">
-                      Etapa: <span className="font-medium text-foreground">{getEtapaAtual(pedido)}</span>
-                    </p>
-                    <p className="text-muted-foreground">
-                      Tipo: <span className="font-medium text-foreground">{pedido.tipo_peca}</span>
-                    </p>
-                    <p className="text-muted-foreground">
-                      Quantidade: <span className="font-medium text-foreground">{pedido.quantidade_total}</span>
-                    </p>
-                    <p className="text-muted-foreground">
-                      Prazo: <span className="font-medium text-foreground">
-                        {new Date(pedido.prazo_final).toLocaleDateString("pt-BR")}
-                      </span>
-                    </p>
-                    <p className="text-muted-foreground">
-                      Responsável: <span className="font-medium text-foreground">{pedido.profiles?.nome}</span>
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between text-xs text-muted-foreground">
-                      <span>Progresso</span>
-                      <span className="font-semibold">
-                        {pedido.progresso_percentual}%
-                      </span>
-                    </div>
-                    <Progress value={pedido.progresso_percentual} />
-                  </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
+        <Card>
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-[100px]">#OP</TableHead>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Produto</TableHead>
+                  <TableHead className="text-right">Qtd</TableHead>
+                  <TableHead className="w-[200px]">Etapa Atual</TableHead>
+                  <TableHead className="w-[120px]">Progresso</TableHead>
+                  <TableHead>Prazo</TableHead>
+                  <TableHead>Situação</TableHead>
+                  <TableHead>Última Atualização</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filteredPedidos.map((pedido) => (
+                  <TableRow
+                    key={pedido.id}
+                    className="cursor-pointer hover:bg-muted/50"
+                  >
+                    <TableCell
+                      className="font-mono text-xs"
+                      onClick={() => handleRowClick(pedido)}
+                    >
+                      {pedido.id.slice(0, 8)}
+                    </TableCell>
+                    <TableCell onClick={() => handleRowClick(pedido)}>
+                      {pedido.clientes?.nome}
+                    </TableCell>
+                    <TableCell onClick={() => handleRowClick(pedido)}>
+                      <div>
+                        <p className="font-medium">{pedido.produto_modelo}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {pedido.tipo_peca}
+                        </p>
+                      </div>
+                    </TableCell>
+                    <TableCell
+                      className="text-right font-semibold"
+                      onClick={() => handleRowClick(pedido)}
+                    >
+                      {pedido.quantidade_total}
+                    </TableCell>
+                    <TableCell onClick={(e) => e.stopPropagation()}>
+                      <Select
+                        value={
+                          pedido.status_geral === "concluido"
+                            ? "concluido"
+                            : pedido.etapas_producao?.find((e) => e.status === "em_andamento")
+                                ?.tipo_etapa || ""
+                        }
+                        onValueChange={(value) => handleAtualizarEtapa(pedido.id, value)}
+                        disabled={pedido.status_geral === "concluido"}
+                      >
+                        <SelectTrigger className="w-full">
+                          <SelectValue placeholder="Selecionar etapa" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {pedido.etapas_producao
+                            ?.sort((a, b) => a.ordem - b.ordem)
+                            .map((etapa) => (
+                              <SelectItem key={etapa.id} value={etapa.tipo_etapa}>
+                                {getEtapaLabel(etapa.tipo_etapa)}
+                              </SelectItem>
+                            ))}
+                          <SelectItem value="concluido">Concluído</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
+                    <TableCell onClick={() => handleRowClick(pedido)}>
+                      <div className="space-y-1">
+                        <Progress value={pedido.progresso_percentual} className="h-2" />
+                        <p className="text-xs text-center font-semibold">
+                          {pedido.progresso_percentual}%
+                        </p>
+                      </div>
+                    </TableCell>
+                    <TableCell onClick={() => handleRowClick(pedido)}>
+                      {format(new Date(pedido.prazo_final), "dd/MM/yyyy", {
+                        locale: ptBR,
+                      })}
+                    </TableCell>
+                    <TableCell onClick={() => handleRowClick(pedido)}>
+                      {getSituacaoBadge(pedido)}
+                    </TableCell>
+                    <TableCell
+                      className="text-xs text-muted-foreground"
+                      onClick={() => handleRowClick(pedido)}
+                    >
+                      {format(new Date(pedido.updated_at), "dd/MM/yyyy HH:mm", {
+                        locale: ptBR,
+                      })}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        </Card>
       )}
+
+      {/* Modal de Detalhes */}
+      <PedidoDetailsSheet
+        pedido={selectedPedido}
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+        onUpdate={fetchPedidos}
+      />
     </div>
   );
 }
