@@ -25,6 +25,7 @@ import { Plus, Search, Package as PackageIcon } from "lucide-react";
 import { PedidosSummaryCards } from "@/components/pedidos/PedidosSummaryCards";
 import { PedidoDetailsSheet } from "@/components/pedidos/PedidoDetailsSheet";
 import { EtapasVisuais } from "@/components/pedidos/EtapasVisuais";
+import { FiltroAvancado } from "@/components/pedidos/FiltroAvancado";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -66,7 +67,9 @@ export default function Pedidos() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
-  const [searchType, setSearchType] = useState("todos");
+  const [marcaFilter, setMarcaFilter] = useState("");
+  const [referenciaFilter, setReferenciaFilter] = useState("");
+  const [opFilter, setOpFilter] = useState("");
   const [selectedPedido, setSelectedPedido] = useState<Pedido | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -76,7 +79,7 @@ export default function Pedidos() {
 
   useEffect(() => {
     filterPedidos();
-  }, [pedidos, searchTerm, statusFilter, searchType]);
+  }, [pedidos, searchTerm, statusFilter, marcaFilter, referenciaFilter, opFilter]);
 
   const fetchPedidos = async () => {
     try {
@@ -104,28 +107,32 @@ export default function Pedidos() {
   const filterPedidos = () => {
     let filtered = pedidos;
 
-    // Filtro por busca com tipo específico
+    // Filtro por busca geral
     if (searchTerm) {
       filtered = filtered.filter((p) => {
         const term = searchTerm.toLowerCase();
-        
-        switch (searchType) {
-          case "marca":
-            return p.clientes?.nome?.toLowerCase().includes(term);
-          case "referencia":
-            return p.tipo_peca?.toLowerCase().includes(term);
-          case "op":
-            return p.id.toLowerCase().includes(term);
-          default:
-            // "todos" - busca em todos os campos
-            return (
-              p.produto_modelo.toLowerCase().includes(term) ||
-              p.clientes?.nome?.toLowerCase().includes(term) ||
-              p.tipo_peca?.toLowerCase().includes(term) ||
-              p.id.toLowerCase().includes(term)
-            );
-        }
+        return (
+          p.produto_modelo.toLowerCase().includes(term) ||
+          p.clientes?.nome?.toLowerCase().includes(term) ||
+          p.tipo_peca?.toLowerCase().includes(term) ||
+          p.id.toLowerCase().includes(term)
+        );
       });
+    }
+
+    // Filtro por marca
+    if (marcaFilter) {
+      filtered = filtered.filter((p) => p.clientes?.nome === marcaFilter);
+    }
+
+    // Filtro por referência
+    if (referenciaFilter) {
+      filtered = filtered.filter((p) => p.tipo_peca === referenciaFilter);
+    }
+
+    // Filtro por OP
+    if (opFilter) {
+      filtered = filtered.filter((p) => p.id.slice(0, 8) === opFilter.slice(0, 8));
     }
 
     // Filtro por status
@@ -329,46 +336,52 @@ export default function Pedidos() {
       {/* Filtros */}
       <Card>
         <CardContent className="pt-6">
-          <div className="flex flex-col gap-4 md:flex-row">
-            <Select value={searchType} onValueChange={setSearchType}>
-              <SelectTrigger className="w-full md:w-[160px]">
-                <SelectValue placeholder="Buscar por" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="marca">Marca</SelectItem>
-                <SelectItem value="referencia">Referência</SelectItem>
-                <SelectItem value="op">OP</SelectItem>
-              </SelectContent>
-            </Select>
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-              <Input
-                placeholder={
-                  searchType === "marca"
-                    ? "Buscar por marca/cliente..."
-                    : searchType === "referencia"
-                    ? "Buscar por referência..."
-                    : searchType === "op"
-                    ? "Buscar por #OP..."
-                    : "Buscar pedidos..."
-                }
-                value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
-                className="pl-9"
+          <div className="space-y-4">
+            <div className="flex flex-col gap-4 md:flex-row">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                <Input
+                  placeholder="Buscar em todos os campos..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
+              <Select value={statusFilter} onValueChange={setStatusFilter}>
+                <SelectTrigger className="w-full md:w-[200px]">
+                  <SelectValue placeholder="Status" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="todos">Todos os status</SelectItem>
+                  <SelectItem value="em_producao">Em Produção</SelectItem>
+                  <SelectItem value="concluido">Concluído</SelectItem>
+                  <SelectItem value="atrasado">Atrasados</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid gap-4 md:grid-cols-3">
+              <FiltroAvancado
+                tipo="marca"
+                opcoes={Array.from(new Set(pedidos.map((p) => p.clientes?.nome).filter(Boolean)))}
+                valor={marcaFilter}
+                onChange={setMarcaFilter}
+                placeholder="Filtrar por marca"
+              />
+              <FiltroAvancado
+                tipo="referencia"
+                opcoes={Array.from(new Set(pedidos.map((p) => p.tipo_peca).filter(Boolean)))}
+                valor={referenciaFilter}
+                onChange={setReferenciaFilter}
+                placeholder="Filtrar por referência"
+              />
+              <FiltroAvancado
+                tipo="op"
+                opcoes={Array.from(new Set(pedidos.map((p) => `#${p.id.slice(0, 8)}`)))}
+                valor={opFilter}
+                onChange={setOpFilter}
+                placeholder="Filtrar por #OP"
               />
             </div>
-            <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className="w-full md:w-[200px]">
-                <SelectValue placeholder="Filtrar por status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos os status</SelectItem>
-                <SelectItem value="em_producao">Em Produção</SelectItem>
-                <SelectItem value="concluido">Concluído</SelectItem>
-                <SelectItem value="atrasado">Atrasados</SelectItem>
-              </SelectContent>
-            </Select>
           </div>
         </CardContent>
       </Card>

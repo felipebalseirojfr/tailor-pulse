@@ -14,6 +14,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft } from "lucide-react";
 
@@ -45,6 +46,8 @@ export default function NovoPedido() {
     prazo_final: "",
     responsavel_comercial_id: "",
     prioridade: "media",
+    tem_personalizacao: false,
+    tipos_personalizacao: [] as string[],
   });
 
   useEffect(() => {
@@ -84,6 +87,8 @@ export default function NovoPedido() {
           ...formData,
           quantidade_total: parseInt(formData.quantidade_total),
           prioridade: formData.prioridade as "alta" | "media" | "baixa",
+          tem_personalizacao: formData.tipos_personalizacao.length > 0,
+          tipos_personalizacao: formData.tipos_personalizacao,
         },
       ]);
 
@@ -111,6 +116,20 @@ export default function NovoPedido() {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
+    });
+  };
+
+  const handlePersonalizacaoToggle = (tipo: string) => {
+    setFormData((prev) => {
+      const tipos = prev.tipos_personalizacao.includes(tipo)
+        ? prev.tipos_personalizacao.filter((t) => t !== tipo)
+        : [...prev.tipos_personalizacao, tipo];
+      
+      return {
+        ...prev,
+        tipos_personalizacao: tipos,
+        tem_personalizacao: tipos.length > 0,
+      };
     });
   };
 
@@ -305,6 +324,55 @@ export default function NovoPedido() {
                   </Label>
                 </div>
               </RadioGroup>
+            </div>
+
+            <div className="space-y-3">
+              <Label>Personalização</Label>
+              <p className="text-sm text-muted-foreground">
+                Selecione os tipos de personalização necessários (adiciona etapas extras)
+              </p>
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="estamparia"
+                    checked={formData.tipos_personalizacao.includes("estamparia")}
+                    onCheckedChange={() => handlePersonalizacaoToggle("estamparia")}
+                  />
+                  <Label htmlFor="estamparia" className="font-normal cursor-pointer">
+                    Estamparia
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="bordado"
+                    checked={formData.tipos_personalizacao.includes("bordado")}
+                    onCheckedChange={() => handlePersonalizacaoToggle("bordado")}
+                  />
+                  <Label htmlFor="bordado" className="font-normal cursor-pointer">
+                    Bordado
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="caseado"
+                    checked={formData.tipos_personalizacao.includes("caseado")}
+                    onCheckedChange={() => handlePersonalizacaoToggle("caseado")}
+                  />
+                  <Label htmlFor="caseado" className="font-normal cursor-pointer">
+                    Caseado
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="lavanderia"
+                    checked={formData.tipos_personalizacao.includes("lavanderia")}
+                    onCheckedChange={() => handlePersonalizacaoToggle("lavanderia")}
+                  />
+                  <Label htmlFor="lavanderia" className="font-normal cursor-pointer">
+                    Lavanderia
+                  </Label>
+                </div>
+              </div>
             </div>
 
             <div className="flex gap-4">

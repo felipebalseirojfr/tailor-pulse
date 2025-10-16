@@ -116,7 +116,9 @@ export type Database = {
           responsavel_comercial_id: string
           status_geral: string | null
           tecido: string | null
+          tem_personalizacao: boolean | null
           tipo_peca: string
+          tipos_personalizacao: string[] | null
           updated_at: string | null
         }
         Insert: {
@@ -133,7 +135,9 @@ export type Database = {
           responsavel_comercial_id: string
           status_geral?: string | null
           tecido?: string | null
+          tem_personalizacao?: boolean | null
           tipo_peca: string
+          tipos_personalizacao?: string[] | null
           updated_at?: string | null
         }
         Update: {
@@ -150,7 +154,9 @@ export type Database = {
           responsavel_comercial_id?: string
           status_geral?: string | null
           tecido?: string | null
+          tem_personalizacao?: boolean | null
           tipo_peca?: string
+          tipos_personalizacao?: string[] | null
           updated_at?: string | null
         }
         Relationships: [
