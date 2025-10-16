@@ -109,6 +109,7 @@ export type Database = {
           data_inicio: string
           id: string
           prazo_final: string
+          prioridade: Database["public"]["Enums"]["prioridade_pedido"] | null
           produto_modelo: string
           progresso_percentual: number | null
           quantidade_total: number
@@ -125,6 +126,7 @@ export type Database = {
           data_inicio: string
           id?: string
           prazo_final: string
+          prioridade?: Database["public"]["Enums"]["prioridade_pedido"] | null
           produto_modelo: string
           progresso_percentual?: number | null
           quantidade_total: number
@@ -141,6 +143,7 @@ export type Database = {
           data_inicio?: string
           id?: string
           prazo_final?: string
+          prioridade?: Database["public"]["Enums"]["prioridade_pedido"] | null
           produto_modelo?: string
           progresso_percentual?: number | null
           quantidade_total?: number
@@ -202,6 +205,7 @@ export type Database = {
       [_ in never]: never
     }
     Enums: {
+      prioridade_pedido: "baixa" | "media" | "alta"
       status_etapa: "pendente" | "em_andamento" | "concluido"
       tipo_etapa:
         | "lacre_piloto"
@@ -338,6 +342,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      prioridade_pedido: ["baixa", "media", "alta"],
       status_etapa: ["pendente", "em_andamento", "concluido"],
       tipo_etapa: [
         "lacre_piloto",
