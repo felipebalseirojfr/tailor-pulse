@@ -66,6 +66,7 @@ export default function Pedidos() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("todos");
+  const [searchType, setSearchType] = useState("todos");
   const [selectedPedido, setSelectedPedido] = useState<Pedido | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
 
@@ -75,7 +76,7 @@ export default function Pedidos() {
 
   useEffect(() => {
     filterPedidos();
-  }, [pedidos, searchTerm, statusFilter]);
+  }, [pedidos, searchTerm, statusFilter, searchType]);
 
   const fetchPedidos = async () => {
     try {
@@ -103,14 +104,28 @@ export default function Pedidos() {
   const filterPedidos = () => {
     let filtered = pedidos;
 
-    // Filtro por busca
+    // Filtro por busca com tipo específico
     if (searchTerm) {
-      filtered = filtered.filter(
-        (p) =>
-          p.produto_modelo.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          p.clientes?.nome?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          p.id.toLowerCase().includes(searchTerm.toLowerCase())
-      );
+      filtered = filtered.filter((p) => {
+        const term = searchTerm.toLowerCase();
+        
+        switch (searchType) {
+          case "marca":
+            return p.clientes?.nome?.toLowerCase().includes(term);
+          case "referencia":
+            return p.tipo_peca?.toLowerCase().includes(term);
+          case "op":
+            return p.id.toLowerCase().includes(term);
+          default:
+            // "todos" - busca em todos os campos
+            return (
+              p.produto_modelo.toLowerCase().includes(term) ||
+              p.clientes?.nome?.toLowerCase().includes(term) ||
+              p.tipo_peca?.toLowerCase().includes(term) ||
+              p.id.toLowerCase().includes(term)
+            );
+        }
+      });
     }
 
     // Filtro por status
@@ -315,10 +330,29 @@ export default function Pedidos() {
       <Card>
         <CardContent className="pt-6">
           <div className="flex flex-col gap-4 md:flex-row">
+            <Select value={searchType} onValueChange={setSearchType}>
+              <SelectTrigger className="w-full md:w-[160px]">
+                <SelectValue placeholder="Buscar por" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="marca">Marca</SelectItem>
+                <SelectItem value="referencia">Referência</SelectItem>
+                <SelectItem value="op">OP</SelectItem>
+              </SelectContent>
+            </Select>
             <div className="relative flex-1">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Buscar por #OP, produto ou cliente..."
+                placeholder={
+                  searchType === "marca"
+                    ? "Buscar por marca/cliente..."
+                    : searchType === "referencia"
+                    ? "Buscar por referência..."
+                    : searchType === "op"
+                    ? "Buscar por #OP..."
+                    : "Buscar pedidos..."
+                }
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
                 className="pl-9"
@@ -370,9 +404,10 @@ export default function Pedidos() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[100px]">#OP</TableHead>
-                  <TableHead>Cliente</TableHead>
-                  <TableHead>Produto / Referência</TableHead>
+                  <TableHead className="w-[120px]">#OP</TableHead>
+                  <TableHead>Marca/Cliente</TableHead>
+                  <TableHead>Produto</TableHead>
+                  <TableHead>Referência</TableHead>
                   <TableHead className="w-[300px]">Etapas de Produção</TableHead>
                   <TableHead>Situação</TableHead>
                 </TableRow>
@@ -384,19 +419,19 @@ export default function Pedidos() {
                     className="cursor-pointer hover:bg-muted/50"
                     onClick={() => handleRowClick(pedido)}
                   >
-                    <TableCell className="font-mono text-xs">
-                      {pedido.id.slice(0, 8)}
+                    <TableCell>
+                      <Badge variant="outline" className="font-mono text-xs">
+                        #{pedido.id.slice(0, 8)}
+                      </Badge>
                     </TableCell>
                     <TableCell className="font-medium">
                       {pedido.clientes?.nome}
                     </TableCell>
-                    <TableCell>
-                      <div>
-                        <p className="font-medium">{pedido.produto_modelo}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {pedido.tipo_peca}
-                        </p>
-                      </div>
+                    <TableCell className="font-medium">
+                      {pedido.produto_modelo}
+                    </TableCell>
+                    <TableCell className="text-muted-foreground">
+                      {pedido.tipo_peca}
                     </TableCell>
                     <TableCell>
                       <EtapasVisuais
