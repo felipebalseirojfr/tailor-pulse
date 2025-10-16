@@ -23,15 +23,9 @@ interface Cliente {
   nome: string;
 }
 
-interface Profile {
-  id: string;
-  nome: string;
-}
-
 export default function NovoPedido() {
   const [loading, setLoading] = useState(false);
   const [clientes, setClientes] = useState<Cliente[]>([]);
-  const [responsaveis, setResponsaveis] = useState<Profile[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -40,19 +34,16 @@ export default function NovoPedido() {
     produto_modelo: "",
     tipo_peca: "",
     tecido: "",
-    aviamentos: "",
+    aviamentos: [] as string[],
     quantidade_total: "",
     data_inicio: new Date().toISOString().split("T")[0],
     prazo_final: "",
-    responsavel_comercial_id: "",
-    prioridade: "media",
     tem_personalizacao: false,
     tipos_personalizacao: [] as string[],
   });
 
   useEffect(() => {
     fetchClientes();
-    fetchResponsaveis();
   }, []);
 
   const fetchClientes = async () => {
@@ -66,27 +57,26 @@ export default function NovoPedido() {
     }
   };
 
-  const fetchResponsaveis = async () => {
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("id, nome")
-      .order("nome");
-
-    if (!error && data) {
-      setResponsaveis(data);
-    }
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
     try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error("Usuário não autenticado");
+
       const { error } = await supabase.from("pedidos").insert([
         {
-          ...formData,
+          cliente_id: formData.cliente_id,
+          produto_modelo: formData.produto_modelo,
+          tipo_peca: formData.tipo_peca,
+          tecido: formData.tecido,
+          aviamentos: formData.aviamentos,
           quantidade_total: parseInt(formData.quantidade_total),
-          prioridade: formData.prioridade as "alta" | "media" | "baixa",
+          data_inicio: formData.data_inicio,
+          prazo_final: formData.prazo_final,
+          responsavel_comercial_id: user.id,
           tem_personalizacao: formData.tipos_personalizacao.length > 0,
           tipos_personalizacao: formData.tipos_personalizacao,
         },
@@ -129,6 +119,19 @@ export default function NovoPedido() {
         ...prev,
         tipos_personalizacao: tipos,
         tem_personalizacao: tipos.length > 0,
+      };
+    });
+  };
+
+  const handleAviamentosToggle = (tipo: string) => {
+    setFormData((prev) => {
+      const aviamentos = prev.aviamentos.includes(tipo)
+        ? prev.aviamentos.filter((t) => t !== tipo)
+        : [...prev.aviamentos, tipo];
+      
+      return {
+        ...prev,
+        aviamentos,
       };
     });
   };
@@ -183,7 +186,7 @@ export default function NovoPedido() {
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="produto_modelo">Modelo do Produto *</Label>
+                <Label htmlFor="produto_modelo">Nome do Produto *</Label>
                 <Input
                   id="produto_modelo"
                   name="produto_modelo"
@@ -195,13 +198,13 @@ export default function NovoPedido() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="tipo_peca">Tipo de Peça *</Label>
+                <Label htmlFor="tipo_peca">Referência *</Label>
                 <Input
                   id="tipo_peca"
                   name="tipo_peca"
                   value={formData.tipo_peca}
                   onChange={handleChange}
-                  placeholder="Ex: Camisa, Calça, Vestido"
+                  placeholder="Ex: REF-001"
                   required
                 />
               </div>
@@ -234,102 +237,10 @@ export default function NovoPedido() {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="aviamentos">Aviamentos</Label>
-              <Textarea
-                id="aviamentos"
-                name="aviamentos"
-                value={formData.aviamentos}
-                onChange={handleChange}
-                placeholder="Ex: Botões, zíperes, etiquetas..."
-                rows={3}
-              />
-            </div>
-
-            <div className="grid gap-4 md:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="data_inicio">Data de Início *</Label>
-                <Input
-                  id="data_inicio"
-                  name="data_inicio"
-                  type="date"
-                  value={formData.data_inicio}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="prazo_final">Prazo Final *</Label>
-                <Input
-                  id="prazo_final"
-                  name="prazo_final"
-                  type="date"
-                  value={formData.prazo_final}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="responsavel_comercial_id">
-                Responsável Comercial *
-              </Label>
-              <Select
-                value={formData.responsavel_comercial_id}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, responsavel_comercial_id: value })
-                }
-                required
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um responsável" />
-                </SelectTrigger>
-                <SelectContent>
-                  {responsaveis.map((resp) => (
-                    <SelectItem key={resp.id} value={resp.id}>
-                      {resp.nome}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Prioridade *</Label>
-              <RadioGroup
-                value={formData.prioridade}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, prioridade: value })
-                }
-                className="flex gap-6"
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="baixa" id="baixa" />
-                  <Label htmlFor="baixa" className="font-normal cursor-pointer">
-                    Baixa
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="media" id="media" />
-                  <Label htmlFor="media" className="font-normal cursor-pointer">
-                    Média
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="alta" id="alta" />
-                  <Label htmlFor="alta" className="font-normal cursor-pointer">
-                    Alta
-                  </Label>
-                </div>
-              </RadioGroup>
-            </div>
-
             <div className="space-y-3">
               <Label>Personalização</Label>
               <p className="text-sm text-muted-foreground">
-                Selecione os tipos de personalização necessários (adiciona etapas extras)
+                Selecione os tipos de personalização necessários
               </p>
               <div className="grid gap-3 md:grid-cols-2">
                 <div className="flex items-center space-x-2">
@@ -374,6 +285,142 @@ export default function NovoPedido() {
                 </div>
               </div>
             </div>
+
+            <div className="space-y-3">
+              <Label>Aviamentos</Label>
+              <p className="text-sm text-muted-foreground">
+                Selecione os aviamentos necessários
+              </p>
+              <div className="grid gap-3 md:grid-cols-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="etiq_marca"
+                    checked={formData.aviamentos.includes("Etiq de marca")}
+                    onCheckedChange={() => handleAviamentosToggle("Etiq de marca")}
+                  />
+                  <Label htmlFor="etiq_marca" className="font-normal cursor-pointer">
+                    Etiq de marca
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="etiq_composicao"
+                    checked={formData.aviamentos.includes("Etiq de composição")}
+                    onCheckedChange={() => handleAviamentosToggle("Etiq de composição")}
+                  />
+                  <Label htmlFor="etiq_composicao" className="font-normal cursor-pointer">
+                    Etiq de composição
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="etiq_tamanho"
+                    checked={formData.aviamentos.includes("Etiq de tamanho")}
+                    onCheckedChange={() => handleAviamentosToggle("Etiq de tamanho")}
+                  />
+                  <Label htmlFor="etiq_tamanho" className="font-normal cursor-pointer">
+                    Etiq de tamanho
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="ziper"
+                    checked={formData.aviamentos.includes("Ziper")}
+                    onCheckedChange={() => handleAviamentosToggle("Ziper")}
+                  />
+                  <Label htmlFor="ziper" className="font-normal cursor-pointer">
+                    Ziper
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="botao"
+                    checked={formData.aviamentos.includes("Botão")}
+                    onCheckedChange={() => handleAviamentosToggle("Botão")}
+                  />
+                  <Label htmlFor="botao" className="font-normal cursor-pointer">
+                    Botão
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="elastico"
+                    checked={formData.aviamentos.includes("Elástico")}
+                    onCheckedChange={() => handleAviamentosToggle("Elástico")}
+                  />
+                  <Label htmlFor="elastico" className="font-normal cursor-pointer">
+                    Elástico
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="cordao"
+                    checked={formData.aviamentos.includes("Cordão")}
+                    onCheckedChange={() => handleAviamentosToggle("Cordão")}
+                  />
+                  <Label htmlFor="cordao" className="font-normal cursor-pointer">
+                    Cordão
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="rebite"
+                    checked={formData.aviamentos.includes("Rebite")}
+                    onCheckedChange={() => handleAviamentosToggle("Rebite")}
+                  />
+                  <Label htmlFor="rebite" className="font-normal cursor-pointer">
+                    Rebite
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="ilhos"
+                    checked={formData.aviamentos.includes("Ilhós")}
+                    onCheckedChange={() => handleAviamentosToggle("Ilhós")}
+                  />
+                  <Label htmlFor="ilhos" className="font-normal cursor-pointer">
+                    Ilhós
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="termocolante"
+                    checked={formData.aviamentos.includes("Termocolante")}
+                    onCheckedChange={() => handleAviamentosToggle("Termocolante")}
+                  />
+                  <Label htmlFor="termocolante" className="font-normal cursor-pointer">
+                    Termocolante
+                  </Label>
+                </div>
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="data_inicio">Data de Início *</Label>
+                <Input
+                  id="data_inicio"
+                  name="data_inicio"
+                  type="date"
+                  value={formData.data_inicio}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="prazo_final">Prazo Final *</Label>
+                <Input
+                  id="prazo_final"
+                  name="prazo_final"
+                  type="date"
+                  value={formData.prazo_final}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </div>
+
 
             <div className="flex gap-4">
               <Button

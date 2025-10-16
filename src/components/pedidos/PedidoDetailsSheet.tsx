@@ -37,7 +37,7 @@ export function PedidoDetailsSheet({
     tipo_peca: "",
     quantidade_total: 0,
     tecido: "",
-    aviamentos: "",
+    aviamentos: [] as string[],
     data_inicio: "",
     prazo_final: "",
   });
@@ -53,7 +53,7 @@ export function PedidoDetailsSheet({
       tipo_peca: pedido.tipo_peca,
       quantidade_total: pedido.quantidade_total,
       tecido: pedido.tecido || "",
-      aviamentos: pedido.aviamentos || "",
+      aviamentos: pedido.aviamentos || [],
       data_inicio: pedido.data_inicio,
       prazo_final: pedido.prazo_final,
     });
@@ -342,10 +342,10 @@ export function PedidoDetailsSheet({
                         <p className="font-medium">{pedido.tecido}</p>
                       </div>
                     )}
-                    {pedido.aviamentos && (
+                    {pedido.aviamentos && pedido.aviamentos.length > 0 && (
                       <div>
                         <p className="text-sm text-muted-foreground">Aviamentos</p>
-                        <p className="font-medium">{pedido.aviamentos}</p>
+                        <p className="font-medium">{pedido.aviamentos.join(", ")}</p>
                       </div>
                     )}
                   </div>
@@ -438,9 +438,12 @@ export function PedidoDetailsSheet({
                   <Label htmlFor="aviamentos">Aviamentos</Label>
                   <Textarea
                     id="aviamentos"
-                    value={editData.aviamentos}
+                    value={editData.aviamentos.join(", ")}
                     onChange={(e) =>
-                      setEditData({ ...editData, aviamentos: e.target.value })
+                      setEditData({ 
+                        ...editData, 
+                        aviamentos: e.target.value.split(",").map(s => s.trim()).filter(s => s) 
+                      })
                     }
                   />
                 </div>

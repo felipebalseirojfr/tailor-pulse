@@ -103,7 +103,7 @@ export type Database = {
       }
       pedidos: {
         Row: {
-          aviamentos: string | null
+          aviamentos: string[] | null
           cliente_id: string
           created_at: string | null
           data_inicio: string
@@ -122,7 +122,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          aviamentos?: string | null
+          aviamentos?: string[] | null
           cliente_id: string
           created_at?: string | null
           data_inicio: string
@@ -141,7 +141,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          aviamentos?: string | null
+          aviamentos?: string[] | null
           cliente_id?: string
           created_at?: string | null
           data_inicio?: string

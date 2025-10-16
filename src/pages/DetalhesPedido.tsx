@@ -27,7 +27,7 @@ interface Pedido {
   produto_modelo: string;
   tipo_peca: string;
   tecido: string;
-  aviamentos: string;
+  aviamentos: string[];
   quantidade_total: number;
   data_inicio: string;
   prazo_final: string;

@@ -43,7 +43,7 @@ interface Pedido {
   created_at: string;
   updated_at: string;
   tecido?: string;
-  aviamentos?: string;
+  aviamentos?: string[];
   clientes: {
     nome: string;
   };
