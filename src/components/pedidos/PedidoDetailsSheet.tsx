@@ -8,9 +8,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CheckCircle2, ChevronRight } from "lucide-react";
+import { CheckCircle2, ChevronRight, Edit2, Save, X } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -28,11 +31,57 @@ export function PedidoDetailsSheet({
   onUpdate,
 }: PedidoDetailsSheetProps) {
   const [loading, setLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
+  const [editData, setEditData] = useState({
+    produto_modelo: "",
+    tipo_peca: "",
+    quantidade_total: 0,
+    tecido: "",
+    aviamentos: "",
+    data_inicio: "",
+    prazo_final: "",
+  });
 
   if (!pedido) return null;
 
   const etapas = pedido.etapas_producao || [];
   const etapaAtual = etapas.find((e: any) => e.status === "em_andamento");
+
+  const handleEditClick = () => {
+    setEditData({
+      produto_modelo: pedido.produto_modelo,
+      tipo_peca: pedido.tipo_peca,
+      quantidade_total: pedido.quantidade_total,
+      tecido: pedido.tecido || "",
+      aviamentos: pedido.aviamentos || "",
+      data_inicio: pedido.data_inicio,
+      prazo_final: pedido.prazo_final,
+    });
+    setIsEditing(true);
+  };
+
+  const handleSaveEdit = async () => {
+    setLoading(true);
+    try {
+      await supabase
+        .from("pedidos")
+        .update(editData)
+        .eq("id", pedido.id);
+
+      toast.success("Pedido atualizado com sucesso!");
+      setIsEditing(false);
+      onUpdate();
+    } catch (error) {
+      console.error("Erro ao atualizar pedido:", error);
+      toast.error("Erro ao atualizar pedido");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditing(false);
+  };
 
   const handleMoverProximaEtapa = async () => {
     if (!etapaAtual) {
@@ -149,82 +198,200 @@ export function PedidoDetailsSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
         <SheetHeader>
-          <SheetTitle>Detalhes do Pedido</SheetTitle>
+          <div className="flex items-center justify-between">
+            <SheetTitle>Detalhes do Pedido</SheetTitle>
+            {!isEditing ? (
+              <Button size="sm" variant="outline" onClick={handleEditClick}>
+                <Edit2 className="mr-2 h-4 w-4" />
+                Editar
+              </Button>
+            ) : (
+              <div className="flex gap-2">
+                <Button size="sm" variant="outline" onClick={handleCancelEdit}>
+                  <X className="mr-2 h-4 w-4" />
+                  Cancelar
+                </Button>
+                <Button size="sm" onClick={handleSaveEdit} disabled={loading}>
+                  <Save className="mr-2 h-4 w-4" />
+                  Salvar
+                </Button>
+              </div>
+            )}
+          </div>
         </SheetHeader>
 
         <div className="space-y-6 mt-6">
           {/* Informações Principais */}
-          <div className="space-y-3">
-            <div>
-              <p className="text-sm text-muted-foreground">Produto</p>
-              <p className="text-lg font-semibold">{pedido.produto_modelo}</p>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Cliente</p>
-                <p className="font-medium">{pedido.clientes?.nome}</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Tipo de Peça</p>
-                <p className="font-medium">{pedido.tipo_peca}</p>
-              </div>
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Detalhes de Produção */}
-          <div className="space-y-3">
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Quantidade Total</p>
-                <p className="text-lg font-semibold">{pedido.quantidade_total} peças</p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Progresso</p>
-                <p className="text-lg font-semibold">{pedido.progresso_percentual}%</p>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <p className="text-sm text-muted-foreground">Data de Início</p>
-                <p className="font-medium">
-                  {format(new Date(pedido.data_inicio), "dd/MM/yyyy", {
-                    locale: ptBR,
-                  })}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm text-muted-foreground">Prazo de Entrega</p>
-                <p className="font-medium">
-                  {format(new Date(pedido.prazo_final), "dd/MM/yyyy", {
-                    locale: ptBR,
-                  })}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <Separator />
-
-          {/* Materiais */}
-          {(pedido.tecido || pedido.aviamentos) && (
+          {!isEditing ? (
             <>
               <div className="space-y-3">
-                <h3 className="font-semibold">Materiais</h3>
-                {pedido.tecido && (
+                <div>
+                  <p className="text-sm text-muted-foreground">Produto</p>
+                  <p className="text-lg font-semibold">{pedido.produto_modelo}</p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <p className="text-sm text-muted-foreground">Tecido</p>
-                    <p className="font-medium">{pedido.tecido}</p>
+                    <p className="text-sm text-muted-foreground">Cliente</p>
+                    <p className="font-medium">{pedido.clientes?.nome}</p>
                   </div>
-                )}
-                {pedido.aviamentos && (
                   <div>
-                    <p className="text-sm text-muted-foreground">Aviamentos</p>
-                    <p className="font-medium">{pedido.aviamentos}</p>
+                    <p className="text-sm text-muted-foreground">Tipo de Peça</p>
+                    <p className="font-medium">{pedido.tipo_peca}</p>
                   </div>
-                )}
+                </div>
               </div>
+
+              <Separator />
+
+              {/* Detalhes de Produção */}
+              <div className="space-y-3">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Quantidade Total</p>
+                    <p className="text-lg font-semibold">{pedido.quantidade_total} peças</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Progresso</p>
+                    <p className="text-lg font-semibold">{pedido.progresso_percentual}%</p>
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Data de Início</p>
+                    <p className="font-medium">
+                      {format(new Date(pedido.data_inicio), "dd/MM/yyyy", {
+                        locale: ptBR,
+                      })}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Prazo de Entrega</p>
+                    <p className="font-medium">
+                      {format(new Date(pedido.prazo_final), "dd/MM/yyyy", {
+                        locale: ptBR,
+                      })}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Materiais */}
+              {(pedido.tecido || pedido.aviamentos) && (
+                <>
+                  <div className="space-y-3">
+                    <h3 className="font-semibold">Materiais</h3>
+                    {pedido.tecido && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">Tecido</p>
+                        <p className="font-medium">{pedido.tecido}</p>
+                      </div>
+                    )}
+                    {pedido.aviamentos && (
+                      <div>
+                        <p className="text-sm text-muted-foreground">Aviamentos</p>
+                        <p className="font-medium">{pedido.aviamentos}</p>
+                      </div>
+                    )}
+                  </div>
+                  <Separator />
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="produto_modelo">Produto</Label>
+                  <Input
+                    id="produto_modelo"
+                    value={editData.produto_modelo}
+                    onChange={(e) =>
+                      setEditData({ ...editData, produto_modelo: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="tipo_peca">Tipo de Peça</Label>
+                    <Input
+                      id="tipo_peca"
+                      value={editData.tipo_peca}
+                      onChange={(e) =>
+                        setEditData({ ...editData, tipo_peca: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="quantidade_total">Quantidade Total</Label>
+                    <Input
+                      id="quantidade_total"
+                      type="number"
+                      value={editData.quantidade_total}
+                      onChange={(e) =>
+                        setEditData({ ...editData, quantidade_total: parseInt(e.target.value) })
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="data_inicio">Data de Início</Label>
+                    <Input
+                      id="data_inicio"
+                      type="date"
+                      value={editData.data_inicio}
+                      onChange={(e) =>
+                        setEditData({ ...editData, data_inicio: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="prazo_final">Prazo de Entrega</Label>
+                    <Input
+                      id="prazo_final"
+                      type="date"
+                      value={editData.prazo_final}
+                      onChange={(e) =>
+                        setEditData({ ...editData, prazo_final: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <Separator />
+
+              <div className="space-y-4">
+                <h3 className="font-semibold">Materiais</h3>
+                <div>
+                  <Label htmlFor="tecido">Tecido</Label>
+                  <Textarea
+                    id="tecido"
+                    value={editData.tecido}
+                    onChange={(e) =>
+                      setEditData({ ...editData, tecido: e.target.value })
+                    }
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="aviamentos">Aviamentos</Label>
+                  <Textarea
+                    id="aviamentos"
+                    value={editData.aviamentos}
+                    onChange={(e) =>
+                      setEditData({ ...editData, aviamentos: e.target.value })
+                    }
+                  />
+                </div>
+              </div>
+
               <Separator />
             </>
           )}

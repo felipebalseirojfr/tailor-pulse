@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Search, Package as PackageIcon } from "lucide-react";
+import { Plus, Search, Package as PackageIcon, ChevronRight } from "lucide-react";
 import { PedidosSummaryCards } from "@/components/pedidos/PedidosSummaryCards";
 import { PedidoDetailsSheet } from "@/components/pedidos/PedidoDetailsSheet";
 import { EtapasVisuais } from "@/components/pedidos/EtapasVisuais";
@@ -418,42 +418,67 @@ export default function Pedidos() {
               <TableHeader>
                 <TableRow>
                   <TableHead className="w-[120px]">#OP</TableHead>
-                  <TableHead>Marca/Cliente</TableHead>
                   <TableHead>Produto</TableHead>
                   <TableHead>Referência</TableHead>
+                  <TableHead>Marca/Cliente</TableHead>
                   <TableHead className="w-[300px]">Etapas de Produção</TableHead>
-                  <TableHead>Situação</TableHead>
+                  <TableHead>Etapa Atual</TableHead>
+                  <TableHead className="w-[100px]">Ação</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredPedidos.map((pedido) => (
                   <TableRow
                     key={pedido.id}
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => handleRowClick(pedido)}
+                    className="hover:bg-muted/50"
                   >
-                    <TableCell>
+                    <TableCell onClick={() => handleRowClick(pedido)} className="cursor-pointer">
                       <Badge variant="outline" className="font-mono text-xs">
                         #{pedido.id.slice(0, 8)}
                       </Badge>
                     </TableCell>
-                    <TableCell className="font-medium">
-                      {pedido.clientes?.nome}
-                    </TableCell>
-                    <TableCell className="font-medium">
+                    <TableCell onClick={() => handleRowClick(pedido)} className="cursor-pointer font-medium">
                       {pedido.produto_modelo}
                     </TableCell>
-                    <TableCell className="text-muted-foreground">
+                    <TableCell onClick={() => handleRowClick(pedido)} className="cursor-pointer text-muted-foreground">
                       {pedido.tipo_peca}
                     </TableCell>
-                    <TableCell>
+                    <TableCell onClick={() => handleRowClick(pedido)} className="cursor-pointer font-medium">
+                      {pedido.clientes?.nome}
+                    </TableCell>
+                    <TableCell onClick={() => handleRowClick(pedido)} className="cursor-pointer">
                       <EtapasVisuais
                         etapas={pedido.etapas_producao || []}
                         statusGeral={pedido.status_geral}
                       />
                     </TableCell>
+                    <TableCell onClick={() => handleRowClick(pedido)} className="cursor-pointer">
+                      <Badge variant="outline">{getEtapaAtual(pedido)}</Badge>
+                    </TableCell>
                     <TableCell>
-                      {getSituacaoBadge(pedido)}
+                      {pedido.status_geral !== "concluido" && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const etapaAtual = pedido.etapas_producao?.find(
+                              (et: any) => et.status === "em_andamento"
+                            );
+                            if (etapaAtual) {
+                              const proximaEtapa = pedido.etapas_producao
+                                ?.sort((a: any, b: any) => a.ordem - b.ordem)
+                                .find((et: any) => et.ordem === etapaAtual.ordem + 1);
+                              handleAtualizarEtapa(
+                                pedido.id,
+                                proximaEtapa ? proximaEtapa.tipo_etapa : "concluido"
+                              );
+                            }
+                          }}
+                        >
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      )}
                     </TableCell>
                   </TableRow>
                 ))}
