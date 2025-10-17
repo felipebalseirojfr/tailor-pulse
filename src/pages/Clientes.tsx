@@ -26,6 +26,7 @@ interface Cliente {
 
 export default function Clientes() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [clientesComPedidos, setClientesComPedidos] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
   const { toast } = useToast();
@@ -43,13 +44,24 @@ export default function Clientes() {
 
   const fetchClientes = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: clientesData, error: clientesError } = await supabase
         .from("clientes")
         .select("*")
         .order("nome");
 
-      if (error) throw error;
-      setClientes(data || []);
+      if (clientesError) throw clientesError;
+      setClientes(clientesData || []);
+
+      // Buscar clientes com pedidos ativos
+      const { data: pedidosData, error: pedidosError } = await supabase
+        .from("pedidos")
+        .select("cliente_id, status_geral")
+        .neq("status_geral", "concluido");
+
+      if (pedidosError) throw pedidosError;
+
+      const clientesAtivos = new Set(pedidosData?.map(p => p.cliente_id) || []);
+      setClientesComPedidos(clientesAtivos);
     } catch (error) {
       console.error("Erro ao buscar clientes:", error);
     } finally {
@@ -194,39 +206,104 @@ export default function Clientes() {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-          {clientes.map((cliente) => (
-            <Card key={cliente.id}>
-              <CardHeader>
-                <CardTitle className="text-lg">{cliente.nome}</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-2">
-                {cliente.contato && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <User className="h-4 w-4 text-muted-foreground" />
-                    <span>{cliente.contato}</span>
-                  </div>
-                )}
-                {cliente.email && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Mail className="h-4 w-4 text-muted-foreground" />
-                    <span className="truncate">{cliente.email}</span>
-                  </div>
-                )}
-                {cliente.telefone && (
-                  <div className="flex items-center gap-2 text-sm">
-                    <Phone className="h-4 w-4 text-muted-foreground" />
-                    <span>{cliente.telefone}</span>
-                  </div>
-                )}
-                {!cliente.contato && !cliente.email && !cliente.telefone && (
-                  <p className="text-sm text-muted-foreground">
-                    Sem informações de contato
-                  </p>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+        <div className="space-y-8">
+          {/* Clientes com Pedidos Ativos */}
+          <div>
+            <h2 className="text-2xl font-semibold mb-4">Clientes com Pedidos Ativos</h2>
+            {clientes.filter(c => clientesComPedidos.has(c.id)).length === 0 ? (
+              <Card>
+                <CardContent className="py-8 text-center">
+                  <p className="text-muted-foreground">Nenhum cliente com pedidos ativos</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {clientes
+                  .filter(c => clientesComPedidos.has(c.id))
+                  .map((cliente) => (
+                    <Card key={cliente.id} className="border-primary/30">
+                      <CardHeader>
+                        <CardTitle className="text-lg">{cliente.nome}</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-2">
+                        {cliente.contato && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <User className="h-4 w-4 text-muted-foreground" />
+                            <span>{cliente.contato}</span>
+                          </div>
+                        )}
+                        {cliente.email && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Mail className="h-4 w-4 text-muted-foreground" />
+                            <span className="truncate">{cliente.email}</span>
+                          </div>
+                        )}
+                        {cliente.telefone && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Phone className="h-4 w-4 text-muted-foreground" />
+                            <span>{cliente.telefone}</span>
+                          </div>
+                        )}
+                        {!cliente.contato && !cliente.email && !cliente.telefone && (
+                          <p className="text-sm text-muted-foreground">
+                            Sem informações de contato
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+              </div>
+            )}
+          </div>
+
+          {/* Clientes sem Pedido */}
+          <div>
+            <h2 className="text-2xl font-semibold mb-4">Clientes sem Pedido</h2>
+            {clientes.filter(c => !clientesComPedidos.has(c.id)).length === 0 ? (
+              <Card>
+                <CardContent className="py-8 text-center">
+                  <p className="text-muted-foreground">Todos os clientes têm pedidos ativos</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {clientes
+                  .filter(c => !clientesComPedidos.has(c.id))
+                  .map((cliente) => (
+                    <Card key={cliente.id}>
+                      <CardHeader>
+                        <CardTitle className="text-lg">{cliente.nome}</CardTitle>
+                      </CardHeader>
+                      <CardContent className="space-y-2">
+                        {cliente.contato && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <User className="h-4 w-4 text-muted-foreground" />
+                            <span>{cliente.contato}</span>
+                          </div>
+                        )}
+                        {cliente.email && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Mail className="h-4 w-4 text-muted-foreground" />
+                            <span className="truncate">{cliente.email}</span>
+                          </div>
+                        )}
+                        {cliente.telefone && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Phone className="h-4 w-4 text-muted-foreground" />
+                            <span>{cliente.telefone}</span>
+                          </div>
+                        )}
+                        {!cliente.contato && !cliente.email && !cliente.telefone && (
+                          <p className="text-sm text-muted-foreground">
+                            Sem informações de contato
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>

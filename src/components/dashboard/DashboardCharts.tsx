@@ -46,7 +46,9 @@ export const DashboardCharts = ({ pedidos }: DashboardChartsProps) => {
     lacre_piloto: "Lacre Piloto",
     liberacao_corte: "Liberação Corte",
     corte: "Corte",
-    personalizacao: "Personalização",
+    estampa: "Estampa",
+    bordado: "Bordado",
+    lavado: "Lavado",
     costura: "Costura",
     acabamento: "Acabamento",
     entrega: "Entrega",
@@ -85,7 +87,7 @@ export const DashboardCharts = ({ pedidos }: DashboardChartsProps) => {
         <CardHeader>
           <CardTitle className="text-base">Status dos Pedidos</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="overflow-hidden">
           <ChartContainer config={chartConfig} className="h-[200px]">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
@@ -115,18 +117,18 @@ export const DashboardCharts = ({ pedidos }: DashboardChartsProps) => {
         <CardHeader>
           <CardTitle className="text-base">Produção por Etapa</CardTitle>
         </CardHeader>
-        <CardContent>
-          <ChartContainer config={chartConfig} className="h-[200px]">
+        <CardContent className="overflow-hidden">
+          <ChartContainer config={chartConfig} className="h-[200px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={etapasData}>
+              <BarChart data={etapasData} margin={{ left: -20, right: 10, top: 5, bottom: 5 }}>
                 <XAxis
                   dataKey="name"
-                  tick={{ fontSize: 10 }}
+                  tick={{ fontSize: 9 }}
                   angle={-45}
                   textAnchor="end"
-                  height={60}
+                  height={70}
                 />
-                <YAxis tick={{ fontSize: 10 }} />
+                <YAxis tick={{ fontSize: 10 }} width={30} />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Bar dataKey="value" fill="#3b82f6" />
               </BarChart>
@@ -139,16 +141,16 @@ export const DashboardCharts = ({ pedidos }: DashboardChartsProps) => {
         <CardHeader>
           <CardTitle className="text-base">Top 5 Clientes</CardTitle>
         </CardHeader>
-        <CardContent>
-          <ChartContainer config={chartConfig} className="h-[200px]">
+        <CardContent className="overflow-hidden">
+          <ChartContainer config={chartConfig} className="h-[200px] w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={clientesData} layout="vertical">
+              <BarChart data={clientesData} layout="vertical" margin={{ left: 10, right: 10, top: 5, bottom: 5 }}>
                 <XAxis type="number" tick={{ fontSize: 10 }} />
                 <YAxis
                   type="category"
                   dataKey="name"
-                  tick={{ fontSize: 10 }}
-                  width={80}
+                  tick={{ fontSize: 9 }}
+                  width={70}
                 />
                 <ChartTooltip content={<ChartTooltipContent />} />
                 <Bar dataKey="value" fill="#22c55e" />

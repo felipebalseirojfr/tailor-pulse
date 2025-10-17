@@ -22,7 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Search, Package as PackageIcon, ChevronRight } from "lucide-react";
+import { Plus, Search, Package as PackageIcon, ChevronRight, Filter, ChevronDown } from "lucide-react";
 import { PedidosSummaryCards } from "@/components/pedidos/PedidosSummaryCards";
 import { PedidoDetailsSheet } from "@/components/pedidos/PedidoDetailsSheet";
 import { EtapasVisuais } from "@/components/pedidos/EtapasVisuais";
@@ -30,6 +30,7 @@ import { FiltroAvancado } from "@/components/pedidos/FiltroAvancado";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
 interface Pedido {
   id: string;
@@ -74,6 +75,7 @@ export default function Pedidos() {
   const [selectedPedido, setSelectedPedido] = useState<Pedido | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("controle");
+  const [filtrosAbertos, setFiltrosAbertos] = useState(false);
 
   useEffect(() => {
     fetchPedidos();
@@ -354,54 +356,68 @@ export default function Pedidos() {
           {/* Filtros */}
           <Card>
             <CardContent className="pt-6">
-              <div className="space-y-4">
-                <div className="flex flex-col gap-4 md:flex-row">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                    <Input
-                      placeholder="Buscar em todos os campos..."
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                      className="pl-9"
+              <Collapsible open={filtrosAbertos} onOpenChange={setFiltrosAbertos}>
+                <div className="flex items-center justify-between mb-4">
+                  <CollapsibleTrigger asChild>
+                    <Button variant="outline" className="w-full justify-between">
+                      <div className="flex items-center gap-2">
+                        <Filter className="h-4 w-4" />
+                        <span>Filtros</span>
+                      </div>
+                      <ChevronDown className={`h-4 w-4 transition-transform ${filtrosAbertos ? 'rotate-180' : ''}`} />
+                    </Button>
+                  </CollapsibleTrigger>
+                </div>
+                
+                <CollapsibleContent className="space-y-4">
+                  <div className="flex flex-col gap-4 md:flex-row">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        placeholder="Buscar em todos os campos..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-9"
+                      />
+                    </div>
+                    {activeTab === "controle" && (
+                      <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="w-full md:w-[200px]">
+                          <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="todos">Todos os status</SelectItem>
+                          <SelectItem value="em_producao">Em Produção</SelectItem>
+                          <SelectItem value="atrasado">Atrasados</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                  <div className="grid gap-4 md:grid-cols-3">
+                    <FiltroAvancado
+                      tipo="marca"
+                      opcoes={Array.from(new Set(pedidos.map((p) => p.clientes?.nome).filter(Boolean)))}
+                      valor={marcaFilter}
+                      onChange={setMarcaFilter}
+                      placeholder="Filtrar por marca"
+                    />
+                    <FiltroAvancado
+                      tipo="referencia"
+                      opcoes={Array.from(new Set(pedidos.map((p) => p.tipo_peca).filter(Boolean)))}
+                      valor={referenciaFilter}
+                      onChange={setReferenciaFilter}
+                      placeholder="Filtrar por referência"
+                    />
+                    <FiltroAvancado
+                      tipo="op"
+                      opcoes={Array.from(new Set(pedidos.map((p) => `#${p.id.slice(0, 8)}`)))}
+                      valor={opFilter}
+                      onChange={setOpFilter}
+                      placeholder="Filtrar por #OP"
                     />
                   </div>
-                  {activeTab === "controle" && (
-                    <Select value={statusFilter} onValueChange={setStatusFilter}>
-                      <SelectTrigger className="w-full md:w-[200px]">
-                        <SelectValue placeholder="Status" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="todos">Todos os status</SelectItem>
-                        <SelectItem value="em_producao">Em Produção</SelectItem>
-                        <SelectItem value="atrasado">Atrasados</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  )}
-                </div>
-                <div className="grid gap-4 md:grid-cols-3">
-                  <FiltroAvancado
-                    tipo="marca"
-                    opcoes={Array.from(new Set(pedidos.map((p) => p.clientes?.nome).filter(Boolean)))}
-                    valor={marcaFilter}
-                    onChange={setMarcaFilter}
-                    placeholder="Filtrar por marca"
-                  />
-                  <FiltroAvancado
-                    tipo="referencia"
-                    opcoes={Array.from(new Set(pedidos.map((p) => p.tipo_peca).filter(Boolean)))}
-                    valor={referenciaFilter}
-                    onChange={setReferenciaFilter}
-                    placeholder="Filtrar por referência"
-                  />
-                  <FiltroAvancado
-                    tipo="op"
-                    opcoes={Array.from(new Set(pedidos.map((p) => `#${p.id.slice(0, 8)}`)))}
-                    valor={opFilter}
-                    onChange={setOpFilter}
-                    placeholder="Filtrar por #OP"
-                  />
-                </div>
-              </div>
+                </CollapsibleContent>
+              </Collapsible>
             </CardContent>
           </Card>
 
@@ -431,7 +447,7 @@ export default function Pedidos() {
           </CardContent>
         </Card>
       ) : (
-        <Card>
+        <Card className="bg-card/60 backdrop-blur-sm border-muted">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>

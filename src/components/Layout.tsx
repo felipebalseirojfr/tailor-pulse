@@ -83,9 +83,9 @@ export default function Layout({ children }: LayoutProps) {
     <div className="flex min-h-screen bg-background">
       {/* Sidebar Desktop */}
       <aside className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
-        <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-border bg-card px-6 pb-4">
+        <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-border bg-background px-6 pb-4">
           <div className="flex h-16 shrink-0 items-center">
-            <h1 className="text-xl font-bold text-sidebar-foreground">Controle de Produções JFR</h1>
+            <h1 className="text-xl font-bold text-foreground">Controle de Produções JFR</h1>
           </div>
           <nav className="flex flex-1 flex-col">
             <ul role="list" className="flex flex-1 flex-col gap-y-7">
@@ -99,8 +99,8 @@ export default function Layout({ children }: LayoutProps) {
                           to={item.href}
                           className={`group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 transition-colors ${
                             isActive
-                              ? "bg-primary text-primary-foreground"
-                              : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                              ? "bg-background text-foreground border border-primary"
+                              : "text-foreground hover:bg-muted hover:text-foreground"
                           }`}
                         >
                           <item.icon className="h-5 w-5 shrink-0" />
@@ -115,7 +115,7 @@ export default function Layout({ children }: LayoutProps) {
                 <Button
                   onClick={handleLogout}
                   variant="ghost"
-                  className="w-full justify-start"
+                  className="w-full justify-start text-foreground hover:text-foreground"
                 >
                   <LogOut className="mr-2 h-5 w-5" />
                   Sair
@@ -149,7 +149,7 @@ export default function Layout({ children }: LayoutProps) {
               className="fixed inset-0 bg-background/80 backdrop-blur-sm"
               onClick={() => setMobileMenuOpen(false)}
             />
-            <div className="fixed inset-y-0 left-0 w-full max-w-xs bg-card p-6">
+            <div className="fixed inset-y-0 left-0 w-full max-w-xs bg-background p-6">
               <nav className="mt-16">
                 <ul role="list" className="space-y-1">
                   {navigation.map((item) => {
@@ -161,8 +161,8 @@ export default function Layout({ children }: LayoutProps) {
                           onClick={() => setMobileMenuOpen(false)}
                           className={`group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 transition-colors ${
                             isActive
-                              ? "bg-primary text-primary-foreground"
-                              : "text-muted-foreground hover:bg-secondary hover:text-foreground"
+                              ? "bg-background text-foreground border border-primary"
+                              : "text-foreground hover:bg-muted hover:text-foreground"
                           }`}
                         >
                           <item.icon className="h-5 w-5 shrink-0" />
@@ -175,7 +175,7 @@ export default function Layout({ children }: LayoutProps) {
                     <Button
                       onClick={handleLogout}
                       variant="ghost"
-                      className="w-full justify-start"
+                      className="w-full justify-start text-foreground hover:text-foreground"
                     >
                       <LogOut className="mr-2 h-5 w-5" />
                       Sair
