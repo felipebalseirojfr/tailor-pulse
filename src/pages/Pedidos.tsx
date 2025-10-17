@@ -447,7 +447,7 @@ export default function Pedidos() {
           </CardContent>
         </Card>
       ) : (
-        <Card className="border-slate-200 dark:border-slate-300">
+        <Card className="bg-card/60 backdrop-blur-sm border-muted">
           <div className="overflow-x-auto">
             <Table>
               <TableHeader>
