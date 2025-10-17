@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -72,6 +73,7 @@ export default function Pedidos() {
   const [opFilter, setOpFilter] = useState("");
   const [selectedPedido, setSelectedPedido] = useState<Pedido | null>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState("controle");
 
   useEffect(() => {
     fetchPedidos();
@@ -79,7 +81,7 @@ export default function Pedidos() {
 
   useEffect(() => {
     filterPedidos();
-  }, [pedidos, searchTerm, statusFilter, marcaFilter, referenciaFilter, opFilter]);
+  }, [pedidos, searchTerm, statusFilter, marcaFilter, referenciaFilter, opFilter, activeTab]);
 
   const fetchPedidos = async () => {
     try {
@@ -106,6 +108,13 @@ export default function Pedidos() {
 
   const filterPedidos = () => {
     let filtered = pedidos;
+
+    // Filtrar por aba ativa
+    if (activeTab === "controle") {
+      filtered = filtered.filter((p) => p.status_geral !== "concluido");
+    } else {
+      filtered = filtered.filter((p) => p.status_geral === "concluido");
+    }
 
     // Filtro por busca geral
     if (searchTerm) {
@@ -335,61 +344,69 @@ export default function Pedidos() {
         activeFilter={statusFilter}
       />
 
-      {/* Filtros */}
-      <Card>
-        <CardContent className="pt-6">
-          <div className="space-y-4">
-            <div className="flex flex-col gap-4 md:flex-row">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  placeholder="Buscar em todos os campos..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-9"
-                />
-              </div>
-              <Select value={statusFilter} onValueChange={setStatusFilter}>
-                <SelectTrigger className="w-full md:w-[200px]">
-                  <SelectValue placeholder="Status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="todos">Todos os status</SelectItem>
-                  <SelectItem value="em_producao">Em Produção</SelectItem>
-                  <SelectItem value="concluido">Concluído</SelectItem>
-                  <SelectItem value="atrasado">Atrasados</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-4 md:grid-cols-3">
-              <FiltroAvancado
-                tipo="marca"
-                opcoes={Array.from(new Set(pedidos.map((p) => p.clientes?.nome).filter(Boolean)))}
-                valor={marcaFilter}
-                onChange={setMarcaFilter}
-                placeholder="Filtrar por marca"
-              />
-              <FiltroAvancado
-                tipo="referencia"
-                opcoes={Array.from(new Set(pedidos.map((p) => p.tipo_peca).filter(Boolean)))}
-                valor={referenciaFilter}
-                onChange={setReferenciaFilter}
-                placeholder="Filtrar por referência"
-              />
-              <FiltroAvancado
-                tipo="op"
-                opcoes={Array.from(new Set(pedidos.map((p) => `#${p.id.slice(0, 8)}`)))}
-                valor={opFilter}
-                onChange={setOpFilter}
-                placeholder="Filtrar por #OP"
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className="grid w-full max-w-md grid-cols-2">
+          <TabsTrigger value="controle">Controle de Produção</TabsTrigger>
+          <TabsTrigger value="concluidos">Pedidos Concluídos</TabsTrigger>
+        </TabsList>
 
-      {/* Tabela de Pedidos */}
-      {filteredPedidos.length === 0 ? (
+        <TabsContent value={activeTab} className="space-y-6">
+          {/* Filtros */}
+          <Card>
+            <CardContent className="pt-6">
+              <div className="space-y-4">
+                <div className="flex flex-col gap-4 md:flex-row">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      placeholder="Buscar em todos os campos..."
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                  {activeTab === "controle" && (
+                    <Select value={statusFilter} onValueChange={setStatusFilter}>
+                      <SelectTrigger className="w-full md:w-[200px]">
+                        <SelectValue placeholder="Status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="todos">Todos os status</SelectItem>
+                        <SelectItem value="em_producao">Em Produção</SelectItem>
+                        <SelectItem value="atrasado">Atrasados</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  )}
+                </div>
+                <div className="grid gap-4 md:grid-cols-3">
+                  <FiltroAvancado
+                    tipo="marca"
+                    opcoes={Array.from(new Set(pedidos.map((p) => p.clientes?.nome).filter(Boolean)))}
+                    valor={marcaFilter}
+                    onChange={setMarcaFilter}
+                    placeholder="Filtrar por marca"
+                  />
+                  <FiltroAvancado
+                    tipo="referencia"
+                    opcoes={Array.from(new Set(pedidos.map((p) => p.tipo_peca).filter(Boolean)))}
+                    valor={referenciaFilter}
+                    onChange={setReferenciaFilter}
+                    placeholder="Filtrar por referência"
+                  />
+                  <FiltroAvancado
+                    tipo="op"
+                    opcoes={Array.from(new Set(pedidos.map((p) => `#${p.id.slice(0, 8)}`)))}
+                    valor={opFilter}
+                    onChange={setOpFilter}
+                    placeholder="Filtrar por #OP"
+                  />
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Tabela de Pedidos */}
+          {filteredPedidos.length === 0 ? (
         <Card>
           <CardContent className="py-16 text-center">
             <PackageIcon className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
@@ -419,13 +436,17 @@ export default function Pedidos() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-[120px]">#OP</TableHead>
                   <TableHead>Produto</TableHead>
-                  <TableHead>Referência</TableHead>
                   <TableHead>Marca/Cliente</TableHead>
-                  <TableHead className="w-[300px]">Etapas de Produção</TableHead>
-                  <TableHead>Etapa Atual</TableHead>
-                  <TableHead className="w-[100px]">Ação</TableHead>
+                  <TableHead>Referência</TableHead>
+                  <TableHead className="w-[120px]">#OP</TableHead>
+                  {activeTab === "controle" && (
+                    <>
+                      <TableHead className="w-[300px]">Etapas de Produção</TableHead>
+                      <TableHead>Etapa Atual</TableHead>
+                      <TableHead className="w-[100px]">Ação</TableHead>
+                    </>
+                  )}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -434,61 +455,63 @@ export default function Pedidos() {
                     key={pedido.id}
                     className="hover:bg-muted/50"
                   >
+                    <TableCell onClick={() => handleRowClick(pedido)} className="cursor-pointer font-medium">
+                      {pedido.produto_modelo}
+                    </TableCell>
+                    <TableCell onClick={() => handleRowClick(pedido)} className="cursor-pointer font-medium">
+                      {pedido.clientes?.nome}
+                    </TableCell>
+                    <TableCell onClick={() => handleRowClick(pedido)} className="cursor-pointer text-muted-foreground">
+                      {pedido.tipo_peca}
+                    </TableCell>
                     <TableCell onClick={() => handleRowClick(pedido)} className="cursor-pointer">
                       <Badge variant="outline" className="font-mono text-xs">
                         #{pedido.id.slice(0, 8)}
                       </Badge>
                     </TableCell>
-                    <TableCell onClick={() => handleRowClick(pedido)} className="cursor-pointer font-medium">
-                      {pedido.produto_modelo}
-                    </TableCell>
-                    <TableCell onClick={() => handleRowClick(pedido)} className="cursor-pointer text-muted-foreground">
-                      {pedido.tipo_peca}
-                    </TableCell>
-                    <TableCell onClick={() => handleRowClick(pedido)} className="cursor-pointer font-medium">
-                      {pedido.clientes?.nome}
-                    </TableCell>
-                    <TableCell onClick={() => handleRowClick(pedido)} className="cursor-pointer">
-                      <EtapasVisuais
-                        etapas={pedido.etapas_producao || []}
-                        statusGeral={pedido.status_geral}
-                      />
-                    </TableCell>
-                    <TableCell onClick={() => handleRowClick(pedido)} className="cursor-pointer">
-                      <Badge variant="outline">{getEtapaAtual(pedido)}</Badge>
-                    </TableCell>
-                    <TableCell>
-                      {pedido.status_geral !== "concluido" && (
-                        <Button
-                          size="icon"
-                          className="bg-primary text-primary-foreground hover:bg-primary/90"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            const etapas = pedido.etapas_producao?.sort((a: any, b: any) => a.ordem - b.ordem);
-                            const etapaAtual = etapas?.find(
-                              (et: any) => et.status === "em_andamento"
-                            );
-                            
-                            if (etapaAtual) {
-                              // Se há etapa em andamento, avançar para a próxima
-                              const proximaEtapa = etapas?.find((et: any) => et.ordem === etapaAtual.ordem + 1);
-                              handleAtualizarEtapa(
-                                pedido.id,
-                                proximaEtapa ? proximaEtapa.tipo_etapa : "concluido"
+                    {activeTab === "controle" && (
+                      <>
+                        <TableCell onClick={() => handleRowClick(pedido)} className="cursor-pointer">
+                          <EtapasVisuais
+                            etapas={pedido.etapas_producao || []}
+                            statusGeral={pedido.status_geral}
+                          />
+                        </TableCell>
+                        <TableCell onClick={() => handleRowClick(pedido)} className="cursor-pointer">
+                          <Badge variant="outline">{getEtapaAtual(pedido)}</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            size="icon"
+                            className="bg-primary text-primary-foreground hover:bg-primary/90"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const etapas = pedido.etapas_producao?.sort((a: any, b: any) => a.ordem - b.ordem);
+                              const etapaAtual = etapas?.find(
+                                (et: any) => et.status === "em_andamento"
                               );
-                            } else {
-                              // Se não há etapa em andamento (aguardando início), iniciar a primeira etapa
-                              const primeiraEtapa = etapas?.[0];
-                              if (primeiraEtapa) {
-                                handleAtualizarEtapa(pedido.id, primeiraEtapa.tipo_etapa);
+                              
+                              if (etapaAtual) {
+                                // Se há etapa em andamento, avançar para a próxima
+                                const proximaEtapa = etapas?.find((et: any) => et.ordem === etapaAtual.ordem + 1);
+                                handleAtualizarEtapa(
+                                  pedido.id,
+                                  proximaEtapa ? proximaEtapa.tipo_etapa : "concluido"
+                                );
+                              } else {
+                                // Se não há etapa em andamento (aguardando início), iniciar a primeira etapa
+                                const primeiraEtapa = etapas?.[0];
+                                if (primeiraEtapa) {
+                                  handleAtualizarEtapa(pedido.id, primeiraEtapa.tipo_etapa);
+                                }
                               }
-                            }
-                          }}
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </TableCell>
+                            }}
+                          >
+                            <ChevronRight className="h-4 w-4" />
+                          </Button>
+                        </TableCell>
+                      </>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
@@ -496,6 +519,8 @@ export default function Pedidos() {
           </div>
         </Card>
       )}
+        </TabsContent>
+      </Tabs>
 
       {/* Modal de Detalhes */}
       <PedidoDetailsSheet
