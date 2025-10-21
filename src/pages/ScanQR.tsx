@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
-import { supabase } from "@/integrations/supabase/client";
 import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
 
 export default function ScanQR() {
@@ -42,17 +41,24 @@ export default function ScanQR() {
       const deviceFingerprint = getDeviceFingerprint();
       const userAgent = navigator.userAgent;
 
-      const { data, error } = await supabase.functions.invoke('processar-qr-scan', {
-        body: {
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseAnonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+      
+      const response = await fetch(`${supabaseUrl}/functions/v1/processar-qr-scan`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'apikey': supabaseAnonKey,
+        },
+        body: JSON.stringify({
           qr_ref: qrRef,
           device_fingerprint: deviceFingerprint,
           fornecedor_nome: 'Fornecedor',
           user_agent: userAgent
-        }
+        })
       });
 
-      if (error) throw error;
-
+      const data = await response.json();
       setResult(data);
     } catch (error: any) {
       console.error('Erro ao processar QR scan:', error);
