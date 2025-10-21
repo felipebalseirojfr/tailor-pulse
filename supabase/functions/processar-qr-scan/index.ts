@@ -47,29 +47,7 @@ serve(async (req) => {
       );
     }
 
-    // 2. Verificar se este dispositivo já escaneou esta produção
-    const { data: escaneamentoExistente } = await supabase
-      .from('escaneamentos_qr')
-      .select('id, etapa_atualizada, escaneado_em')
-      .eq('pedido_id', pedido.id)
-      .eq('device_fingerprint', device_fingerprint)
-      .single();
-
-    if (escaneamentoExistente) {
-      console.log('⚠️ Dispositivo já escaneou esta produção');
-      return new Response(
-        JSON.stringify({
-          success: false,
-          already_scanned: true,
-          message: '⚠️ Você já atualizou esta produção. Apenas um escaneamento por fornecedor é permitido.',
-          etapa_anterior: escaneamentoExistente.etapa_atualizada,
-          data_escaneamento: escaneamentoExistente.escaneado_em
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 200 }
-      );
-    }
-
-    // 3. Buscar a próxima etapa pendente
+    // 2. Buscar as etapas da produção
     const { data: etapas, error: etapasError } = await supabase
       .from('etapas_producao')
       .select('id, tipo_etapa, status, ordem')
@@ -87,7 +65,7 @@ serve(async (req) => {
       );
     }
 
-    // Encontrar primeira etapa pendente ou em andamento
+    // 3. Encontrar primeira etapa pendente ou em andamento (cada etapa pode ser escaneada apenas uma vez)
     const proximaEtapa = etapas.find(e => e.status === 'pendente' || e.status === 'em_andamento');
 
     if (!proximaEtapa) {
@@ -103,7 +81,7 @@ serve(async (req) => {
       );
     }
 
-    // 4. Atualizar a etapa para concluída
+    // 4. Atualizar a etapa atual para concluída
     const { error: updateEtapaError } = await supabase
       .from('etapas_producao')
       .update({
@@ -123,7 +101,7 @@ serve(async (req) => {
       );
     }
 
-    // 4.5 Iniciar automaticamente a próxima etapa se existir
+    // 5. Iniciar automaticamente a próxima etapa se existir
     const proximaEtapaSeguinte = etapas.find(e => 
       e.ordem > proximaEtapa.ordem && e.status === 'pendente'
     );
@@ -144,7 +122,7 @@ serve(async (req) => {
       }
     }
 
-    // 5. Registrar o escaneamento
+    // 6. Registrar o escaneamento
     const { error: escaneamentoError } = await supabase
       .from('escaneamentos_qr')
       .insert({
@@ -160,7 +138,7 @@ serve(async (req) => {
       console.error('❌ Erro ao registrar escaneamento:', escaneamentoError);
     }
 
-    // 6. Formatar nome da etapa
+    // 7. Formatar resposta
     const etapaNomeFormatado = proximaEtapa.tipo_etapa.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
 
     console.log('✅ Etapa atualizada com sucesso:', proximaEtapa.tipo_etapa);
