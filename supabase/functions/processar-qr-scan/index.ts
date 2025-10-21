@@ -123,6 +123,27 @@ serve(async (req) => {
       );
     }
 
+    // 4.5 Iniciar automaticamente a próxima etapa se existir
+    const proximaEtapaSeguinte = etapas.find(e => 
+      e.ordem > proximaEtapa.ordem && e.status === 'pendente'
+    );
+
+    if (proximaEtapaSeguinte) {
+      const { error: iniciarProximaError } = await supabase
+        .from('etapas_producao')
+        .update({
+          status: 'em_andamento',
+          data_inicio: new Date().toISOString()
+        })
+        .eq('id', proximaEtapaSeguinte.id);
+
+      if (iniciarProximaError) {
+        console.error('⚠️ Erro ao iniciar próxima etapa:', iniciarProximaError);
+      } else {
+        console.log('✅ Próxima etapa iniciada automaticamente:', proximaEtapaSeguinte.tipo_etapa);
+      }
+    }
+
     // 5. Registrar o escaneamento
     const { error: escaneamentoError } = await supabase
       .from('escaneamentos_qr')
@@ -139,11 +160,7 @@ serve(async (req) => {
       console.error('❌ Erro ao registrar escaneamento:', escaneamentoError);
     }
 
-    // 6. Verificar se há próxima etapa
-    const proximaEtapaSeguinte = etapas.find(e => 
-      e.ordem > proximaEtapa.ordem && (e.status === 'pendente' || e.status === 'em_andamento')
-    );
-
+    // 6. Formatar nome da etapa
     const etapaNomeFormatado = proximaEtapa.tipo_etapa.replace(/_/g, ' ').replace(/\b\w/g, (l: string) => l.toUpperCase());
 
     console.log('✅ Etapa atualizada com sucesso:', proximaEtapa.tipo_etapa);
