@@ -11,6 +11,7 @@ import NovoPedido from "./pages/NovoPedido";
 import DetalhesPedido from "./pages/DetalhesPedido";
 import Clientes from "./pages/Clientes";
 import Calendario from "./pages/Calendario";
+import ScanQR from "./pages/ScanQR";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -23,6 +24,7 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/auth" element={<Auth />} />
+          <Route path="/scan/:qrRef" element={<ScanQR />} />
           <Route path="/" element={<Layout><Dashboard /></Layout>} />
           <Route path="/pedidos" element={<Layout><Pedidos /></Layout>} />
           <Route path="/pedidos/novo" element={<Layout><NovoPedido /></Layout>} />

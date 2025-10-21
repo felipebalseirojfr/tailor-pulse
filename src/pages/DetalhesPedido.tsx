@@ -21,6 +21,8 @@ import {
   Circle,
   PlayCircle,
 } from "lucide-react";
+import { QRCodeDisplay } from "@/components/pedidos/QRCodeDisplay";
+import { HistoricoEscaneamentos } from "@/components/pedidos/HistoricoEscaneamentos";
 
 interface Pedido {
   id: string;
@@ -33,6 +35,7 @@ interface Pedido {
   prazo_final: string;
   progresso_percentual: number;
   status_geral: string;
+  qr_code_ref: string;
   clientes: {
     nome: string;
     contato: string;
@@ -279,74 +282,92 @@ export default function DetalhesPedido() {
       </div>
 
       {/* Informações do Pedido */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Informações do Pedido</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-6 md:grid-cols-2">
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Tipo de Peça
-                </p>
-                <p className="text-base">{pedido.tipo_peca}</p>
+      <div className="grid gap-6 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <Card>
+            <CardHeader>
+              <CardTitle>Informações do Pedido</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid gap-6 md:grid-cols-2">
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Tipo de Peça
+                    </p>
+                    <p className="text-base">{pedido.tipo_peca}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Tecido
+                    </p>
+                    <p className="text-base">{pedido.tecido || "Não especificado"}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Aviamentos
+                    </p>
+                    <p className="text-base">
+                      {pedido.aviamentos || "Não especificado"}
+                    </p>
+                  </div>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Quantidade Total
+                    </p>
+                    <p className="text-base">{pedido.quantidade_total} unidades</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Data de Início
+                    </p>
+                    <p className="text-base">
+                      {new Date(pedido.data_inicio).toLocaleDateString("pt-BR")}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Prazo Final
+                    </p>
+                    <p className="text-base">
+                      {new Date(pedido.prazo_final).toLocaleDateString("pt-BR")}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Responsável Comercial
+                    </p>
+                    <p className="text-base">{pedido.profiles?.nome}</p>
+                  </div>
+                </div>
               </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Tecido
-                </p>
-                <p className="text-base">{pedido.tecido || "Não especificado"}</p>
+              <div className="mt-6 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-medium">Progresso Geral</span>
+                  <span className="text-2xl font-bold">{pedido.progresso_percentual}%</span>
+                </div>
+                <Progress value={pedido.progresso_percentual} className="h-3" />
               </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Aviamentos
-                </p>
-                <p className="text-base">
-                  {pedido.aviamentos || "Não especificado"}
-                </p>
-              </div>
-            </div>
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Quantidade Total
-                </p>
-                <p className="text-base">{pedido.quantidade_total} unidades</p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Data de Início
-                </p>
-                <p className="text-base">
-                  {new Date(pedido.data_inicio).toLocaleDateString("pt-BR")}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Prazo Final
-                </p>
-                <p className="text-base">
-                  {new Date(pedido.prazo_final).toLocaleDateString("pt-BR")}
-                </p>
-              </div>
-              <div>
-                <p className="text-sm font-medium text-muted-foreground">
-                  Responsável Comercial
-                </p>
-                <p className="text-base">{pedido.profiles?.nome}</p>
-              </div>
-            </div>
-          </div>
-          <div className="mt-6 space-y-2">
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-medium">Progresso Geral</span>
-              <span className="text-2xl font-bold">{pedido.progresso_percentual}%</span>
-            </div>
-            <Progress value={pedido.progresso_percentual} className="h-3" />
-          </div>
-        </CardContent>
-      </Card>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* QR Code */}
+        <div className="lg:col-span-1 space-y-6">
+          {pedido.qr_code_ref && (
+            <>
+              <QRCodeDisplay
+                qrCodeRef={pedido.qr_code_ref}
+                produtoModelo={pedido.produto_modelo}
+                pedidoId={pedido.id}
+              />
+              <HistoricoEscaneamentos pedidoId={pedido.id} />
+            </>
+          )}
+        </div>
+      </div>
 
       {/* Etapas de Produção */}
       <Card>

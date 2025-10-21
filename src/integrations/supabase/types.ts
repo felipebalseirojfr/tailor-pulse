@@ -44,6 +44,50 @@ export type Database = {
         }
         Relationships: []
       }
+      escaneamentos_qr: {
+        Row: {
+          created_at: string
+          device_fingerprint: string
+          escaneado_em: string
+          etapa_atualizada: string
+          fornecedor_nome: string | null
+          id: string
+          ip_address: string | null
+          pedido_id: string
+          user_agent: string | null
+        }
+        Insert: {
+          created_at?: string
+          device_fingerprint: string
+          escaneado_em?: string
+          etapa_atualizada: string
+          fornecedor_nome?: string | null
+          id?: string
+          ip_address?: string | null
+          pedido_id: string
+          user_agent?: string | null
+        }
+        Update: {
+          created_at?: string
+          device_fingerprint?: string
+          escaneado_em?: string
+          etapa_atualizada?: string
+          fornecedor_nome?: string | null
+          id?: string
+          ip_address?: string | null
+          pedido_id?: string
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escaneamentos_qr_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       etapas_producao: {
         Row: {
           created_at: string | null
@@ -112,6 +156,8 @@ export type Database = {
           prioridade: Database["public"]["Enums"]["prioridade_pedido"] | null
           produto_modelo: string
           progresso_percentual: number | null
+          qr_code_gerado_em: string | null
+          qr_code_ref: string | null
           quantidade_total: number
           responsavel_comercial_id: string
           status_geral: string | null
@@ -131,6 +177,8 @@ export type Database = {
           prioridade?: Database["public"]["Enums"]["prioridade_pedido"] | null
           produto_modelo: string
           progresso_percentual?: number | null
+          qr_code_gerado_em?: string | null
+          qr_code_ref?: string | null
           quantidade_total: number
           responsavel_comercial_id: string
           status_geral?: string | null
@@ -150,6 +198,8 @@ export type Database = {
           prioridade?: Database["public"]["Enums"]["prioridade_pedido"] | null
           produto_modelo?: string
           progresso_percentual?: number | null
+          qr_code_gerado_em?: string | null
+          qr_code_ref?: string | null
           quantidade_total?: number
           responsavel_comercial_id?: string
           status_geral?: string | null

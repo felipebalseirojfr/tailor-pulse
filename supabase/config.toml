@@ -1,1 +1,4 @@
 project_id = "pnqkollfbuqlrqvodrpt"
+
+[functions.processar-qr-scan]
+verify_jwt = false
