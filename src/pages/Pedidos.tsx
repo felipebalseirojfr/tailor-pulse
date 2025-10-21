@@ -79,6 +79,45 @@ export default function Pedidos() {
 
   useEffect(() => {
     fetchPedidos();
+
+    // Configurar listener de mudanças em tempo real para pedidos
+    const pedidosChannel = supabase
+      .channel('pedidos-list-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'pedidos'
+        },
+        (payload) => {
+          console.log('Mudança detectada na lista de pedidos:', payload);
+          fetchPedidos();
+        }
+      )
+      .subscribe();
+
+    // Listener para etapas (afeta progresso dos pedidos)
+    const etapasChannel = supabase
+      .channel('etapas-list-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'etapas_producao'
+        },
+        (payload) => {
+          console.log('Mudança detectada nas etapas:', payload);
+          fetchPedidos();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(pedidosChannel);
+      supabase.removeChannel(etapasChannel);
+    };
   }, []);
 
   useEffect(() => {
