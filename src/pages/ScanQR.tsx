@@ -1,21 +1,14 @@
 import { useEffect, useState } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Loader2, QrCode, CheckCircle2, AlertCircle, ArrowLeft } from "lucide-react";
-import { toast } from "sonner";
+import { CheckCircle2, XCircle, Loader2 } from "lucide-react";
 
 export default function ScanQR() {
-  const { qrRef } = useParams<{ qrRef: string }>();
-  const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
-  const [fornecedorNome, setFornecedorNome] = useState("");
+  const { qrRef } = useParams();
+  const [loading, setLoading] = useState(true);
   const [result, setResult] = useState<any>(null);
 
-  // Gerar fingerprint do dispositivo
   const getDeviceFingerprint = () => {
     const canvas = document.createElement('canvas');
     const ctx = canvas.getContext('2d');
@@ -40,172 +33,118 @@ export default function ScanQR() {
 
   const handleScan = async () => {
     if (!qrRef) {
-      toast.error("QR Code inválido");
+      setResult({ success: false, message: "QR Code inválido" });
+      setLoading(false);
       return;
     }
 
-    setLoading(true);
-    setResult(null);
-
     try {
       const deviceFingerprint = getDeviceFingerprint();
-      
+      const userAgent = navigator.userAgent;
+
       const { data, error } = await supabase.functions.invoke('processar-qr-scan', {
         body: {
           qr_ref: qrRef,
           device_fingerprint: deviceFingerprint,
-          fornecedor_nome: fornecedorNome || 'Não informado',
-          user_agent: navigator.userAgent,
-          ip_address: 'client' // IP seria capturado no servidor idealmente
+          fornecedor_nome: 'Fornecedor',
+          user_agent: userAgent
         }
       });
 
       if (error) throw error;
 
       setResult(data);
-
-      if (data.success) {
-        toast.success(data.message);
-      } else if (data.already_scanned) {
-        toast.warning(data.message);
-      } else if (data.completed) {
-        toast.info(data.message);
-      } else {
-        toast.error(data.message);
-      }
     } catch (error: any) {
-      console.error('Erro ao processar escaneamento:', error);
-      toast.error('Erro ao processar escaneamento');
-      setResult({
-        success: false,
-        message: error.message || 'Erro desconhecido'
-      });
+      console.error('Erro ao processar QR scan:', error);
+      const errorMessage = error.message || "Erro ao processar o escaneamento";
+      setResult({ success: false, message: errorMessage });
     } finally {
       setLoading(false);
     }
   };
 
+  // Auto-scan ao carregar a página
   useEffect(() => {
-    if (qrRef) {
-      // Auto-scan após 1 segundo se o fornecedor não informar o nome
-      const timer = setTimeout(() => {
-        if (!result && !loading) {
-          handleScan();
-        }
-      }, 1000);
-      return () => clearTimeout(timer);
-    }
-  }, [qrRef]);
+    handleScan();
+  }, []);
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4">
-      <Card className="w-full max-w-md">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <QrCode className="h-6 w-6" />
-            Escaneamento de Produção
-          </CardTitle>
-          <CardDescription>
-            {qrRef ? `Referência: ${qrRef}` : 'QR Code não encontrado'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          {!result ? (
-            <>
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-primary/5 via-background to-secondary/5">
+      <Card className="w-full max-w-md shadow-lg">
+        <CardHeader className="text-center">
+          {loading ? (
+            <div className="flex flex-col items-center gap-4 py-8">
+              <Loader2 className="h-16 w-16 animate-spin text-primary" />
+              <p className="text-lg font-medium">Processando escaneamento...</p>
+            </div>
+          ) : result?.success ? (
+            <div className="flex flex-col items-center gap-4 py-8">
+              <div className="rounded-full bg-success/10 p-4">
+                <CheckCircle2 className="h-16 w-16 text-success" />
+              </div>
               <div className="space-y-2">
-                <Label htmlFor="fornecedor">Nome do Fornecedor (Opcional)</Label>
-                <Input
-                  id="fornecedor"
-                  placeholder="Digite seu nome ou empresa"
-                  value={fornecedorNome}
-                  onChange={(e) => setFornecedorNome(e.target.value)}
-                  disabled={loading}
-                />
+                <h2 className="text-2xl font-bold">Obrigado pelo serviço!</h2>
+                <p className="text-muted-foreground">Etapa registrada com sucesso</p>
               </div>
-
-              <Button
-                onClick={handleScan}
-                disabled={loading || !qrRef}
-                className="w-full"
-                size="lg"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                    Processando...
-                  </>
-                ) : (
-                  <>
-                    <QrCode className="mr-2 h-5 w-5" />
-                    Confirmar Etapa
-                  </>
-                )}
-              </Button>
-            </>
+            </div>
           ) : (
-            <div className="space-y-4">
-              <div className={`flex items-start gap-3 p-4 rounded-lg ${
-                result.success 
-                  ? 'bg-success/10 border border-success/20' 
-                  : result.already_scanned || result.completed
-                  ? 'bg-warning/10 border border-warning/20'
-                  : 'bg-destructive/10 border border-destructive/20'
+            <div className="flex flex-col items-center gap-4 py-8">
+              <div className={`rounded-full p-4 ${
+                result?.message?.includes('já foi escaneado') || result?.already_scanned 
+                  ? 'bg-warning/10' 
+                  : 'bg-destructive/10'
               }`}>
-                {result.success ? (
-                  <CheckCircle2 className="h-6 w-6 text-success mt-0.5" />
-                ) : (
-                  <AlertCircle className="h-6 w-6 text-warning mt-0.5" />
-                )}
-                <div className="flex-1 space-y-2">
-                  <p className="font-medium">{result.message}</p>
-                  {result.produto && (
-                    <p className="text-sm text-muted-foreground">
-                      Produto: {result.produto}
-                    </p>
-                  )}
-                  {result.etapa_concluida && (
-                    <p className="text-sm text-muted-foreground">
-                      Etapa concluída: {result.etapa_concluida.replace(/_/g, ' ')}
-                    </p>
-                  )}
-                  {result.proxima_etapa && (
-                    <p className="text-sm text-muted-foreground">
-                      Próxima etapa: {result.proxima_etapa.replace(/_/g, ' ')}
-                    </p>
-                  )}
-                  {result.etapa_anterior && (
-                    <p className="text-sm text-muted-foreground">
-                      Você já escaneou na etapa: {result.etapa_anterior.replace(/_/g, ' ')}
-                    </p>
-                  )}
-                </div>
+                <XCircle className={`h-16 w-16 ${
+                  result?.message?.includes('já foi escaneado') || result?.already_scanned
+                    ? 'text-warning' 
+                    : 'text-destructive'
+                }`} />
               </div>
-
-              <Button
-                onClick={() => navigate('/')}
-                variant="outline"
-                className="w-full"
-              >
-                <ArrowLeft className="mr-2 h-4 w-4" />
-                Voltar ao início
-              </Button>
-
-              {result.success && !result.pedido_completo && (
-                <p className="text-xs text-center text-muted-foreground">
-                  O QR Code continua válido para os próximos fornecedores
-                </p>
+              <div className="space-y-2">
+                <h2 className="text-2xl font-bold">
+                  {result?.message?.includes('já foi escaneado') || result?.already_scanned
+                    ? 'Já Escaneado' 
+                    : 'Erro'}
+                </h2>
+                <p className="text-muted-foreground">{result?.message}</p>
+              </div>
+            </div>
+          )}
+        </CardHeader>
+        <CardContent>
+          {!loading && result && (
+            <div className="space-y-3">
+              {result.produto && (
+                <div className="text-center p-3 bg-muted/50 rounded-lg">
+                  <p className="text-sm text-muted-foreground">Produto</p>
+                  <p className="font-medium">{result.produto}</p>
+                </div>
+              )}
+              {result.etapa_concluida && (
+                <div className="text-center p-3 bg-muted/50 rounded-lg">
+                  <p className="text-sm text-muted-foreground">Etapa concluída</p>
+                  <p className="font-medium">{result.etapa_concluida.replace(/_/g, ' ')}</p>
+                </div>
+              )}
+              {result.proxima_etapa && (
+                <div className="text-center p-3 bg-primary/5 rounded-lg">
+                  <p className="text-sm text-muted-foreground">Próxima etapa</p>
+                  <p className="font-medium">{result.proxima_etapa.replace(/_/g, ' ')}</p>
+                </div>
+              )}
+              {result.pedido_completo && (
+                <div className="text-center p-3 bg-success/10 rounded-lg">
+                  <p className="font-medium text-success">✓ Pedido Completo!</p>
+                </div>
+              )}
+              {result.etapa_anterior && (
+                <div className="text-center p-3 bg-warning/10 rounded-lg">
+                  <p className="text-sm text-muted-foreground">Escaneado anteriormente na etapa</p>
+                  <p className="font-medium">{result.etapa_anterior.replace(/_/g, ' ')}</p>
+                </div>
               )}
             </div>
           )}
-
-          <div className="text-xs text-muted-foreground space-y-1 mt-4 p-3 bg-muted/50 rounded-md">
-            <p className="font-semibold">ℹ️ Informações:</p>
-            <ul className="list-disc list-inside space-y-1">
-              <li>Cada dispositivo pode escanear apenas uma vez</li>
-              <li>A etapa é atualizada automaticamente</li>
-              <li>O histórico completo é registrado</li>
-            </ul>
-          </div>
         </CardContent>
       </Card>
     </div>
