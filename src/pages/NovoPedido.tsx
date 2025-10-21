@@ -88,10 +88,11 @@ export default function NovoPedido() {
       const pedidoId = pedidoData[0].id;
       const qrCodeRef = pedidoData[0].qr_code_ref;
 
-      // Gerar Código de Barras no frontend
-      const Barcode = (await import('react-barcode')).default;
+      // Gerar QR Code no frontend
+      const QRCode = (await import('qrcode.react')).QRCodeSVG;
+      const qrUrl = `${window.location.origin}/scan/${qrCodeRef}`;
       
-      // Criar elemento temporário para gerar o código de barras
+      // Criar elemento temporário para gerar o QR Code
       const container = document.createElement('div');
       container.style.position = 'absolute';
       container.style.left = '-9999px';
@@ -102,25 +103,24 @@ export default function NovoPedido() {
       
       await new Promise<void>((resolve) => {
         root.render(
-          <Barcode
-            value={qrCodeRef}
-            format="CODE128"
-            width={2}
-            height={100}
-            displayValue={true}
+          <QRCode
+            value={qrUrl}
+            size={512}
+            level="H"
+            includeMargin={true}
           />
         );
         setTimeout(resolve, 100);
       });
 
       const svgElement = container.querySelector('svg');
-      if (!svgElement) throw new Error("Erro ao gerar código de barras");
+      if (!svgElement) throw new Error("Erro ao gerar QR Code");
 
       // Converter SVG para PNG
       const svgData = new XMLSerializer().serializeToString(svgElement);
       const canvas = document.createElement('canvas');
-      canvas.width = 600;
-      canvas.height = 150;
+      canvas.width = 512;
+      canvas.height = 512;
       const ctx = canvas.getContext('2d');
       const img = new Image();
 
@@ -133,7 +133,7 @@ export default function NovoPedido() {
         img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
       });
 
-      const barcodeImage = canvas.toDataURL('image/png');
+      const qrCodeImage = canvas.toDataURL('image/png');
 
       // Limpar elementos temporários
       root.unmount();
@@ -143,17 +143,17 @@ export default function NovoPedido() {
       const { error: uploadError } = await supabase.functions.invoke('gerar-qr-code', {
         body: {
           pedidoId,
-          qrCodeImage: barcodeImage,
+          qrCodeImage,
         },
       });
 
       if (uploadError) {
-        console.error('Erro ao salvar código de barras:', uploadError);
+        console.error('Erro ao salvar QR Code:', uploadError);
       }
 
       toast({
         title: "Pedido criado!",
-        description: "O pedido foi criado com sucesso e o código de barras foi gerado.",
+        description: "O pedido foi criado com sucesso e o QR Code foi gerado.",
       });
       navigate("/pedidos");
     } catch (error: any) {

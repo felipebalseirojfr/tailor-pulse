@@ -1,8 +1,8 @@
 import { useState, useEffect } from "react";
-import Barcode from "react-barcode";
+import { QRCodeSVG } from "qrcode.react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, Printer, Barcode as BarcodeIcon } from "lucide-react";
+import { Download, Printer, QrCode } from "lucide-react";
 
 interface QRCodeDisplayProps {
   qrCodeRef: string;
@@ -11,6 +11,7 @@ interface QRCodeDisplayProps {
 }
 
 export function QRCodeDisplay({ qrCodeRef, produtoModelo, pedidoId }: QRCodeDisplayProps) {
+  const qrUrl = `${window.location.origin}/scan/${qrCodeRef}`;
   const [qrCodeLink, setQrCodeLink] = useState<string | null>(null);
 
   useEffect(() => {
@@ -30,8 +31,7 @@ export function QRCodeDisplay({ qrCodeRef, produtoModelo, pedidoId }: QRCodeDisp
   }, [pedidoId]);
 
   const handleDownload = () => {
-    const container = document.getElementById('barcode-svg');
-    const svg = container?.querySelector('svg') as unknown as SVGElement;
+    const svg = document.getElementById('qr-code-svg') as unknown as SVGElement;
     if (!svg) return;
 
     const svgData = new XMLSerializer().serializeToString(svg);
@@ -39,8 +39,8 @@ export function QRCodeDisplay({ qrCodeRef, produtoModelo, pedidoId }: QRCodeDisp
     const ctx = canvas.getContext('2d');
     const img = new Image();
 
-    canvas.width = 600;
-    canvas.height = 150;
+    canvas.width = 512;
+    canvas.height = 512;
 
     img.onload = () => {
       ctx?.drawImage(img, 0, 0);
@@ -49,7 +49,7 @@ export function QRCodeDisplay({ qrCodeRef, produtoModelo, pedidoId }: QRCodeDisp
           const url = URL.createObjectURL(blob);
           const link = document.createElement('a');
           link.href = url;
-          link.download = `barcode-${qrCodeRef}.png`;
+          link.download = `qrcode-${qrCodeRef}.png`;
           link.click();
           URL.revokeObjectURL(url);
         }
@@ -63,14 +63,11 @@ export function QRCodeDisplay({ qrCodeRef, produtoModelo, pedidoId }: QRCodeDisp
     const printWindow = window.open('', '_blank');
     if (!printWindow) return;
 
-    const container = document.getElementById('barcode-svg');
-    const barcodeHtml = container?.innerHTML || '';
-
     printWindow.document.write(`
       <!DOCTYPE html>
       <html>
         <head>
-          <title>Código de Barras - ${qrCodeRef}</title>
+          <title>QR Code - ${qrCodeRef}</title>
           <style>
             body {
               display: flex;
@@ -110,11 +107,11 @@ export function QRCodeDisplay({ qrCodeRef, produtoModelo, pedidoId }: QRCodeDisp
         </head>
         <body>
           <div class="container">
-            <h1>Código de Barras de Rastreamento</h1>
+            <h1>QR Code de Rastreamento</h1>
             <p>${produtoModelo}</p>
             <p><strong>Referência:</strong> ${qrCodeRef}</p>
             <div class="qr-container">
-              ${barcodeHtml}
+              ${document.getElementById('qr-code-svg')?.outerHTML}
             </div>
           </div>
           <script>
@@ -133,8 +130,8 @@ export function QRCodeDisplay({ qrCodeRef, produtoModelo, pedidoId }: QRCodeDisp
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <BarcodeIcon className="h-5 w-5" />
-          Código de Barras de Rastreamento
+          <QrCode className="h-5 w-5" />
+          QR Code de Rastreamento
         </CardTitle>
         <CardDescription>
           Escaneie para atualizar o status da produção em cada etapa
@@ -145,26 +142,23 @@ export function QRCodeDisplay({ qrCodeRef, produtoModelo, pedidoId }: QRCodeDisp
           {qrCodeLink ? (
             <img 
               src={qrCodeLink} 
-              alt="Código de Barras" 
-              className="max-w-full h-auto"
+              alt="QR Code" 
+              className="w-[200px] h-[200px]"
             />
           ) : (
-            <div id="barcode-svg">
-              <Barcode
-                value={qrCodeRef}
-                format="CODE128"
-                width={2}
-                height={80}
-                displayValue={true}
-                renderer="svg"
-              />
-            </div>
+            <QRCodeSVG
+              id="qr-code-svg"
+              value={qrUrl}
+              size={200}
+              level="H"
+              includeMargin={true}
+            />
           )}
         </div>
         
         <div className="text-center space-y-2">
           <p className="text-sm font-medium">Referência: {qrCodeRef}</p>
-          <p className="text-xs text-muted-foreground">Use o scanner para ler este código</p>
+          <p className="text-xs text-muted-foreground break-all">{qrUrl}</p>
         </div>
 
         <div className="flex gap-2">
@@ -189,7 +183,7 @@ export function QRCodeDisplay({ qrCodeRef, produtoModelo, pedidoId }: QRCodeDisp
         <div className="text-xs text-muted-foreground space-y-1 mt-4 p-3 bg-muted/50 rounded-md">
           <p className="font-semibold">Como funciona:</p>
           <ul className="list-disc list-inside space-y-1">
-            <li>Cada fornecedor escaneia o código de barras uma vez</li>
+            <li>Cada fornecedor escaneia o QR Code uma vez</li>
             <li>O sistema avança automaticamente para a próxima etapa</li>
             <li>Múltiplos escaneamentos pelo mesmo dispositivo são bloqueados</li>
             <li>Histórico completo de rastreamento é mantido</li>

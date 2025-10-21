@@ -74,27 +74,6 @@ export default function ScanQR() {
     handleScan();
   }, []);
 
-  // Auto-fechar após 3 segundos quando processado
-  useEffect(() => {
-    if (!loading && result) {
-      const timer = setTimeout(() => {
-        // Tentar fechar a aba/janela
-        window.close();
-        // Se não conseguir fechar (não foi aberta via script), mostrar mensagem
-        setTimeout(() => {
-          if (!window.closed) {
-            setResult((prev: any) => ({
-              ...prev,
-              canClose: true
-            }));
-          }
-        }, 100);
-      }, 3000);
-
-      return () => clearTimeout(timer);
-    }
-  }, [loading, result]);
-
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gradient-to-br from-primary/5 via-background to-secondary/5">
       <Card className="w-full max-w-md shadow-lg">
@@ -112,9 +91,6 @@ export default function ScanQR() {
               <div className="space-y-2">
                 <h2 className="text-2xl font-bold">Obrigado pelo serviço!</h2>
                 <p className="text-muted-foreground">Etapa registrada com sucesso</p>
-                {result?.canClose && (
-                  <p className="text-sm text-muted-foreground mt-4">Você pode fechar esta página</p>
-                )}
               </div>
             </div>
           ) : (
@@ -137,9 +113,6 @@ export default function ScanQR() {
                     : 'Erro'}
                 </h2>
                 <p className="text-muted-foreground">{result?.message}</p>
-                {result?.canClose && (
-                  <p className="text-sm text-muted-foreground mt-4">Você pode fechar esta página</p>
-                )}
               </div>
             </div>
           )}
