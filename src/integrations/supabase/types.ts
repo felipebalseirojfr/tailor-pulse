@@ -157,6 +157,7 @@ export type Database = {
           produto_modelo: string
           progresso_percentual: number | null
           qr_code_gerado_em: string | null
+          qr_code_link: string | null
           qr_code_ref: string | null
           quantidade_total: number
           responsavel_comercial_id: string
@@ -178,6 +179,7 @@ export type Database = {
           produto_modelo: string
           progresso_percentual?: number | null
           qr_code_gerado_em?: string | null
+          qr_code_link?: string | null
           qr_code_ref?: string | null
           quantidade_total: number
           responsavel_comercial_id: string
@@ -199,6 +201,7 @@ export type Database = {
           produto_modelo?: string
           progresso_percentual?: number | null
           qr_code_gerado_em?: string | null
+          qr_code_link?: string | null
           qr_code_ref?: string | null
           quantidade_total?: number
           responsavel_comercial_id?: string
