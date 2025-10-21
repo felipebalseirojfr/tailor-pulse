@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import { CheckCircle2, ChevronRight, Edit2, Save, X, ChevronLeft } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { QRCodeDisplay } from "./QRCodeDisplay";
 
 interface PedidoDetailsSheetProps {
   pedido: any;
@@ -502,6 +503,18 @@ export function PedidoDetailsSheet({
                 ))}
             </div>
           </div>
+
+          {/* QR Code */}
+          {pedido.qr_code_ref && (
+            <>
+              <Separator />
+              <QRCodeDisplay
+                qrCodeRef={pedido.qr_code_ref}
+                produtoModelo={pedido.produto_modelo}
+                pedidoId={pedido.id}
+              />
+            </>
+          )}
 
           {/* Ações */}
           {pedido.status_geral !== "concluido" && (
