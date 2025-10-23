@@ -22,7 +22,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Search, Package as PackageIcon, ChevronRight, Filter, ChevronDown } from "lucide-react";
+import { Plus, Search, Package as PackageIcon, ChevronRight, Filter, ChevronDown, AlertCircle } from "lucide-react";
 import { PedidosSummaryCards } from "@/components/pedidos/PedidosSummaryCards";
 import { PedidoDetailsSheet } from "@/components/pedidos/PedidoDetailsSheet";
 import { EtapasVisuais } from "@/components/pedidos/EtapasVisuais";
@@ -59,6 +59,8 @@ interface Pedido {
     ordem: number;
     data_inicio?: string;
     data_termino?: string;
+    data_inicio_prevista?: string;
+    data_termino_prevista?: string;
     observacoes?: string;
   }>;
 }
@@ -132,7 +134,7 @@ export default function Pedidos() {
           *,
           clientes(nome),
           profiles(nome),
-          etapas_producao(id, tipo_etapa, status, ordem, data_inicio, data_termino, observacoes)
+          etapas_producao(id, tipo_etapa, status, ordem, data_inicio, data_termino, data_inicio_prevista, data_termino_prevista, observacoes)
         `)
         .order("prazo_final", { ascending: true });
 
@@ -254,6 +256,38 @@ export default function Pedidos() {
     }
 
     return "Aguardando início";
+  };
+
+  const temEtapaEmAtraso = (pedido: Pedido) => {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    
+    return pedido.etapas_producao?.some((etapa) => {
+      if (etapa.status === "concluido" || !etapa.data_termino_prevista) {
+        return false;
+      }
+      
+      const dataTerminoPrevista = new Date(etapa.data_termino_prevista);
+      dataTerminoPrevista.setHours(0, 0, 0, 0);
+      
+      return dataTerminoPrevista < hoje;
+    }) || false;
+  };
+
+  const getEtapasAtrasadas = (pedido: Pedido) => {
+    const hoje = new Date();
+    hoje.setHours(0, 0, 0, 0);
+    
+    return pedido.etapas_producao?.filter((etapa) => {
+      if (etapa.status === "concluido" || !etapa.data_termino_prevista) {
+        return false;
+      }
+      
+      const dataTerminoPrevista = new Date(etapa.data_termino_prevista);
+      dataTerminoPrevista.setHours(0, 0, 0, 0);
+      
+      return dataTerminoPrevista < hoje;
+    }) || [];
   };
 
   const handleAtualizarEtapa = async (pedidoId: string, novaEtapa: string) => {
@@ -510,8 +544,16 @@ export default function Pedidos() {
                     key={pedido.id}
                     className="hover:bg-muted/50"
                   >
-                    <TableCell onClick={() => handleRowClick(pedido)} className="cursor-pointer font-medium">
+                     <TableCell onClick={() => handleRowClick(pedido)} className="cursor-pointer font-medium">
                       {pedido.produto_modelo}
+                      {temEtapaEmAtraso(pedido) && (
+                        <div className="flex items-center gap-1 mt-1">
+                          <AlertCircle className="h-3 w-3 text-destructive" />
+                          <span className="text-xs text-destructive">
+                            {getEtapasAtrasadas(pedido).length} etapa(s) atrasada(s)
+                          </span>
+                        </div>
+                      )}
                     </TableCell>
                     <TableCell onClick={() => handleRowClick(pedido)} className="cursor-pointer font-medium">
                       {pedido.clientes?.nome}

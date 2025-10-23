@@ -17,6 +17,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Upload, X, FileText, Image as ImageIcon } from "lucide-react";
+import EtapasManager, { Etapa } from "@/components/pedidos/EtapasManager";
 
 interface Cliente {
   id: string;
@@ -43,6 +44,8 @@ export default function NovoPedido() {
     tipos_personalizacao: [] as string[],
     grade_tamanhos: {} as Record<string, number>,
   });
+
+  const [etapas, setEtapas] = useState<Etapa[]>([]);
 
   const tamanhos = ["2", "4", "6", "8", "10", "12", "14", "PP", "P", "M", "G", "XGG", "XGG1", "XGG2"];
 
@@ -115,6 +118,28 @@ export default function NovoPedido() {
       if (!pedidoData || pedidoData.length === 0) throw new Error("Erro ao criar pedido");
 
       const pedidoId = pedidoData[0].id;
+
+      // Criar etapas manualmente
+      if (etapas.length > 0) {
+        const etapasData = etapas.map((etapa, index) => ({
+          pedido_id: pedidoId,
+          tipo_etapa: etapa.tipo_etapa as "lacre_piloto" | "liberacao_corte" | "corte" | "estampa" | "bordado" | "lavado" | "costura" | "acabamento" | "entrega",
+          ordem: etapa.ordem,
+          status: (index === 0 ? 'em_andamento' : 'pendente') as "em_andamento" | "pendente" | "concluido",
+          data_inicio: index === 0 ? new Date().toISOString() : null,
+          data_inicio_prevista: etapa.data_inicio_prevista?.toISOString().split('T')[0] || null,
+          data_termino_prevista: etapa.data_termino_prevista?.toISOString().split('T')[0] || null,
+        }));
+
+        const { error: etapasError } = await supabase
+          .from("etapas_producao")
+          .insert(etapasData);
+
+        if (etapasError) {
+          console.error('Erro ao criar etapas:', etapasError);
+          throw new Error("Erro ao criar etapas de produção");
+        }
+      }
       const qrCodeRef = pedidoData[0].qr_code_ref;
 
       // Gerar QR Code no frontend
@@ -632,6 +657,8 @@ export default function NovoPedido() {
                 </div>
               )}
             </div>
+
+            <EtapasManager etapas={etapas} onChange={setEtapas} />
 
             <div className="flex gap-4">
               <Button
