@@ -16,7 +16,7 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, Upload, X, FileText, Image as ImageIcon } from "lucide-react";
 
 interface Cliente {
   id: string;
@@ -26,6 +26,7 @@ interface Cliente {
 export default function NovoPedido() {
   const [loading, setLoading] = useState(false);
   const [clientes, setClientes] = useState<Cliente[]>([]);
+  const [arquivos, setArquivos] = useState<File[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
 
@@ -69,6 +70,29 @@ export default function NovoPedido() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
+      // Upload arquivos primeiro
+      const arquivosUpload = [];
+      for (const arquivo of arquivos) {
+        const fileName = `${Date.now()}_${arquivo.name}`;
+        const filePath = `${user.id}/${fileName}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('pedidos-arquivos')
+          .upload(filePath, arquivo);
+
+        if (uploadError) {
+          console.error('Erro ao fazer upload:', uploadError);
+          throw new Error(`Erro ao fazer upload do arquivo ${arquivo.name}`);
+        }
+
+        arquivosUpload.push({
+          nome: arquivo.name,
+          caminho: filePath,
+          tipo: arquivo.type,
+          tamanho: arquivo.size,
+        });
+      }
+
       const { data: pedidoData, error } = await supabase.from("pedidos").insert([
         {
           cliente_id: formData.cliente_id,
@@ -83,6 +107,7 @@ export default function NovoPedido() {
           tem_personalizacao: formData.tipos_personalizacao.length > 0,
           tipos_personalizacao: formData.tipos_personalizacao,
           grade_tamanhos: formData.grade_tamanhos,
+          arquivos: arquivosUpload,
         },
       ]).select();
 
@@ -205,6 +230,22 @@ export default function NovoPedido() {
         aviamentos,
       };
     });
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const newFiles = Array.from(e.target.files);
+      setArquivos((prev) => [...prev, ...newFiles]);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setArquivos((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const getFileIcon = (type: string) => {
+    if (type.startsWith('image/')) return <ImageIcon className="h-4 w-4" />;
+    return <FileText className="h-4 w-4" />;
   };
 
   return (
@@ -526,6 +567,71 @@ export default function NovoPedido() {
               </div>
             </div>
 
+            <div className="space-y-3">
+              <Label>Arquivos e Documentos</Label>
+              <p className="text-sm text-muted-foreground">
+                Adicione fichas técnicas, fotos ou outros documentos relacionados à produção
+              </p>
+              
+              <div className="border-2 border-dashed rounded-lg p-6 text-center hover:border-primary/50 transition-colors">
+                <Input
+                  id="file-upload"
+                  type="file"
+                  multiple
+                  onChange={handleFileChange}
+                  accept="image/*,.pdf,.doc,.docx"
+                  className="hidden"
+                />
+                <Label
+                  htmlFor="file-upload"
+                  className="cursor-pointer flex flex-col items-center gap-2"
+                >
+                  <Upload className="h-8 w-8 text-muted-foreground" />
+                  <span className="text-sm font-medium">
+                    Clique para adicionar arquivos
+                  </span>
+                  <span className="text-xs text-muted-foreground">
+                    PNG, JPG, PDF, DOC (máx. 10MB por arquivo)
+                  </span>
+                </Label>
+              </div>
+
+              {arquivos.length > 0 && (
+                <div className="space-y-2">
+                  <Label className="text-sm font-medium">
+                    Arquivos selecionados ({arquivos.length})
+                  </Label>
+                  <div className="space-y-2">
+                    {arquivos.map((file, index) => (
+                      <div
+                        key={index}
+                        className="flex items-center justify-between p-3 border rounded-lg bg-background"
+                      >
+                        <div className="flex items-center gap-3 flex-1 min-w-0">
+                          {getFileIcon(file.type)}
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">
+                              {file.name}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              {(file.size / 1024).toFixed(1)} KB
+                            </p>
+                          </div>
+                        </div>
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => removeFile(index)}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
 
             <div className="flex gap-4">
               <Button

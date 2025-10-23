@@ -147,6 +147,7 @@ export type Database = {
       }
       pedidos: {
         Row: {
+          arquivos: Json | null
           aviamentos: string[] | null
           cliente_id: string
           created_at: string | null
@@ -170,6 +171,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          arquivos?: Json | null
           aviamentos?: string[] | null
           cliente_id: string
           created_at?: string | null
@@ -193,6 +195,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          arquivos?: Json | null
           aviamentos?: string[] | null
           cliente_id?: string
           created_at?: string | null
