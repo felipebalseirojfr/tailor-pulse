@@ -40,7 +40,10 @@ export default function NovoPedido() {
     prazo_final: "",
     tem_personalizacao: false,
     tipos_personalizacao: [] as string[],
+    grade_tamanhos: {} as Record<string, number>,
   });
+
+  const tamanhos = ["2", "4", "6", "8", "10", "12", "14", "PP", "P", "M", "G", "XGG", "XGG1", "XGG2"];
 
   useEffect(() => {
     fetchClientes();
@@ -79,6 +82,7 @@ export default function NovoPedido() {
           responsavel_comercial_id: user.id,
           tem_personalizacao: formData.tipos_personalizacao.length > 0,
           tipos_personalizacao: formData.tipos_personalizacao,
+          grade_tamanhos: formData.grade_tamanhos,
         },
       ]).select();
 
@@ -301,6 +305,40 @@ export default function NovoPedido() {
                   placeholder="Ex: 100"
                   required
                 />
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <Label>Grade de Tamanhos</Label>
+              <p className="text-sm text-muted-foreground">
+                Especifique a quantidade por tamanho (opcional)
+              </p>
+              <div className="grid grid-cols-3 md:grid-cols-7 gap-3">
+                {tamanhos.map((tamanho) => (
+                  <div key={tamanho} className="space-y-1">
+                    <Label htmlFor={`tamanho_${tamanho}`} className="text-xs font-medium">
+                      {tamanho}
+                    </Label>
+                    <Input
+                      id={`tamanho_${tamanho}`}
+                      type="number"
+                      min="0"
+                      value={formData.grade_tamanhos[tamanho] || ""}
+                      onChange={(e) => {
+                        const value = e.target.value;
+                        setFormData((prev) => ({
+                          ...prev,
+                          grade_tamanhos: {
+                            ...prev.grade_tamanhos,
+                            [tamanho]: value ? parseInt(value) : 0,
+                          },
+                        }));
+                      }}
+                      placeholder="0"
+                      className="h-9 text-center"
+                    />
+                  </div>
+                ))}
               </div>
             </div>
 

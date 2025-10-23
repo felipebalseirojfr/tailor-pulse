@@ -151,6 +151,7 @@ export type Database = {
           cliente_id: string
           created_at: string | null
           data_inicio: string
+          grade_tamanhos: Json | null
           id: string
           prazo_final: string
           prioridade: Database["public"]["Enums"]["prioridade_pedido"] | null
@@ -173,6 +174,7 @@ export type Database = {
           cliente_id: string
           created_at?: string | null
           data_inicio: string
+          grade_tamanhos?: Json | null
           id?: string
           prazo_final: string
           prioridade?: Database["public"]["Enums"]["prioridade_pedido"] | null
@@ -195,6 +197,7 @@ export type Database = {
           cliente_id?: string
           created_at?: string | null
           data_inicio?: string
+          grade_tamanhos?: Json | null
           id?: string
           prazo_final?: string
           prioridade?: Database["public"]["Enums"]["prioridade_pedido"] | null
