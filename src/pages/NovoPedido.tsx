@@ -123,7 +123,7 @@ export default function NovoPedido() {
       if (etapas.length > 0) {
         const etapasData = etapas.map((etapa, index) => ({
           pedido_id: pedidoId,
-          tipo_etapa: etapa.tipo_etapa as "pilotagem" | "liberacao_corte" | "corte" | "lavanderia" | "costura" | "caseado" | "estamparia_bordado" | "acabamento" | "entrega",
+          tipo_etapa: etapa.tipo_etapa as any,
           ordem: etapa.ordem,
           status: (index === 0 ? 'em_andamento' : 'pendente') as "em_andamento" | "pendente" | "concluido",
           data_inicio: index === 0 ? new Date().toISOString() : null,

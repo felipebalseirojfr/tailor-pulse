@@ -284,16 +284,15 @@ export type Database = {
       prioridade_pedido: "baixa" | "media" | "alta"
       status_etapa: "pendente" | "em_andamento" | "concluido"
       tipo_etapa:
-        | "lacre_piloto"
+        | "pilotagem"
         | "liberacao_corte"
         | "corte"
-        | "personalizacao"
+        | "lavanderia"
         | "costura"
+        | "caseado"
+        | "estamparia_bordado"
         | "acabamento"
         | "entrega"
-        | "estampa"
-        | "bordado"
-        | "lavado"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -424,16 +423,15 @@ export const Constants = {
       prioridade_pedido: ["baixa", "media", "alta"],
       status_etapa: ["pendente", "em_andamento", "concluido"],
       tipo_etapa: [
-        "lacre_piloto",
+        "pilotagem",
         "liberacao_corte",
         "corte",
-        "personalizacao",
+        "lavanderia",
         "costura",
+        "caseado",
+        "estamparia_bordado",
         "acabamento",
         "entrega",
-        "estampa",
-        "bordado",
-        "lavado",
       ],
     },
   },
