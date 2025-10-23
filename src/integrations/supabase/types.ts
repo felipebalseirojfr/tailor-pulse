@@ -92,7 +92,9 @@ export type Database = {
         Row: {
           created_at: string | null
           data_inicio: string | null
+          data_inicio_prevista: string | null
           data_termino: string | null
+          data_termino_prevista: string | null
           id: string
           observacoes: string | null
           ordem: number
@@ -105,7 +107,9 @@ export type Database = {
         Insert: {
           created_at?: string | null
           data_inicio?: string | null
+          data_inicio_prevista?: string | null
           data_termino?: string | null
+          data_termino_prevista?: string | null
           id?: string
           observacoes?: string | null
           ordem: number
@@ -118,7 +122,9 @@ export type Database = {
         Update: {
           created_at?: string | null
           data_inicio?: string | null
+          data_inicio_prevista?: string | null
           data_termino?: string | null
+          data_termino_prevista?: string | null
           id?: string
           observacoes?: string | null
           ordem?: number
@@ -267,7 +273,12 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      etapa_em_atraso: {
+        Args: {
+          etapa_row: Database["public"]["Tables"]["etapas_producao"]["Row"]
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       prioridade_pedido: "baixa" | "media" | "alta"
