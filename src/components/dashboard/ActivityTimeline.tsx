@@ -33,11 +33,13 @@ export const ActivityTimeline = ({ atividades }: ActivityTimelineProps) => {
 
   const getEtapaLabel = (tipo: string) => {
     const labels: Record<string, string> = {
-      lacre_piloto: "Lacre Piloto",
-      liberacao_corte: "Liberação Corte",
+      pilotagem: "Pilotagem",
+      liberacao_corte: "Liberação de Corte",
       corte: "Corte",
-      personalizacao: "Personalização",
+      lavanderia: "Lavanderia",
       costura: "Costura",
+      caseado: "Caseado",
+      estamparia_bordado: "Estamparia/Bordado",
       acabamento: "Acabamento",
       entrega: "Entrega",
     };

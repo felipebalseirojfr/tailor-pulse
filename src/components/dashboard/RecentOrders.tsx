@@ -21,11 +21,13 @@ export const RecentOrders = ({ pedidos }: RecentOrdersProps) => {
     
     if (etapaAtual) {
       const labels: Record<string, string> = {
-        lacre_piloto: "Lacre Piloto",
-        liberacao_corte: "Liberação Corte",
+        pilotagem: "Pilotagem",
+        liberacao_corte: "Liberação de Corte",
         corte: "Corte",
-        personalizacao: "Personalização",
+        lavanderia: "Lavanderia",
         costura: "Costura",
+        caseado: "Caseado",
+        estamparia_bordado: "Estamparia/Bordado",
         acabamento: "Acabamento",
         entrega: "Entrega",
       };
@@ -43,13 +45,15 @@ export const RecentOrders = ({ pedidos }: RecentOrdersProps) => {
     if (!etapaAtual) return "bg-gray-500";
     
     const colors: Record<string, string> = {
-      lacre_piloto: "bg-purple-500",
+      pilotagem: "bg-purple-500",
       liberacao_corte: "bg-indigo-500",
       corte: "bg-blue-500",
-      personalizacao: "bg-cyan-500",
+      lavanderia: "bg-cyan-500",
       costura: "bg-teal-500",
-      acabamento: "bg-green-500",
-      entrega: "bg-emerald-500",
+      caseado: "bg-green-500",
+      estamparia_bordado: "bg-orange-500",
+      acabamento: "bg-amber-500",
+      entrega: "bg-red-500",
     };
     return colors[etapaAtual.tipo_etapa] || "bg-blue-500";
   };

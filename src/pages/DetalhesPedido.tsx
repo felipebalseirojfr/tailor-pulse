@@ -66,13 +66,13 @@ interface Profile {
 }
 
 const ETAPAS_NOMES: Record<string, string> = {
-  lacre_piloto: "Lacre de Piloto",
+  pilotagem: "Pilotagem",
   liberacao_corte: "Liberação de Corte",
   corte: "Corte",
-  estampa: "Estampa",
-  bordado: "Bordado",
-  lavado: "Lavado",
+  lavanderia: "Lavanderia",
   costura: "Costura",
+  caseado: "Caseado",
+  estamparia_bordado: "Estamparia/Bordado",
   acabamento: "Acabamento",
   entrega: "Entrega",
 };
