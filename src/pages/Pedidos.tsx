@@ -99,7 +99,10 @@ export default function Pedidos() {
         },
         (payload) => {
           console.log('Mudança detectada na lista de pedidos:', payload);
-          fetchPedidos();
+          // Não buscar novamente em DELETEs, pois já tratamos otimisticamente
+          if (payload.eventType !== 'DELETE') {
+            fetchPedidos();
+          }
         }
       )
       .subscribe();
