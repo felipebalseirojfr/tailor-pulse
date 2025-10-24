@@ -260,8 +260,7 @@ export function PedidoDetailsSheet({
       // Mostrar mensagem de sucesso
       toast.success("Pedido excluído com sucesso!");
       
-      // Atualizar a lista do servidor em background
-      onUpdate();
+      // O listener real-time vai atualizar automaticamente
     } catch (error: any) {
       console.error("Erro ao excluir pedido:", error);
       toast.error("Erro ao excluir pedido");
