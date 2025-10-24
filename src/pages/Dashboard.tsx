@@ -6,7 +6,6 @@ import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { DashboardMetrics } from "@/components/dashboard/DashboardMetrics";
 import { DashboardCharts } from "@/components/dashboard/DashboardCharts";
 import { RecentOrders } from "@/components/dashboard/RecentOrders";
-import { ActivityTimeline } from "@/components/dashboard/ActivityTimeline";
 
 export default function Dashboard() {
   const { stats, pedidos, atividades, loading } = useDashboardData();
@@ -59,11 +58,8 @@ export default function Dashboard() {
       {/* Gráficos */}
       <DashboardCharts pedidos={pedidos} />
 
-      {/* Pedidos Recentes e Timeline */}
-      <div className="grid gap-6 md:grid-cols-2">
-        <RecentOrders pedidos={pedidos} />
-        <ActivityTimeline atividades={atividades} />
-      </div>
+      {/* Pedidos em Andamento */}
+      <RecentOrders pedidos={pedidos} />
     </div>
   );
 }

@@ -11,7 +11,9 @@ interface RecentOrdersProps {
 }
 
 export const RecentOrders = ({ pedidos }: RecentOrdersProps) => {
-  const pedidosRecentes = pedidos.slice(0, 5);
+  const pedidosEmAndamento = pedidos
+    .filter((p) => p.status_geral !== "concluido")
+    .slice(0, 5);
 
   const getEtapaAtual = (etapas: any[]) => {
     if (!etapas || etapas.length === 0) return "Sem etapa";
@@ -62,7 +64,7 @@ export const RecentOrders = ({ pedidos }: RecentOrdersProps) => {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          <span>Pedidos Recentes</span>
+          <span>Pedidos em Andamento</span>
           <Link to="/pedidos">
             <Button variant="ghost" size="sm">
               Ver todos
@@ -71,7 +73,7 @@ export const RecentOrders = ({ pedidos }: RecentOrdersProps) => {
         </CardTitle>
       </CardHeader>
       <CardContent>
-        {pedidosRecentes.length === 0 ? (
+        {pedidosEmAndamento.length === 0 ? (
           <div className="py-8 text-center text-muted-foreground">
             <Package className="mx-auto mb-4 h-12 w-12 opacity-50" />
             <p>Nenhum pedido cadastrado ainda.</p>
@@ -81,7 +83,7 @@ export const RecentOrders = ({ pedidos }: RecentOrdersProps) => {
           </div>
         ) : (
           <div className="space-y-4">
-            {pedidosRecentes.map((pedido) => {
+            {pedidosEmAndamento.map((pedido) => {
               const dataLimite = new Date(pedido.prazo_final);
               const hoje = new Date();
               const atrasado =
