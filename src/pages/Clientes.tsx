@@ -14,7 +14,17 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Users as UsersIcon, Mail, Phone, User } from "lucide-react";
+import { Plus, Users as UsersIcon, Mail, Phone, User, Pencil, Trash2 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface Cliente {
   id: string;
@@ -29,6 +39,9 @@ export default function Clientes() {
   const [clientesComPedidos, setClientesComPedidos] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingCliente, setEditingCliente] = useState<Cliente | null>(null);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [clienteToDelete, setClienteToDelete] = useState<Cliente | null>(null);
   const { toast } = useToast();
 
   const [formData, setFormData] = useState({
@@ -73,24 +86,88 @@ export default function Clientes() {
     e.preventDefault();
 
     try {
-      const { error } = await supabase.from("clientes").insert([formData]);
+      if (editingCliente) {
+        // Atualizar cliente existente
+        const { error } = await supabase
+          .from("clientes")
+          .update(formData)
+          .eq("id", editingCliente.id);
 
-      if (error) throw error;
+        if (error) throw error;
 
-      toast({
-        title: "Cliente cadastrado!",
-        description: "O cliente foi adicionado com sucesso.",
-      });
+        toast({
+          title: "Cliente atualizado!",
+          description: "As informações foram salvas com sucesso.",
+        });
+      } else {
+        // Criar novo cliente
+        const { error } = await supabase.from("clientes").insert([formData]);
+
+        if (error) throw error;
+
+        toast({
+          title: "Cliente cadastrado!",
+          description: "O cliente foi adicionado com sucesso.",
+        });
+      }
 
       setDialogOpen(false);
+      setEditingCliente(null);
       setFormData({ nome: "", contato: "", email: "", telefone: "" });
       fetchClientes();
     } catch (error: any) {
       toast({
-        title: "Erro ao cadastrar cliente",
+        title: editingCliente ? "Erro ao atualizar cliente" : "Erro ao cadastrar cliente",
         description: error.message,
         variant: "destructive",
       });
+    }
+  };
+
+  const handleEdit = (cliente: Cliente) => {
+    setEditingCliente(cliente);
+    setFormData({
+      nome: cliente.nome,
+      contato: cliente.contato || "",
+      email: cliente.email || "",
+      telefone: cliente.telefone || "",
+    });
+    setDialogOpen(true);
+  };
+
+  const handleDeleteConfirm = async () => {
+    if (!clienteToDelete) return;
+
+    try {
+      const { error } = await supabase
+        .from("clientes")
+        .delete()
+        .eq("id", clienteToDelete.id);
+
+      if (error) throw error;
+
+      toast({
+        title: "Cliente excluído!",
+        description: "O cliente foi removido com sucesso.",
+      });
+
+      setDeleteDialogOpen(false);
+      setClienteToDelete(null);
+      fetchClientes();
+    } catch (error: any) {
+      toast({
+        title: "Erro ao excluir cliente",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleDialogClose = (open: boolean) => {
+    setDialogOpen(open);
+    if (!open) {
+      setEditingCliente(null);
+      setFormData({ nome: "", contato: "", email: "", telefone: "" });
     }
   };
 
@@ -111,7 +188,7 @@ export default function Clientes() {
             Gerencie os clientes (marcas) da confecção
           </p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <Dialog open={dialogOpen} onOpenChange={handleDialogClose}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
@@ -121,9 +198,13 @@ export default function Clientes() {
           <DialogContent>
             <form onSubmit={handleSubmit}>
               <DialogHeader>
-                <DialogTitle>Cadastrar Cliente</DialogTitle>
+                <DialogTitle>
+                  {editingCliente ? "Editar Cliente" : "Cadastrar Cliente"}
+                </DialogTitle>
                 <DialogDescription>
-                  Adicione um novo cliente à sua lista
+                  {editingCliente
+                    ? "Atualize as informações do cliente"
+                    : "Adicione um novo cliente à sua lista"}
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
@@ -178,11 +259,13 @@ export default function Clientes() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => setDialogOpen(false)}
+                  onClick={() => handleDialogClose(false)}
                 >
                   Cancelar
                 </Button>
-                <Button type="submit">Cadastrar</Button>
+                <Button type="submit">
+                  {editingCliente ? "Salvar" : "Cadastrar"}
+                </Button>
               </DialogFooter>
             </form>
           </DialogContent>
@@ -223,7 +306,30 @@ export default function Clientes() {
                   .map((cliente) => (
                     <Card key={cliente.id} className="border-primary/30">
                       <CardHeader>
-                        <CardTitle className="text-lg">{cliente.nome}</CardTitle>
+                        <div className="flex items-start justify-between">
+                          <CardTitle className="text-lg">{cliente.nome}</CardTitle>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => handleEdit(cliente)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive hover:text-destructive"
+                              onClick={() => {
+                                setClienteToDelete(cliente);
+                                setDeleteDialogOpen(true);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
                       </CardHeader>
                       <CardContent className="space-y-2">
                         {cliente.contato && (
@@ -272,7 +378,30 @@ export default function Clientes() {
                   .map((cliente) => (
                     <Card key={cliente.id}>
                       <CardHeader>
-                        <CardTitle className="text-lg">{cliente.nome}</CardTitle>
+                        <div className="flex items-start justify-between">
+                          <CardTitle className="text-lg">{cliente.nome}</CardTitle>
+                          <div className="flex gap-2">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8"
+                              onClick={() => handleEdit(cliente)}
+                            >
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-destructive hover:text-destructive"
+                              onClick={() => {
+                                setClienteToDelete(cliente);
+                                setDeleteDialogOpen(true);
+                              }}
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </div>
                       </CardHeader>
                       <CardContent className="space-y-2">
                         {cliente.contato && (
@@ -306,6 +435,27 @@ export default function Clientes() {
           </div>
         </div>
       )}
+
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o cliente{" "}
+              <strong>{clienteToDelete?.nome}</strong>? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteConfirm}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
