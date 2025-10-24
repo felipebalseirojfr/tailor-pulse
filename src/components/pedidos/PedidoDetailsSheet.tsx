@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Sheet,
   SheetContent,
@@ -14,10 +14,20 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CheckCircle2, ChevronRight, Edit2, Save, X, ChevronLeft, ExternalLink } from "lucide-react";
+import { CheckCircle2, ChevronRight, Edit2, Save, X, ChevronLeft, ExternalLink, Trash2 } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { QRCodeDisplay } from "./QRCodeDisplay";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 interface PedidoDetailsSheetProps {
   pedido: any;
@@ -32,8 +42,10 @@ export function PedidoDetailsSheet({
   onOpenChange,
   onUpdate,
 }: PedidoDetailsSheetProps) {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [editData, setEditData] = useState({
     produto_modelo: "",
     tipo_peca: "",
@@ -212,6 +224,35 @@ export function PedidoDetailsSheet({
       toast.error("Erro ao concluir pedido");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDeletePedido = async () => {
+    if (!pedido) return;
+
+    try {
+      // Primeiro, excluir todas as etapas de produção deste pedido
+      const { error: etapasError } = await supabase
+        .from("etapas_producao")
+        .delete()
+        .eq("pedido_id", pedido.id);
+
+      if (etapasError) throw etapasError;
+
+      // Depois, excluir o pedido
+      const { error: pedidoError } = await supabase
+        .from("pedidos")
+        .delete()
+        .eq("id", pedido.id);
+
+      if (pedidoError) throw pedidoError;
+
+      toast.success("Pedido excluído com sucesso!");
+      onOpenChange(false);
+      onUpdate();
+    } catch (error: any) {
+      console.error("Erro ao excluir pedido:", error);
+      toast.error("Erro ao excluir pedido");
     }
   };
 
@@ -557,8 +598,42 @@ export function PedidoDetailsSheet({
               </div>
             </>
           )}
+
+          {/* Botão de Excluir */}
+          <Separator />
+          <Button
+            variant="destructive"
+            onClick={() => setDeleteDialogOpen(true)}
+            className="w-full"
+          >
+            <Trash2 className="mr-2 h-4 w-4" />
+            Excluir Pedido
+          </Button>
         </div>
       </SheetContent>
+
+      {/* Dialog de Confirmação de Exclusão */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o pedido{" "}
+              <strong>{pedido.produto_modelo}</strong>? Esta ação não pode ser desfeita
+              e todas as etapas de produção associadas serão removidas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeletePedido}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir Pedido
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </Sheet>
   );
 }
