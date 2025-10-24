@@ -247,9 +247,14 @@ export function PedidoDetailsSheet({
 
       if (pedidoError) throw pedidoError;
 
-      toast.success("Pedido excluído com sucesso!");
+      // Fechar o sheet primeiro para melhor UX
       onOpenChange(false);
+      
+      // Atualizar a lista
       onUpdate();
+      
+      // Mostrar mensagem de sucesso
+      toast.success("Pedido excluído com sucesso!");
     } catch (error: any) {
       console.error("Erro ao excluir pedido:", error);
       toast.error("Erro ao excluir pedido");
