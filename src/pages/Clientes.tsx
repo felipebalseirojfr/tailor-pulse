@@ -53,6 +53,30 @@ export default function Clientes() {
 
   useEffect(() => {
     fetchClientes();
+
+    // Configurar listener de mudanças em tempo real
+    const clientesChannel = supabase
+      .channel('clientes-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'clientes'
+        },
+        (payload) => {
+          console.log('Mudança detectada em clientes:', payload);
+          // Não buscar novamente em DELETEs, pois já tratamos otimisticamente
+          if (payload.eventType !== 'DELETE') {
+            fetchClientes();
+          }
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(clientesChannel);
+    };
   }, []);
 
   const fetchClientes = async () => {
@@ -180,6 +204,9 @@ export default function Clientes() {
         throw error;
       }
 
+      // Remover da lista imediatamente (atualização otimista)
+      setClientes(prev => prev.filter(c => c.id !== clienteToDelete.id));
+
       toast({
         title: "Cliente excluído!",
         description: "O cliente foi removido com sucesso.",
@@ -187,7 +214,8 @@ export default function Clientes() {
 
       setDeleteDialogOpen(false);
       setClienteToDelete(null);
-      fetchClientes();
+      
+      // O listener real-time vai atualizar automaticamente (para outros casos)
     } catch (error: any) {
       console.error("Erro completo:", error);
       toast({
