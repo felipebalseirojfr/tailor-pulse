@@ -20,7 +20,18 @@ import {
   CheckCircle2,
   Circle,
   PlayCircle,
+  Trash2,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { QRCodeDisplay } from "@/components/pedidos/QRCodeDisplay";
 import { HistoricoEscaneamentos } from "@/components/pedidos/HistoricoEscaneamentos";
 
@@ -85,6 +96,7 @@ export default function DetalhesPedido() {
   const [etapas, setEtapas] = useState<Etapa[]>([]);
   const [responsaveis, setResponsaveis] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchPedidoDetails();
@@ -255,6 +267,43 @@ export default function DetalhesPedido() {
     }
   };
 
+  const handleDeletePedido = async () => {
+    if (!pedido) return;
+
+    try {
+      // Primeiro, excluir todas as etapas de produção deste pedido
+      const { error: etapasError } = await supabase
+        .from("etapas_producao")
+        .delete()
+        .eq("pedido_id", pedido.id);
+
+      if (etapasError) throw etapasError;
+
+      // Depois, excluir o pedido
+      const { error: pedidoError } = await supabase
+        .from("pedidos")
+        .delete()
+        .eq("id", pedido.id);
+
+      if (pedidoError) throw pedidoError;
+
+      toast({
+        title: "Pedido excluído!",
+        description: "O pedido foi removido do controle de produção.",
+      });
+
+      // Navegar de volta para a lista de pedidos
+      navigate("/pedidos");
+    } catch (error: any) {
+      console.error("Erro ao excluir pedido:", error);
+      toast({
+        title: "Erro ao excluir pedido",
+        description: error.message || "Ocorreu um erro ao tentar excluir o pedido.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -312,12 +361,22 @@ export default function DetalhesPedido() {
               Cliente: {pedido.clientes?.nome}
             </p>
           </div>
-          {atrasado && (
-            <Badge variant="destructive" className="text-base">
-              <Clock className="mr-2 h-4 w-4" />
-              Atrasado
-            </Badge>
-          )}
+          <div className="flex items-center gap-2">
+            {atrasado && (
+              <Badge variant="destructive" className="text-base">
+                <Clock className="mr-2 h-4 w-4" />
+                Atrasado
+              </Badge>
+            )}
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => setDeleteDialogOpen(true)}
+            >
+              <Trash2 className="mr-2 h-4 w-4" />
+              Excluir Pedido
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -526,6 +585,29 @@ export default function DetalhesPedido() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Dialog de Confirmação de Exclusão */}
+      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o pedido{" "}
+              <strong>{pedido.produto_modelo}</strong>? Esta ação não pode ser desfeita
+              e todas as etapas de produção associadas serão removidas.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeletePedido}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir Pedido
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
