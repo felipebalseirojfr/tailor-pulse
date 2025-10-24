@@ -135,6 +135,37 @@ export default function Clientes() {
     setDialogOpen(true);
   };
 
+  const handleDeleteClick = async (cliente: Cliente) => {
+    // Verificar se o cliente tem pedidos
+    const { data: pedidos, error } = await supabase
+      .from("pedidos")
+      .select("id")
+      .eq("cliente_id", cliente.id);
+
+    if (error) {
+      console.error("Erro ao verificar pedidos:", error);
+      toast({
+        title: "Erro",
+        description: "Não foi possível verificar os pedidos do cliente.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (pedidos && pedidos.length > 0) {
+      toast({
+        title: "Não é possível excluir",
+        description: `Este cliente possui ${pedidos.length} pedido(s) cadastrado(s). Exclua os pedidos primeiro.`,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Se não tem pedidos, abrir dialog de confirmação
+    setClienteToDelete(cliente);
+    setDeleteDialogOpen(true);
+  };
+
   const handleDeleteConfirm = async () => {
     if (!clienteToDelete) return;
 
@@ -144,7 +175,10 @@ export default function Clientes() {
         .delete()
         .eq("id", clienteToDelete.id);
 
-      if (error) throw error;
+      if (error) {
+        console.error("Erro ao deletar cliente:", error);
+        throw error;
+      }
 
       toast({
         title: "Cliente excluído!",
@@ -155,9 +189,10 @@ export default function Clientes() {
       setClienteToDelete(null);
       fetchClientes();
     } catch (error: any) {
+      console.error("Erro completo:", error);
       toast({
         title: "Erro ao excluir cliente",
-        description: error.message,
+        description: error.message || "Ocorreu um erro ao tentar excluir o cliente.",
         variant: "destructive",
       });
     }
@@ -321,10 +356,7 @@ export default function Clientes() {
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8 text-destructive hover:text-destructive"
-                              onClick={() => {
-                                setClienteToDelete(cliente);
-                                setDeleteDialogOpen(true);
-                              }}
+                              onClick={() => handleDeleteClick(cliente)}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
@@ -393,10 +425,7 @@ export default function Clientes() {
                               variant="ghost"
                               size="icon"
                               className="h-8 w-8 text-destructive hover:text-destructive"
-                              onClick={() => {
-                                setClienteToDelete(cliente);
-                                setDeleteDialogOpen(true);
-                              }}
+                              onClick={() => handleDeleteClick(cliente)}
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
