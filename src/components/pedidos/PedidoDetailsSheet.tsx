@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link } from "react-router-dom";
 import {
   Sheet,
   SheetContent,
@@ -13,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CheckCircle2, ChevronRight, Edit2, Save, X, ChevronLeft } from "lucide-react";
+import { CheckCircle2, ChevronRight, Edit2, Save, X, ChevronLeft, ExternalLink } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { QRCodeDisplay } from "./QRCodeDisplay";
@@ -244,36 +245,44 @@ export function PedidoDetailsSheet({
     <Sheet open={open} onOpenChange={onOpenChange}>
       <SheetContent className="w-full sm:max-w-xl overflow-y-auto">
         <SheetHeader>
-          <div className="flex items-center justify-between">
-            <SheetTitle>Detalhes do Pedido</SheetTitle>
-            <div className="flex gap-2">
-              <Button 
-                size="sm" 
-                variant="outline" 
-                onClick={handleVoltarEtapa}
-                disabled={loading}
-                title="Voltar etapa"
-              >
-                <ChevronLeft className="h-4 w-4" />
-              </Button>
-              {!isEditing ? (
-                <Button size="sm" variant="outline" onClick={handleEditClick}>
-                  <Edit2 className="mr-2 h-4 w-4" />
-                  Editar
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center justify-between">
+              <SheetTitle>Detalhes do Pedido</SheetTitle>
+              <div className="flex gap-2">
+                <Button 
+                  size="sm" 
+                  variant="outline" 
+                  onClick={handleVoltarEtapa}
+                  disabled={loading}
+                  title="Voltar etapa"
+                >
+                  <ChevronLeft className="h-4 w-4" />
                 </Button>
-              ) : (
-                <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={handleCancelEdit}>
-                    <X className="mr-2 h-4 w-4" />
-                    Cancelar
+                {!isEditing ? (
+                  <Button size="sm" variant="outline" onClick={handleEditClick}>
+                    <Edit2 className="mr-2 h-4 w-4" />
+                    Editar
                   </Button>
-                  <Button size="sm" onClick={handleSaveEdit} disabled={loading}>
-                    <Save className="mr-2 h-4 w-4" />
-                    Salvar
-                  </Button>
-                </div>
-              )}
+                ) : (
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" onClick={handleCancelEdit}>
+                      <X className="mr-2 h-4 w-4" />
+                      Cancelar
+                    </Button>
+                    <Button size="sm" onClick={handleSaveEdit} disabled={loading}>
+                      <Save className="mr-2 h-4 w-4" />
+                      Salvar
+                    </Button>
+                  </div>
+                )}
+              </div>
             </div>
+            <Link to={`/pedidos/${pedido.id}`}>
+              <Button variant="secondary" size="sm" className="w-full">
+                <ExternalLink className="mr-2 h-4 w-4" />
+                Ver Detalhes Completos
+              </Button>
+            </Link>
           </div>
         </SheetHeader>
 
