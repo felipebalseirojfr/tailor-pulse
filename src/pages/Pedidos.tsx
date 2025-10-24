@@ -79,6 +79,11 @@ export default function Pedidos() {
   const [activeTab, setActiveTab] = useState("controle");
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
 
+  const handlePedidoDeleted = (pedidoId: string) => {
+    setPedidos(prev => prev.filter(p => p.id !== pedidoId));
+    setFilteredPedidos(prev => prev.filter(p => p.id !== pedidoId));
+  };
+
   useEffect(() => {
     fetchPedidos();
 
@@ -629,12 +634,13 @@ export default function Pedidos() {
       </Tabs>
 
       {/* Modal de Detalhes */}
-      <PedidoDetailsSheet
-        pedido={selectedPedido}
-        open={sheetOpen}
-        onOpenChange={setSheetOpen}
-        onUpdate={fetchPedidos}
-      />
+        <PedidoDetailsSheet
+          pedido={selectedPedido}
+          open={sheetOpen}
+          onOpenChange={setSheetOpen}
+          onUpdate={fetchPedidos}
+          onDelete={handlePedidoDeleted}
+        />
     </div>
   );
 }

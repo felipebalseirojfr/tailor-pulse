@@ -34,6 +34,7 @@ interface PedidoDetailsSheetProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onUpdate: () => void;
+  onDelete?: (pedidoId: string) => void;
 }
 
 export function PedidoDetailsSheet({
@@ -41,6 +42,7 @@ export function PedidoDetailsSheet({
   open,
   onOpenChange,
   onUpdate,
+  onDelete,
 }: PedidoDetailsSheetProps) {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
@@ -250,11 +252,16 @@ export function PedidoDetailsSheet({
       // Fechar o sheet primeiro para melhor UX
       onOpenChange(false);
       
-      // Atualizar a lista
-      onUpdate();
+      // Remover da lista imediatamente (atualização otimista)
+      if (onDelete) {
+        onDelete(pedido.id);
+      }
       
       // Mostrar mensagem de sucesso
       toast.success("Pedido excluído com sucesso!");
+      
+      // Atualizar a lista do servidor em background
+      onUpdate();
     } catch (error: any) {
       console.error("Erro ao excluir pedido:", error);
       toast.error("Erro ao excluir pedido");
