@@ -156,7 +156,16 @@ export default function Pedidos() {
     if (activeTab === "controle") {
       filtered = filtered.filter((p) => p.status_geral !== "concluido");
     } else {
-      filtered = filtered.filter((p) => p.status_geral === "concluido");
+      // Na aba de concluídos, mostrar apenas os últimos 20 dias
+      const vintesDiasAtras = new Date();
+      vintesDiasAtras.setDate(vintesDiasAtras.getDate() - 20);
+      
+      filtered = filtered.filter((p) => {
+        if (p.status_geral !== "concluido") return false;
+        
+        const dataAtualizacao = new Date(p.updated_at);
+        return dataAtualizacao >= vintesDiasAtras;
+      });
     }
 
     // Filtro por busca geral
