@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,8 +14,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Users as UsersIcon, Mail, Phone, User, Pencil, Trash2, Search, X, Filter } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Plus, Users as UsersIcon, Mail, Phone, User, Pencil, Trash2 } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -45,29 +44,12 @@ export default function Clientes() {
   const [clienteToDelete, setClienteToDelete] = useState<Cliente | null>(null);
   const { toast } = useToast();
 
-  // Estados de busca e filtros
-  const [searchQuery, setSearchQuery] = useState("");
-  const [debouncedSearch, setDebouncedSearch] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState({
-    comPedidos: "todos", // todos, com, sem
-  });
-
   const [formData, setFormData] = useState({
     nome: "",
     contato: "",
     email: "",
     telefone: "",
   });
-
-  // Debounce para busca
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedSearch(searchQuery);
-    }, 300);
-
-    return () => clearTimeout(timer);
-  }, [searchQuery]);
 
   useEffect(() => {
     fetchClientes();
@@ -252,55 +234,6 @@ export default function Clientes() {
     }
   };
 
-  // Lógica de busca e filtros
-  const handleSearch = (value: string) => {
-    setSearchQuery(value);
-  };
-
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (e.key === "Escape") {
-      setSearchQuery("");
-    }
-  };
-
-  const resetFilters = () => {
-    setSearchQuery("");
-    setFilters({ comPedidos: "todos" });
-  };
-
-  // Contar pedidos ativos por cliente
-  const pedidosCount = useMemo(() => {
-    const countMap = new Map<string, number>();
-    clientes.forEach(cliente => {
-      countMap.set(cliente.id, clientesComPedidos.has(cliente.id) ? 1 : 0);
-    });
-    return countMap;
-  }, [clientes, clientesComPedidos]);
-
-  // Filtragem com useMemo
-  const clientesFiltrados = useMemo(() => {
-    return clientes.filter(cliente => {
-      // Busca
-      const searchLower = debouncedSearch.toLowerCase();
-      const matchesSearch = 
-        cliente.nome.toLowerCase().includes(searchLower) ||
-        cliente.email?.toLowerCase().includes(searchLower) ||
-        cliente.telefone?.includes(debouncedSearch) ||
-        cliente.contato?.toLowerCase().includes(searchLower);
-
-      if (!matchesSearch) return false;
-
-      // Filtro de pedidos
-      if (filters.comPedidos === "com" && !clientesComPedidos.has(cliente.id)) return false;
-      if (filters.comPedidos === "sem" && clientesComPedidos.has(cliente.id)) return false;
-
-      return true;
-    });
-  }, [clientes, debouncedSearch, filters, clientesComPedidos]);
-
-  const clientesFiltradosComPedidos = clientesFiltrados.filter(c => clientesComPedidos.has(c.id));
-  const clientesFiltradosSemPedidos = clientesFiltrados.filter(c => !clientesComPedidos.has(c.id));
-
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -402,93 +335,6 @@ export default function Clientes() {
         </Dialog>
       </div>
 
-      {/* Barra de busca e filtros */}
-      {clientes.length > 0 && (
-        <Card>
-          <CardContent className="pt-6">
-            <div className="space-y-4">
-              {/* Barra de busca */}
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input
-                  type="text"
-                  placeholder="Buscar cliente por nome, e-mail, telefone ou contato..."
-                  value={searchQuery}
-                  onChange={(e) => handleSearch(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  className="pl-10 pr-10"
-                />
-                {searchQuery && (
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    className="absolute right-1 top-1/2 h-7 w-7 -translate-y-1/2"
-                    onClick={() => setSearchQuery("")}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
-                )}
-              </div>
-
-              {/* Filtros */}
-              <div className="flex flex-wrap items-center gap-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setShowFilters(!showFilters)}
-                  className="gap-2"
-                >
-                  <Filter className="h-4 w-4" />
-                  Filtros
-                </Button>
-
-                {showFilters && (
-                  <>
-                    <Button
-                      variant={filters.comPedidos === "todos" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setFilters({ ...filters, comPedidos: "todos" })}
-                    >
-                      Todos
-                    </Button>
-                    <Button
-                      variant={filters.comPedidos === "com" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setFilters({ ...filters, comPedidos: "com" })}
-                    >
-                      Com Pedidos
-                    </Button>
-                    <Button
-                      variant={filters.comPedidos === "sem" ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setFilters({ ...filters, comPedidos: "sem" })}
-                    >
-                      Sem Pedidos
-                    </Button>
-                  </>
-                )}
-
-                {(searchQuery || filters.comPedidos !== "todos") && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={resetFilters}
-                    className="text-muted-foreground"
-                  >
-                    Limpar filtros
-                  </Button>
-                )}
-              </div>
-
-              {/* Contador */}
-              <p className="text-sm text-muted-foreground">
-                Exibindo {clientesFiltrados.length} de {clientes.length} clientes
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
       {clientes.length === 0 ? (
         <Card>
           <CardContent className="py-16 text-center">
@@ -505,43 +351,26 @@ export default function Clientes() {
             </Button>
           </CardContent>
         </Card>
-      ) : clientesFiltrados.length === 0 ? (
-        <Card>
-          <CardContent className="py-16 text-center">
-            <Search className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-            <h3 className="mb-2 text-lg font-semibold">
-              Nenhum cliente encontrado
-            </h3>
-            <p className="mb-4 text-muted-foreground">
-              Tente ajustar os filtros ou buscar por outro termo
-            </p>
-            <Button variant="outline" onClick={resetFilters}>
-              Limpar filtros
-            </Button>
-          </CardContent>
-        </Card>
       ) : (
         <div className="space-y-8">
           {/* Clientes com Pedidos Ativos */}
-          {(filters.comPedidos === "todos" || filters.comPedidos === "com") && clientesFiltradosComPedidos.length > 0 && (
-            <div>
-              <h2 className="text-2xl font-semibold mb-4">
-                Clientes com Pedidos Ativos
-                <Badge variant="secondary" className="ml-2">
-                  {clientesFiltradosComPedidos.length}
-                </Badge>
-              </h2>
+          <div>
+            <h2 className="text-2xl font-semibold mb-4">Clientes com Pedidos Ativos</h2>
+            {clientes.filter(c => clientesComPedidos.has(c.id)).length === 0 ? (
+              <Card>
+                <CardContent className="py-8 text-center">
+                  <p className="text-muted-foreground">Nenhum cliente com pedidos ativos</p>
+                </CardContent>
+              </Card>
+            ) : (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {clientesFiltradosComPedidos.map((cliente) => (
-                  <Card key={cliente.id} className="border-primary/30">
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
+                {clientes
+                  .filter(c => clientesComPedidos.has(c.id))
+                  .map((cliente) => (
+                    <Card key={cliente.id} className="border-primary/30">
+                      <CardHeader>
+                        <div className="flex items-start justify-between">
                           <CardTitle className="text-lg">{cliente.nome}</CardTitle>
-                          <Badge variant="default" className="mt-1 bg-green-500 hover:bg-green-600">
-                            🟢 Pedidos ativos
-                          </Badge>
-                        </div>
                           <div className="flex gap-2">
                             <Button
                               variant="ghost"
@@ -559,60 +388,58 @@ export default function Clientes() {
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
+                          </div>
                         </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      {cliente.contato && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <User className="h-4 w-4 text-muted-foreground" />
-                          <span>{cliente.contato}</span>
-                        </div>
-                      )}
-                      {cliente.email && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <Mail className="h-4 w-4 text-muted-foreground" />
-                          <span className="truncate">{cliente.email}</span>
-                        </div>
-                      )}
-                      {cliente.telefone && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <Phone className="h-4 w-4 text-muted-foreground" />
-                          <span>{cliente.telefone}</span>
-                        </div>
-                      )}
-                      {!cliente.contato && !cliente.email && !cliente.telefone && (
-                        <p className="text-sm text-muted-foreground">
-                          Sem informações de contato
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardHeader>
+                      <CardContent className="space-y-2">
+                        {cliente.contato && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <User className="h-4 w-4 text-muted-foreground" />
+                            <span>{cliente.contato}</span>
+                          </div>
+                        )}
+                        {cliente.email && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Mail className="h-4 w-4 text-muted-foreground" />
+                            <span className="truncate">{cliente.email}</span>
+                          </div>
+                        )}
+                        {cliente.telefone && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Phone className="h-4 w-4 text-muted-foreground" />
+                            <span>{cliente.telefone}</span>
+                          </div>
+                        )}
+                        {!cliente.contato && !cliente.email && !cliente.telefone && (
+                          <p className="text-sm text-muted-foreground">
+                            Sem informações de contato
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* Clientes sem Pedido */}
-          {(filters.comPedidos === "todos" || filters.comPedidos === "sem") && clientesFiltradosSemPedidos.length > 0 && (
-            <div>
-              <h2 className="text-2xl font-semibold mb-4">
-                Clientes sem Pedido
-                <Badge variant="outline" className="ml-2">
-                  {clientesFiltradosSemPedidos.length}
-                </Badge>
-              </h2>
+          <div>
+            <h2 className="text-2xl font-semibold mb-4">Clientes sem Pedido</h2>
+            {clientes.filter(c => !clientesComPedidos.has(c.id)).length === 0 ? (
+              <Card>
+                <CardContent className="py-8 text-center">
+                  <p className="text-muted-foreground">Todos os clientes têm pedidos ativos</p>
+                </CardContent>
+              </Card>
+            ) : (
               <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {clientesFiltradosSemPedidos.map((cliente) => (
-                  <Card key={cliente.id}>
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
+                {clientes
+                  .filter(c => !clientesComPedidos.has(c.id))
+                  .map((cliente) => (
+                    <Card key={cliente.id}>
+                      <CardHeader>
+                        <div className="flex items-start justify-between">
                           <CardTitle className="text-lg">{cliente.nome}</CardTitle>
-                          <Badge variant="outline" className="mt-1">
-                            ⚪ Sem pedidos
-                          </Badge>
-                        </div>
                           <div className="flex gap-2">
                             <Button
                               variant="ghost"
@@ -630,39 +457,39 @@ export default function Clientes() {
                             >
                               <Trash2 className="h-4 w-4" />
                             </Button>
+                          </div>
                         </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent className="space-y-2">
-                      {cliente.contato && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <User className="h-4 w-4 text-muted-foreground" />
-                          <span>{cliente.contato}</span>
-                        </div>
-                      )}
-                      {cliente.email && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <Mail className="h-4 w-4 text-muted-foreground" />
-                          <span className="truncate">{cliente.email}</span>
-                        </div>
-                      )}
-                      {cliente.telefone && (
-                        <div className="flex items-center gap-2 text-sm">
-                          <Phone className="h-4 w-4 text-muted-foreground" />
-                          <span>{cliente.telefone}</span>
-                        </div>
-                      )}
-                      {!cliente.contato && !cliente.email && !cliente.telefone && (
-                        <p className="text-sm text-muted-foreground">
-                          Sem informações de contato
-                        </p>
-                      )}
-                    </CardContent>
-                  </Card>
-                ))}
+                      </CardHeader>
+                      <CardContent className="space-y-2">
+                        {cliente.contato && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <User className="h-4 w-4 text-muted-foreground" />
+                            <span>{cliente.contato}</span>
+                          </div>
+                        )}
+                        {cliente.email && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Mail className="h-4 w-4 text-muted-foreground" />
+                            <span className="truncate">{cliente.email}</span>
+                          </div>
+                        )}
+                        {cliente.telefone && (
+                          <div className="flex items-center gap-2 text-sm">
+                            <Phone className="h-4 w-4 text-muted-foreground" />
+                            <span>{cliente.telefone}</span>
+                          </div>
+                        )}
+                        {!cliente.contato && !cliente.email && !cliente.telefone && (
+                          <p className="text-sm text-muted-foreground">
+                            Sem informações de contato
+                          </p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       )}
 
