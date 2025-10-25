@@ -233,37 +233,52 @@ export function PedidoDetailsSheet({
     if (!pedido) return;
 
     try {
+      console.log('[DELETE] Iniciando exclusão do pedido:', pedido.id);
+      
       // Primeiro, excluir todas as etapas de produção deste pedido
-      const { error: etapasError } = await supabase
+      const { data: etapasData, error: etapasError } = await supabase
         .from("etapas_producao")
         .delete()
-        .eq("pedido_id", pedido.id);
+        .eq("pedido_id", pedido.id)
+        .select();
 
-      if (etapasError) throw etapasError;
+      if (etapasError) {
+        console.error('[DELETE] Erro ao excluir etapas:', etapasError);
+        throw new Error(`Erro ao excluir etapas: ${etapasError.message}`);
+      }
+      
+      console.log('[DELETE] Etapas excluídas:', etapasData?.length || 0);
 
       // Depois, excluir o pedido
-      const { error: pedidoError } = await supabase
+      const { data: pedidoData, error: pedidoError } = await supabase
         .from("pedidos")
         .delete()
-        .eq("id", pedido.id);
+        .eq("id", pedido.id)
+        .select();
 
-      if (pedidoError) throw pedidoError;
+      if (pedidoError) {
+        console.error('[DELETE] Erro ao excluir pedido:', pedidoError);
+        throw new Error(`Erro ao excluir pedido: ${pedidoError.message}`);
+      }
+      
+      console.log('[DELETE] Pedido excluído:', pedidoData);
 
       // Fechar o sheet primeiro para melhor UX
       onOpenChange(false);
       
       // Remover da lista imediatamente (atualização otimista)
       if (onDelete) {
+        console.log('[DELETE] Chamando onDelete callback');
         onDelete(pedido.id);
       }
       
       // Mostrar mensagem de sucesso
       toast.success("Pedido excluído com sucesso!");
       
-      // O listener real-time vai atualizar automaticamente
+      console.log('[DELETE] Exclusão concluída com sucesso');
     } catch (error: any) {
-      console.error("Erro ao excluir pedido:", error);
-      toast.error("Erro ao excluir pedido");
+      console.error("[DELETE] Erro completo:", error);
+      toast.error(error.message || "Erro ao excluir pedido. Verifique suas permissões.");
     }
   };
 
