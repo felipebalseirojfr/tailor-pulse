@@ -22,11 +22,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus, Search, Package as PackageIcon, ChevronRight, Filter, ChevronDown, AlertCircle } from "lucide-react";
+import { Plus, Search, Package as PackageIcon, ChevronRight, Filter, ChevronDown, AlertCircle, Maximize2, X } from "lucide-react";
 import { PedidosSummaryCards } from "@/components/pedidos/PedidosSummaryCards";
 import { PedidoDetailsSheet } from "@/components/pedidos/PedidoDetailsSheet";
 import { EtapasVisuais } from "@/components/pedidos/EtapasVisuais";
 import { FiltroAvancado } from "@/components/pedidos/FiltroAvancado";
+import { PedidoCard } from "@/components/pedidos/PedidoCard";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -78,6 +79,8 @@ export default function Pedidos() {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [activeTab, setActiveTab] = useState("controle");
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
+  const [modoTV, setModoTV] = useState(false);
+  const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
 
   const handlePedidoDeleted = (pedidoId: string) => {
     setPedidos(prev => prev.filter(p => p.id !== pedidoId));
@@ -408,231 +411,354 @@ export default function Pedidos() {
   }
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">
-            Controle de Produção – Visão Geral
-          </h1>
-          <p className="text-muted-foreground">
-            Acompanhe e atualize todos os pedidos em produção
-          </p>
+    <div className={`${modoTV ? 'fixed inset-0 z-50 bg-background overflow-auto' : 'space-y-6'}`}>
+      {!modoTV ? (
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">
+              Controle de Produção – Visão Geral
+            </h1>
+            <p className="text-muted-foreground">
+              Acompanhe e atualize todos os pedidos em produção
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={() => setModoTV(true)}
+            >
+              <Maximize2 className="mr-2 h-4 w-4" />
+              Modo TV
+            </Button>
+            <Link to="/pedidos/novo">
+              <Button>
+                <Plus className="mr-2 h-4 w-4" />
+                Novo Pedido
+              </Button>
+            </Link>
+          </div>
         </div>
-        <Link to="/pedidos/novo">
-          <Button>
-            <Plus className="mr-2 h-4 w-4" />
-            Novo Pedido
+      ) : (
+        <div className="flex items-center justify-between p-6 border-b border-border">
+          <div className="flex items-center gap-4">
+            <h1 className="text-4xl font-bold tracking-tight">
+              JFR Confecções - Controle de Produção
+            </h1>
+            <div className="text-2xl text-muted-foreground">
+              {format(new Date(), "HH:mm", { locale: ptBR })}
+            </div>
+          </div>
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => setModoTV(false)}
+          >
+            <X className="mr-2 h-5 w-5" />
+            Sair do Modo TV
           </Button>
-        </Link>
-      </div>
+        </div>
+      )}
 
       {/* Cards de Resumo */}
-      <PedidosSummaryCards
-        total={summaryData.total}
-        emProducao={summaryData.emProducao}
-        concluidos={summaryData.concluidos}
-        atrasados={summaryData.atrasados}
-        onFilterClick={setStatusFilter}
-        activeFilter={statusFilter}
-      />
+      <div className={modoTV ? 'px-6' : ''}>
+        <PedidosSummaryCards
+          total={summaryData.total}
+          emProducao={summaryData.emProducao}
+          concluidos={summaryData.concluidos}
+          atrasados={summaryData.atrasados}
+          onFilterClick={setStatusFilter}
+          activeFilter={statusFilter}
+        />
+        
+        {/* Barra de Progresso Global */}
+        {!modoTV && activeTab === "controle" && (
+          <Card className="mt-4">
+            <CardContent className="pt-6">
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-muted-foreground">Progresso total da produção</span>
+                  <span className="font-bold">
+                    {pedidos.length > 0
+                      ? Math.round(
+                          (pedidos.reduce((sum, p) => sum + p.progresso_percentual, 0) /
+                            pedidos.length)
+                        )
+                      : 0}
+                    % concluído
+                  </span>
+                </div>
+                <Progress
+                  value={
+                    pedidos.length > 0
+                      ? pedidos.reduce((sum, p) => sum + p.progresso_percentual, 0) /
+                        pedidos.length
+                      : 0
+                  }
+                  className="h-3"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+      </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-        <TabsList className="grid w-full max-w-md grid-cols-2">
-          <TabsTrigger value="controle">Controle de Produção</TabsTrigger>
-          <TabsTrigger value="concluidos">Pedidos Concluídos</TabsTrigger>
-        </TabsList>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className={`space-y-6 ${modoTV ? 'px-6' : ''}`}>
+        {!modoTV && (
+          <div className="flex items-center justify-between">
+            <TabsList className="grid w-full max-w-md grid-cols-2">
+              <TabsTrigger value="controle">Controle de Produção</TabsTrigger>
+              <TabsTrigger value="concluidos">Pedidos Concluídos</TabsTrigger>
+            </TabsList>
+            {activeTab === "controle" && (
+              <div className="flex items-center gap-2">
+                <Button
+                  variant={viewMode === "cards" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setViewMode("cards")}
+                >
+                  Cards
+                </Button>
+                <Button
+                  variant={viewMode === "table" ? "default" : "outline"}
+                  size="sm"
+                  onClick={() => setViewMode("table")}
+                >
+                  Tabela
+                </Button>
+              </div>
+            )}
+          </div>
+        )}
 
         <TabsContent value={activeTab} className="space-y-6">
           {/* Filtros */}
-          <Card>
-            <CardContent className="pt-6">
-              <Collapsible open={filtrosAbertos} onOpenChange={setFiltrosAbertos}>
-                <div className="flex items-center justify-between mb-4">
-                  <CollapsibleTrigger asChild>
-                    <Button variant="outline" className="w-full justify-between">
-                      <div className="flex items-center gap-2">
-                        <Filter className="h-4 w-4" />
-                        <span>Filtros</span>
+          {!modoTV && (
+            <Card>
+              <CardContent className="pt-6">
+                <Collapsible open={filtrosAbertos} onOpenChange={setFiltrosAbertos}>
+                  <div className="flex items-center justify-between mb-4">
+                    <CollapsibleTrigger asChild>
+                      <Button variant="outline" className="w-full justify-between">
+                        <div className="flex items-center gap-2">
+                          <Filter className="h-4 w-4" />
+                          <span>Filtros</span>
+                        </div>
+                        <ChevronDown className={`h-4 w-4 transition-transform ${filtrosAbertos ? 'rotate-180' : ''}`} />
+                      </Button>
+                    </CollapsibleTrigger>
+                  </div>
+                  
+                  <CollapsibleContent className="space-y-4">
+                    <div className="flex flex-col gap-4 md:flex-row">
+                      <div className="relative flex-1">
+                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                          placeholder="Buscar cliente, produto, referência ou OP..."
+                          value={searchTerm}
+                          onChange={(e) => setSearchTerm(e.target.value)}
+                          className="pl-9"
+                        />
                       </div>
-                      <ChevronDown className={`h-4 w-4 transition-transform ${filtrosAbertos ? 'rotate-180' : ''}`} />
-                    </Button>
-                  </CollapsibleTrigger>
-                </div>
-                
-                <CollapsibleContent className="space-y-4">
-                  <div className="flex flex-col gap-4 md:flex-row">
-                    <div className="relative flex-1">
-                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        placeholder="Buscar em todos os campos..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-9"
+                      {activeTab === "controle" && (
+                        <Select value={statusFilter} onValueChange={setStatusFilter}>
+                          <SelectTrigger className="w-full md:w-[200px]">
+                            <SelectValue placeholder="Status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="todos">Todos os status</SelectItem>
+                            <SelectItem value="em_producao">Em Produção</SelectItem>
+                            <SelectItem value="atrasado">Atrasados</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </div>
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <FiltroAvancado
+                        tipo="marca"
+                        opcoes={Array.from(new Set(pedidos.map((p) => p.clientes?.nome).filter(Boolean)))}
+                        valor={marcaFilter}
+                        onChange={setMarcaFilter}
+                        placeholder="Filtrar por marca"
+                      />
+                      <FiltroAvancado
+                        tipo="referencia"
+                        opcoes={Array.from(new Set(pedidos.map((p) => p.tipo_peca).filter(Boolean)))}
+                        valor={referenciaFilter}
+                        onChange={setReferenciaFilter}
+                        placeholder="Filtrar por referência"
+                      />
+                      <FiltroAvancado
+                        tipo="op"
+                        opcoes={Array.from(new Set(pedidos.map((p) => `#${p.id.slice(0, 8)}`)))}
+                        valor={opFilter}
+                        onChange={setOpFilter}
+                        placeholder="Filtrar por #OP"
                       />
                     </div>
-                    {activeTab === "controle" && (
-                      <Select value={statusFilter} onValueChange={setStatusFilter}>
-                        <SelectTrigger className="w-full md:w-[200px]">
-                          <SelectValue placeholder="Status" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="todos">Todos os status</SelectItem>
-                          <SelectItem value="em_producao">Em Produção</SelectItem>
-                          <SelectItem value="atrasado">Atrasados</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    )}
-                  </div>
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <FiltroAvancado
-                      tipo="marca"
-                      opcoes={Array.from(new Set(pedidos.map((p) => p.clientes?.nome).filter(Boolean)))}
-                      valor={marcaFilter}
-                      onChange={setMarcaFilter}
-                      placeholder="Filtrar por marca"
-                    />
-                    <FiltroAvancado
-                      tipo="referencia"
-                      opcoes={Array.from(new Set(pedidos.map((p) => p.tipo_peca).filter(Boolean)))}
-                      valor={referenciaFilter}
-                      onChange={setReferenciaFilter}
-                      placeholder="Filtrar por referência"
-                    />
-                    <FiltroAvancado
-                      tipo="op"
-                      opcoes={Array.from(new Set(pedidos.map((p) => `#${p.id.slice(0, 8)}`)))}
-                      valor={opFilter}
-                      onChange={setOpFilter}
-                      placeholder="Filtrar por #OP"
-                    />
-                  </div>
-                </CollapsibleContent>
-              </Collapsible>
-            </CardContent>
-          </Card>
+                  </CollapsibleContent>
+                </Collapsible>
+              </CardContent>
+            </Card>
+          )}
+          
+          {/* Contador de Resultados */}
+          {filteredPedidos.length > 0 && (
+            <div className="text-sm text-muted-foreground">
+              Exibindo {filteredPedidos.length} de {pedidos.length} pedidos
+            </div>
+          )}
 
-          {/* Tabela de Pedidos */}
+          {/* Lista de Pedidos */}
           {filteredPedidos.length === 0 ? (
-        <Card>
-          <CardContent className="py-16 text-center">
-            <PackageIcon className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-            <h3 className="mb-2 text-lg font-semibold">
-              {pedidos.length === 0
-                ? "Nenhum pedido cadastrado"
-                : "Nenhum pedido encontrado"}
-            </h3>
-            <p className="mb-4 text-muted-foreground">
-              {pedidos.length === 0
-                ? "Comece criando seu primeiro pedido de produção"
-                : "Tente ajustar os filtros de busca"}
-            </p>
-            {pedidos.length === 0 && (
-              <Link to="/pedidos/novo">
-                <Button>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Criar Pedido
-                </Button>
-              </Link>
-            )}
-          </CardContent>
-        </Card>
-      ) : (
-        <Card className="bg-card/60 backdrop-blur-sm border-muted">
-          <div className="overflow-x-auto">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Produto</TableHead>
-                  <TableHead>Marca/Cliente</TableHead>
-                  <TableHead>Referência</TableHead>
-                  <TableHead className="w-[120px]">#OP</TableHead>
-                  {activeTab === "controle" && (
-                    <>
-                      <TableHead className="w-[300px]">Etapas de Produção</TableHead>
-                      <TableHead>Etapa Atual</TableHead>
-                      <TableHead className="w-[100px]">Ação</TableHead>
-                    </>
-                  )}
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {filteredPedidos.map((pedido) => (
-                  <TableRow
-                    key={pedido.id}
-                    className="hover:bg-muted/50"
-                  >
-                     <TableCell onClick={() => handleRowClick(pedido)} className="cursor-pointer font-medium">
-                      {pedido.produto_modelo}
-                      {temEtapaEmAtraso(pedido) && (
-                        <div className="flex items-center gap-1 mt-1">
-                          <AlertCircle className="h-3 w-3 text-destructive" />
-                          <span className="text-xs text-destructive">
-                            {getEtapasAtrasadas(pedido).length} etapa(s) atrasada(s)
-                          </span>
-                        </div>
+            <Card>
+              <CardContent className="py-16 text-center">
+                <PackageIcon className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
+                <h3 className="mb-2 text-lg font-semibold">
+                  {pedidos.length === 0
+                    ? "Nenhum pedido cadastrado"
+                    : "Nenhum pedido encontrado"}
+                </h3>
+                <p className="mb-4 text-muted-foreground">
+                  {pedidos.length === 0
+                    ? "Comece criando seu primeiro pedido de produção"
+                    : "Tente ajustar os filtros de busca"}
+                </p>
+                {pedidos.length === 0 && !modoTV && (
+                  <Link to="/pedidos/novo">
+                    <Button>
+                      <Plus className="mr-2 h-4 w-4" />
+                      Criar Pedido
+                    </Button>
+                  </Link>
+                )}
+              </CardContent>
+            </Card>
+          ) : (viewMode === "cards" || modoTV) && activeTab === "controle" ? (
+            /* Vista de Cards */
+            <div className={`grid gap-4 ${modoTV ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
+              {filteredPedidos.map((pedido) => (
+                <PedidoCard
+                  key={pedido.id}
+                  pedido={pedido}
+                  onViewDetails={() => {
+                    if (!modoTV) {
+                      handleRowClick(pedido);
+                    }
+                  }}
+                  onAdvanceStage={() => {
+                    const etapas = pedido.etapas_producao?.sort((a, b) => a.ordem - b.ordem);
+                    const etapaAtual = etapas?.find((et) => et.status === "em_andamento");
+                    
+                    if (etapaAtual) {
+                      const proximaEtapa = etapas?.find((et) => et.ordem === etapaAtual.ordem + 1);
+                      handleAtualizarEtapa(
+                        pedido.id,
+                        proximaEtapa ? proximaEtapa.tipo_etapa : "concluido"
+                      );
+                    } else {
+                      const primeiraEtapa = etapas?.[0];
+                      if (primeiraEtapa) {
+                        handleAtualizarEtapa(pedido.id, primeiraEtapa.tipo_etapa);
+                      }
+                    }
+                  }}
+                  isTV={modoTV}
+                />
+              ))}
+            </div>
+          ) : (
+            /* Vista de Tabela */
+            <Card className="bg-card/60 backdrop-blur-sm border-muted">
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Produto</TableHead>
+                      <TableHead>Marca/Cliente</TableHead>
+                      <TableHead>Referência</TableHead>
+                      <TableHead className="w-[120px]">#OP</TableHead>
+                      {activeTab === "controle" && (
+                        <>
+                          <TableHead className="w-[300px]">Etapas de Produção</TableHead>
+                          <TableHead>Etapa Atual</TableHead>
+                          <TableHead className="w-[100px]">Ação</TableHead>
+                        </>
                       )}
-                    </TableCell>
-                    <TableCell onClick={() => handleRowClick(pedido)} className="cursor-pointer font-medium">
-                      {pedido.clientes?.nome}
-                    </TableCell>
-                    <TableCell onClick={() => handleRowClick(pedido)} className="cursor-pointer text-muted-foreground">
-                      {pedido.tipo_peca}
-                    </TableCell>
-                    <TableCell onClick={() => handleRowClick(pedido)} className="cursor-pointer">
-                      <Badge variant="outline" className="font-mono text-xs">
-                        #{pedido.id.slice(0, 8)}
-                      </Badge>
-                    </TableCell>
-                    {activeTab === "controle" && (
-                      <>
-                        <TableCell onClick={() => handleRowClick(pedido)} className="cursor-pointer">
-                          <EtapasVisuais
-                            etapas={pedido.etapas_producao || []}
-                            statusGeral={pedido.status_geral}
-                          />
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredPedidos.map((pedido) => (
+                      <TableRow
+                        key={pedido.id}
+                        className="hover:bg-muted/50"
+                      >
+                        <TableCell onClick={() => handleRowClick(pedido)} className="cursor-pointer font-medium">
+                          {pedido.produto_modelo}
+                          {temEtapaEmAtraso(pedido) && (
+                            <div className="flex items-center gap-1 mt-1">
+                              <AlertCircle className="h-3 w-3 text-destructive" />
+                              <span className="text-xs text-destructive">
+                                {getEtapasAtrasadas(pedido).length} etapa(s) atrasada(s)
+                              </span>
+                            </div>
+                          )}
+                        </TableCell>
+                        <TableCell onClick={() => handleRowClick(pedido)} className="cursor-pointer font-medium">
+                          {pedido.clientes?.nome}
+                        </TableCell>
+                        <TableCell onClick={() => handleRowClick(pedido)} className="cursor-pointer text-muted-foreground">
+                          {pedido.tipo_peca}
                         </TableCell>
                         <TableCell onClick={() => handleRowClick(pedido)} className="cursor-pointer">
-                          <Badge variant="outline">{getEtapaAtual(pedido)}</Badge>
+                          <Badge variant="outline" className="font-mono text-xs">
+                            #{pedido.id.slice(0, 8)}
+                          </Badge>
                         </TableCell>
-                        <TableCell>
-                          <Button
-                            size="icon"
-                            className="bg-primary text-primary-foreground hover:bg-primary/90"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              const etapas = pedido.etapas_producao?.sort((a: any, b: any) => a.ordem - b.ordem);
-                              const etapaAtual = etapas?.find(
-                                (et: any) => et.status === "em_andamento"
-                              );
-                              
-                              if (etapaAtual) {
-                                // Se há etapa em andamento, avançar para a próxima
-                                const proximaEtapa = etapas?.find((et: any) => et.ordem === etapaAtual.ordem + 1);
-                                handleAtualizarEtapa(
-                                  pedido.id,
-                                  proximaEtapa ? proximaEtapa.tipo_etapa : "concluido"
-                                );
-                              } else {
-                                // Se não há etapa em andamento (aguardando início), iniciar a primeira etapa
-                                const primeiraEtapa = etapas?.[0];
-                                if (primeiraEtapa) {
-                                  handleAtualizarEtapa(pedido.id, primeiraEtapa.tipo_etapa);
-                                }
-                              }
-                            }}
-                          >
-                            <ChevronRight className="h-4 w-4" />
-                          </Button>
-                        </TableCell>
-                      </>
-                    )}
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </div>
-        </Card>
-      )}
+                        {activeTab === "controle" && (
+                          <>
+                            <TableCell onClick={() => handleRowClick(pedido)} className="cursor-pointer">
+                              <EtapasVisuais
+                                etapas={pedido.etapas_producao || []}
+                                statusGeral={pedido.status_geral}
+                              />
+                            </TableCell>
+                            <TableCell onClick={() => handleRowClick(pedido)} className="cursor-pointer">
+                              <Badge variant="outline">{getEtapaAtual(pedido)}</Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                size="icon"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  const etapas = pedido.etapas_producao?.sort((a, b) => a.ordem - b.ordem);
+                                  const etapaAtual = etapas?.find((et) => et.status === "em_andamento");
+                                  
+                                  if (etapaAtual) {
+                                    const proximaEtapa = etapas?.find((et) => et.ordem === etapaAtual.ordem + 1);
+                                    handleAtualizarEtapa(
+                                      pedido.id,
+                                      proximaEtapa ? proximaEtapa.tipo_etapa : "concluido"
+                                    );
+                                  } else {
+                                    const primeiraEtapa = etapas?.[0];
+                                    if (primeiraEtapa) {
+                                      handleAtualizarEtapa(pedido.id, primeiraEtapa.tipo_etapa);
+                                    }
+                                  }
+                                }}
+                              >
+                                <ChevronRight className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </>
+                        )}
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            </Card>
+          )}
         </TabsContent>
       </Tabs>
 
