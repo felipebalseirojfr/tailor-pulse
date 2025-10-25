@@ -166,38 +166,55 @@ export function PedidoCard({ pedido, onViewDetails, onAdvanceStage, isTV = false
         </div>
 
         {/* Rodapé com informações essenciais */}
-        <div className="flex items-center justify-between pt-3 border-t border-border/50">
-          <div className="flex items-center gap-4 text-muted-foreground">
-            <div className="flex items-center gap-1.5">
-              <Clock className={`${isTV ? 'h-5 w-5' : 'h-4 w-4'}`} />
-              <span className={`font-medium ${isTV ? 'text-base' : 'text-sm'}`}>
-                Previsto: {format(new Date(pedido.prazo_final), "dd/MM/yyyy", { locale: ptBR })}
-              </span>
+        <div className="pt-4 border-t border-border/50">
+          <div className="flex items-start justify-between gap-4">
+            <div className="flex flex-col gap-2.5 flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <div className="flex items-center justify-center w-5 h-5 rounded-full bg-muted/50">
+                  <Clock className={`${isTV ? 'h-3.5 w-3.5' : 'h-3 w-3'} text-muted-foreground`} />
+                </div>
+                <div className="flex flex-col">
+                  <span className={`text-muted-foreground ${isTV ? 'text-xs' : 'text-[10px]'} uppercase tracking-wide font-medium`}>
+                    Previsto:
+                  </span>
+                  <span className={`text-foreground font-semibold ${isTV ? 'text-base' : 'text-sm'}`}>
+                    {format(new Date(pedido.prazo_final), "dd/MM/yyyy", { locale: ptBR })}
+                  </span>
+                </div>
+              </div>
+              
+              {etapaAtual && (
+                <div className="flex items-center gap-2">
+                  <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/10">
+                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                  </div>
+                  <div className="flex flex-col">
+                    <span className={`text-muted-foreground ${isTV ? 'text-xs' : 'text-[10px]'} uppercase tracking-wide font-medium`}>
+                      Etapa:
+                    </span>
+                    <span className={`text-foreground font-semibold ${isTV ? 'text-base' : 'text-sm'} truncate`}>
+                      {getEtapaLabel(etapaAtual.tipo_etapa)}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
-            {etapaAtual && (
-              <>
-                <span className="text-muted-foreground/50">|</span>
-                <span className={`font-medium ${isTV ? 'text-base' : 'text-sm'}`}>
-                  Etapa: <span className="text-foreground">{getEtapaLabel(etapaAtual.tipo_etapa)}</span>
-                </span>
-              </>
+            
+            {!isTV && (
+              <Button
+                size="icon"
+                variant="ghost"
+                className="text-muted-foreground hover:text-foreground hover:bg-muted/50 flex-shrink-0"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onViewDetails();
+                }}
+                title="Ver detalhes"
+              >
+                <Eye className="h-4 w-4" />
+              </Button>
             )}
           </div>
-          
-          {!isTV && (
-            <Button
-              size="icon"
-              variant="ghost"
-              className="text-muted-foreground hover:text-foreground"
-              onClick={(e) => {
-                e.stopPropagation();
-                onViewDetails();
-              }}
-              title="Ver detalhes"
-            >
-              <Eye className="h-4 w-4" />
-            </Button>
-          )}
         </div>
       </CardContent>
     </Card>
