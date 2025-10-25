@@ -48,23 +48,23 @@ export function TimelineEtapas({ etapas, statusGeral, isTV = false }: TimelineEt
   };
 
   const getEtapaColor = (status: string, atrasada: boolean) => {
-    if (atrasada) return "bg-destructive border-destructive";
+    if (atrasada) return "bg-destructive ring-destructive/20";
     
     switch (status) {
       case "concluido":
-        return "bg-success border-success";
+        return "bg-success ring-success/20";
       case "em_andamento":
-        return "bg-primary border-primary animate-pulse";
+        return "bg-primary ring-primary/30 animate-pulse";
       case "pendente":
-        return "bg-muted border-muted-foreground/30";
+        return "bg-muted-foreground/20 ring-muted-foreground/10";
       default:
-        return "bg-muted border-muted-foreground/30";
+        return "bg-muted-foreground/20 ring-muted-foreground/10";
     }
   };
 
   const getLinhaColor = (etapa: Etapa) => {
-    if (etapa.status === "concluido") return "bg-success";
-    return "bg-muted";
+    if (etapa.status === "concluido") return "bg-success/40";
+    return "bg-muted-foreground/20";
   };
 
   const getEtapaLabel = (tipo: string) => {
@@ -115,47 +115,48 @@ export function TimelineEtapas({ etapas, statusGeral, isTV = false }: TimelineEt
     );
   };
 
-  const dotSize = isTV ? "h-5 w-5" : "h-3 w-3";
-  const lineWidth = isTV ? "w-8" : "w-6";
-  const ringSize = isTV ? "ring-4" : "ring-2";
+  const dotSize = isTV ? "h-4 w-4" : "h-2.5 w-2.5";
+  const lineWidth = isTV ? "w-12" : "w-8";
+  const ringSize = isTV ? "ring-[3px]" : "ring-2";
 
   return (
     <TooltipProvider>
-      <div className="flex items-center justify-start gap-0 overflow-x-auto pb-2">
+      <div className="relative flex items-center justify-start gap-0 overflow-x-auto scrollbar-hide py-1">
         {etapasOrdenadas.map((etapa, index) => {
           const atrasada = isEtapaAtrasada(etapa);
           const status = getEtapaStatus(etapa);
+          const isAtual = etapa.status === "em_andamento";
           
           return (
             <div key={etapa.id} className="flex items-center flex-shrink-0">
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <div className="relative flex flex-col items-center">
+                  <div className="relative flex flex-col items-center gap-1">
                     <div
-                      className={`${dotSize} rounded-full border-2 transition-all ${getEtapaColor(
+                      className={`${dotSize} rounded-full transition-all duration-300 ${getEtapaColor(
                         status,
                         atrasada
                       )} ${
-                        etapa.status === "em_andamento" ? `${ringSize} ring-primary ring-offset-2` : ""
-                      } ${
-                        atrasada && etapa.status !== "concluido" ? `${ringSize} ring-destructive ring-offset-2` : ""
-                      } cursor-pointer`}
+                        isAtual ? `${ringSize} ring ring-offset-1` : ""
+                      } cursor-pointer shadow-sm`}
                     />
                     {isTV && (
-                      <span className="text-xs mt-1 text-center whitespace-nowrap">
-                        {getEtapaLabel(etapa.tipo_etapa).substring(0, 8)}
+                      <span className={`text-xs text-center whitespace-nowrap ${
+                        isAtual ? "text-foreground font-medium" : "text-muted-foreground"
+                      }`}>
+                        {getEtapaLabel(etapa.tipo_etapa).substring(0, 9)}
                       </span>
                     )}
                   </div>
                 </TooltipTrigger>
-                <TooltipContent side="top" className="max-w-xs">
+                <TooltipContent side="top" className="max-w-xs bg-popover/95 backdrop-blur-sm">
                   {getTooltipContent(etapa, atrasada)}
                 </TooltipContent>
               </Tooltip>
               
               {index < etapasOrdenadas.length - 1 && (
                 <div
-                  className={`h-0.5 ${lineWidth} ${getLinhaColor(etapa)} transition-all`}
+                  className={`h-[2px] ${lineWidth} ${getLinhaColor(etapa)} transition-all duration-300 rounded-full`}
                 />
               )}
             </div>
