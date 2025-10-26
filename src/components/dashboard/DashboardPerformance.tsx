@@ -52,45 +52,47 @@ export const DashboardPerformance = ({ pedidos }: DashboardPerformanceProps) => 
   const maxProdutos = Math.max(...top5Produtos.map((p) => p.count), 1);
 
   return (
-    <div>
-      <div className="mb-4">
-        <h2 className="text-xl font-semibold tracking-tight">Desempenho de Clientes e Produtos</h2>
+    <div className="space-y-4">
+      <div className="space-y-1">
+        <h2 className="text-2xl font-bold tracking-tight text-foreground">👔 Desempenho de Clientes e Produtos</h2>
         <p className="text-sm text-muted-foreground">Análise de volume e eficiência por cliente</p>
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         {/* Top 5 Clientes por Volume */}
-        <Card className="lg:col-span-2 bg-gradient-to-br from-card to-card/80">
+        <Card className="lg:col-span-2 bg-card border border-border shadow-executive hover:shadow-executive-hover transition-all duration-300">
           <CardHeader>
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <Users className="h-4 w-4 text-primary" />
+            <CardTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
+              <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center border border-primary/20">
+                <Users className="h-4 w-4 text-primary" />
+              </div>
               Top 5 Clientes por Volume
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-4">
             {top5Clientes.map((cliente, index) => (
-              <div key={cliente.nome} className="space-y-1">
+              <div key={cliente.nome} className="space-y-2">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="h-6 w-6 rounded-lg bg-primary/20 text-primary flex items-center justify-center text-xs font-bold">
-                      {index + 1}
+                  <div className="flex items-center gap-3">
+                    <div className="h-8 w-8 rounded-xl bg-primary/15 text-primary flex items-center justify-center text-sm font-bold border border-primary/30">
+                      #{index + 1}
                     </div>
-                    <span className="text-sm font-medium truncate max-w-[180px]">
+                    <span className="text-sm font-semibold truncate max-w-[180px] text-foreground">
                       {cliente.nome}
                     </span>
                   </div>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold">{cliente.total}</span>
+                    <span className="text-base font-bold text-foreground">{cliente.total}</span>
                     {cliente.atrasados > 0 && (
-                      <span className="text-xs text-destructive font-medium">
-                        ({cliente.atrasados} ⚠)
+                      <span className="text-xs text-destructive font-semibold bg-destructive/10 px-2 py-0.5 rounded-lg">
+                        {cliente.atrasados} ⚠
                       </span>
                     )}
                   </div>
                 </div>
                 <Progress 
                   value={(cliente.total / top5Clientes[0].total) * 100} 
-                  className="h-1" 
+                  className="h-2" 
                 />
               </div>
             ))}
@@ -98,88 +100,94 @@ export const DashboardPerformance = ({ pedidos }: DashboardPerformanceProps) => 
         </Card>
 
         {/* Melhor Cliente */}
-        <Card className="bg-gradient-to-br from-success/5 to-card/80 border-success/20">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+        <Card className="bg-card border border-success/30 shadow-executive hover:shadow-executive-hover transition-all duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Melhor Performance
             </CardTitle>
-            <div className="h-8 w-8 rounded-lg bg-success/20 flex items-center justify-center">
-              <Award className="h-4 w-4 text-success" />
+            <div className="h-10 w-10 rounded-xl bg-success/15 flex items-center justify-center border border-success/30">
+              <Award className="h-5 w-5 text-success" />
             </div>
           </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="text-base font-bold truncate" title={melhorCliente?.nome}>
+          <CardContent className="space-y-3">
+            <div className="text-lg font-bold truncate text-foreground" title={melhorCliente?.nome}>
               {melhorCliente?.nome || "N/A"}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <div className="flex-1">
-                <div className="text-xs text-muted-foreground mb-1">Taxa de Atraso</div>
-                <div className="text-lg font-bold text-success">
+                <div className="text-xs font-medium text-muted-foreground mb-1">Taxa de Atraso</div>
+                <div className="text-2xl font-bold text-success">
                   {melhorCliente?.taxaAtraso.toFixed(0)}%
                 </div>
               </div>
-              <TrendingUp className="h-8 w-8 text-success/50" />
+              <div className="h-12 w-12 rounded-xl bg-success/10 flex items-center justify-center">
+                <TrendingUp className="h-6 w-6 text-success" />
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground font-medium">
               {melhorCliente?.total} pedidos
             </p>
           </CardContent>
         </Card>
 
         {/* Pior Cliente */}
-        <Card className="bg-gradient-to-br from-destructive/5 to-card/80 border-destructive/20">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
+        <Card className="bg-card border border-destructive/30 shadow-executive hover:shadow-executive-hover transition-all duration-300">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+            <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
               Requer Atenção
             </CardTitle>
-            <div className="h-8 w-8 rounded-lg bg-destructive/20 flex items-center justify-center">
-              <TrendingDown className="h-4 w-4 text-destructive" />
+            <div className="h-10 w-10 rounded-xl bg-destructive/15 flex items-center justify-center border border-destructive/30">
+              <TrendingDown className="h-5 w-5 text-destructive" />
             </div>
           </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="text-base font-bold truncate" title={piorCliente?.nome}>
+          <CardContent className="space-y-3">
+            <div className="text-lg font-bold truncate text-foreground" title={piorCliente?.nome}>
               {piorCliente?.nome || "N/A"}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-3">
               <div className="flex-1">
-                <div className="text-xs text-muted-foreground mb-1">Taxa de Atraso</div>
-                <div className="text-lg font-bold text-destructive">
+                <div className="text-xs font-medium text-muted-foreground mb-1">Taxa de Atraso</div>
+                <div className="text-2xl font-bold text-destructive">
                   {piorCliente?.taxaAtraso.toFixed(0)}%
                 </div>
               </div>
-              <TrendingDown className="h-8 w-8 text-destructive/50" />
+              <div className="h-12 w-12 rounded-xl bg-destructive/10 flex items-center justify-center">
+                <TrendingDown className="h-6 w-6 text-destructive" />
+              </div>
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-muted-foreground font-medium">
               {piorCliente?.atrasados} de {piorCliente?.total} atrasados
             </p>
           </CardContent>
         </Card>
 
         {/* Top 5 Produtos */}
-        <Card className="lg:col-span-4 bg-gradient-to-br from-card to-card/80">
+        <Card className="lg:col-span-4 bg-card border border-border shadow-executive hover:shadow-executive-hover transition-all duration-300">
           <CardHeader>
-            <CardTitle className="text-base font-semibold flex items-center gap-2">
-              <TrendingUp className="h-4 w-4 text-secondary" />
+            <CardTitle className="text-lg font-bold flex items-center gap-2 text-foreground">
+              <div className="h-8 w-8 rounded-lg bg-secondary/10 flex items-center justify-center border border-secondary/20">
+                <TrendingUp className="h-4 w-4 text-secondary" />
+              </div>
               Produtos Mais Produzidos (Mês Atual)
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-5 gap-4">
+            <div className="grid grid-cols-5 gap-6">
               {top5Produtos.map((produto, index) => (
-                <div key={produto.nome} className="space-y-2">
+                <div key={produto.nome} className="space-y-3">
                   <div className="flex items-center justify-between">
-                    <span className="text-xs font-medium text-muted-foreground">
+                    <span className="text-xs font-bold text-muted-foreground bg-muted px-2 py-1 rounded-lg">
                       #{index + 1}
                     </span>
-                    <span className="text-sm font-bold">{produto.count}</span>
+                    <span className="text-lg font-bold text-foreground">{produto.count}</span>
                   </div>
-                  <div className="h-24 bg-muted rounded-lg overflow-hidden relative">
+                  <div className="h-32 bg-muted/50 rounded-2xl overflow-hidden relative border border-border">
                     <div 
-                      className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-secondary to-primary transition-all duration-500"
+                      className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-secondary to-primary transition-all duration-700 shadow-glow-blue"
                       style={{ height: `${(produto.count / maxProdutos) * 100}%` }}
                     />
                   </div>
-                  <p className="text-xs font-medium truncate text-center" title={produto.nome}>
+                  <p className="text-xs font-semibold truncate text-center text-foreground" title={produto.nome}>
                     {produto.nome}
                   </p>
                 </div>

@@ -40,22 +40,22 @@ export const DashboardAlerts = ({ pedidos }: DashboardAlertsProps) => {
   const temAlertas = pedidosEmRisco.length > 0 || pedidosComEtapasAtrasadas.length > 0 || pedidosAtrasados.length > 0;
 
   return (
-    <div>
-      <div className="mb-4">
-        <h2 className="text-xl font-semibold tracking-tight">Alertas e Riscos</h2>
+    <div className="space-y-4">
+      <div className="space-y-1">
+        <h2 className="text-2xl font-bold tracking-tight text-foreground">⚠️ Alertas e Riscos</h2>
         <p className="text-sm text-muted-foreground">Monitoramento de pedidos críticos</p>
       </div>
 
       {!temAlertas ? (
-        <Card className="bg-gradient-to-br from-success/5 to-card/80 border-success/20">
-          <CardContent className="py-8">
-            <div className="flex flex-col items-center justify-center gap-3 text-center">
-              <div className="h-12 w-12 rounded-full bg-success/20 flex items-center justify-center">
-                <CheckCircle className="h-6 w-6 text-success" />
+        <Card className="bg-card border border-success/30 shadow-executive">
+          <CardContent className="py-12">
+            <div className="flex flex-col items-center justify-center gap-4 text-center">
+              <div className="h-16 w-16 rounded-2xl bg-success/15 flex items-center justify-center border border-success/30 animate-pulse">
+                <CheckCircle className="h-8 w-8 text-success" />
               </div>
               <div>
-                <h3 className="font-semibold text-lg">✓ Nenhum risco no momento</h3>
-                <p className="text-sm text-muted-foreground mt-1">
+                <h3 className="font-bold text-xl text-foreground">✓ Nenhum risco no momento</h3>
+                <p className="text-sm text-muted-foreground mt-2 font-medium">
                   Todos os pedidos estão em dia ou com folga de prazo
                 </p>
               </div>
@@ -66,15 +66,17 @@ export const DashboardAlerts = ({ pedidos }: DashboardAlertsProps) => {
         <div className="grid gap-4 md:grid-cols-3">
           {/* Pedidos Atrasados */}
           {pedidosAtrasados.length > 0 && (
-            <Card className="bg-gradient-to-br from-destructive/5 to-card/80 border-destructive/20">
+            <Card className="bg-card border border-destructive/30 shadow-executive hover:shadow-executive-hover transition-all duration-300">
               <CardHeader>
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 text-destructive" />
+                <CardTitle className="text-base font-bold flex items-center gap-2 text-foreground">
+                  <div className="h-8 w-8 rounded-lg bg-destructive/15 flex items-center justify-center border border-destructive/30">
+                    <AlertCircle className="h-4 w-4 text-destructive" />
+                  </div>
                   Pedidos Atrasados
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="text-2xl font-bold text-destructive mb-3">
+              <CardContent className="space-y-3">
+                <div className="text-3xl font-bold text-destructive mb-4">
                   {pedidosAtrasados.length}
                 </div>
                 <div className="space-y-2 max-h-[200px] overflow-y-auto">
@@ -109,15 +111,17 @@ export const DashboardAlerts = ({ pedidos }: DashboardAlertsProps) => {
 
           {/* Pedidos em Risco */}
           {pedidosEmRisco.length > 0 && (
-            <Card className="bg-gradient-to-br from-warning/5 to-card/80 border-warning/20">
+            <Card className="bg-card border border-warning/30 shadow-executive hover:shadow-executive-hover transition-all duration-300">
               <CardHeader>
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-warning" />
+                <CardTitle className="text-base font-bold flex items-center gap-2 text-foreground">
+                  <div className="h-8 w-8 rounded-lg bg-warning/15 flex items-center justify-center border border-warning/30">
+                    <AlertTriangle className="h-4 w-4 text-warning" />
+                  </div>
                   Em Risco de Atraso
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="text-2xl font-bold text-warning mb-3">
+              <CardContent className="space-y-3">
+                <div className="text-3xl font-bold text-warning mb-4">
                   {pedidosEmRisco.length}
                 </div>
                 <div className="space-y-2 max-h-[200px] overflow-y-auto">
@@ -158,15 +162,17 @@ export const DashboardAlerts = ({ pedidos }: DashboardAlertsProps) => {
 
           {/* Pedidos com Múltiplas Etapas Atrasadas */}
           {pedidosComEtapasAtrasadas.length > 0 && (
-            <Card className="bg-gradient-to-br from-destructive/5 to-card/80 border-destructive/20">
+            <Card className="bg-card border border-destructive/30 shadow-executive hover:shadow-executive-hover transition-all duration-300">
               <CardHeader>
-                <CardTitle className="text-sm font-semibold flex items-center gap-2">
-                  <AlertCircle className="h-4 w-4 text-destructive" />
+                <CardTitle className="text-base font-bold flex items-center gap-2 text-foreground">
+                  <div className="h-8 w-8 rounded-lg bg-destructive/15 flex items-center justify-center border border-destructive/30">
+                    <AlertCircle className="h-4 w-4 text-destructive" />
+                  </div>
                   Múltiplas Etapas Atrasadas
                 </CardTitle>
               </CardHeader>
-              <CardContent className="space-y-2">
-                <div className="text-2xl font-bold text-destructive mb-3">
+              <CardContent className="space-y-3">
+                <div className="text-3xl font-bold text-destructive mb-4">
                   {pedidosComEtapasAtrasadas.length}
                 </div>
                 <div className="space-y-2 max-h-[200px] overflow-y-auto">

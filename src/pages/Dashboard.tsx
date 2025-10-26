@@ -20,32 +20,35 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="space-y-8 pb-8">
-      {/* Header Executivo */}
-      <div className="flex items-start justify-between">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-3">
-            <TrendingUp className="h-8 w-8 text-primary" />
-            Painel Executivo de Produção
-          </h1>
-          <p className="text-muted-foreground text-base">
-            Monitoramento estratégico em tempo real
-          </p>
+    <div className="dashboard-container min-h-screen pb-8">
+      <div className="space-y-6 max-w-[1600px] mx-auto px-6">
+        {/* Header Executivo */}
+        <div className="flex items-start justify-between pt-8 pb-2">
+          <div className="space-y-1">
+            <h1 className="text-4xl font-bold tracking-tight flex items-center gap-3 text-foreground">
+              <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center">
+                <TrendingUp className="h-6 w-6 text-primary" />
+              </div>
+              Painel Executivo de Produção
+            </h1>
+            <p className="text-muted-foreground text-base ml-[52px]">
+              Monitoramento estratégico em tempo real • JFR Confecções
+            </p>
+          </div>
+          <Link to="/pedidos/novo">
+            <Button size="lg" className="shadow-executive hover:shadow-executive-hover">
+              <Plus className="mr-2 h-5 w-5" />
+              Novo Pedido
+            </Button>
+          </Link>
         </div>
-        <Link to="/pedidos/novo">
-          <Button size="lg" className="shadow-glow-blue">
-            <Plus className="mr-2 h-5 w-5" />
-            Novo Pedido
-          </Button>
-        </Link>
-      </div>
 
-      {/* Bloco 1: Visão Geral - Indicadores Críticos */}
-      <section>
-        <div className="mb-4">
-          <h2 className="text-xl font-semibold tracking-tight">Visão Geral</h2>
-          <p className="text-sm text-muted-foreground">Indicadores principais da operação</p>
-        </div>
+        {/* Bloco 1: Visão Geral - Indicadores Críticos */}
+        <section className="space-y-4">
+          <div className="space-y-1">
+            <h2 className="text-2xl font-bold tracking-tight text-foreground">📊 Visão Geral</h2>
+            <p className="text-sm text-muted-foreground">Indicadores principais da operação</p>
+          </div>
         <DashboardStats
           totalPedidos={stats.totalPedidos}
           pedidosAtivos={stats.pedidosAtivos}
@@ -54,37 +57,38 @@ export default function Dashboard() {
           pedidosProximosPrazo={stats.pedidosProximosPrazo}
           capacidadeAtual={stats.capacidadeAtual}
           capacidadeTotal={stats.capacidadeTotal}
-        />
-      </section>
+          />
+        </section>
 
-      {/* Bloco 2: Eficiência Operacional */}
-      <section>
+        {/* Bloco 2: Eficiência Operacional */}
+        <section className="space-y-4">
         <DashboardEfficiency
           taxaConclusao={stats.taxaConclusao}
           tempoMedioProducao={stats.tempoMedioProducao}
           pedidosAtrasados={stats.pedidosAtrasados}
           pedidos={pedidos}
-        />
-      </section>
+          />
+        </section>
 
-      {/* Bloco 3: Desempenho de Clientes e Produtos */}
-      <section>
-        <DashboardPerformance pedidos={pedidos} />
-      </section>
+        {/* Bloco 3: Desempenho de Clientes e Produtos */}
+        <section className="space-y-4">
+          <DashboardPerformance pedidos={pedidos} />
+        </section>
 
-      {/* Bloco 4: Alertas e Riscos */}
-      <section>
-        <DashboardAlerts pedidos={pedidos} />
-      </section>
+        {/* Bloco 4: Alertas e Riscos */}
+        <section className="space-y-4">
+          <DashboardAlerts pedidos={pedidos} />
+        </section>
 
-      {/* Pedidos em Andamento */}
-      <section>
-        <div className="mb-4">
-          <h2 className="text-xl font-semibold tracking-tight">Pedidos em Andamento</h2>
-          <p className="text-sm text-muted-foreground">Últimos pedidos em produção</p>
-        </div>
-        <RecentOrders pedidos={pedidos} />
-      </section>
+        {/* Pedidos em Andamento */}
+        <section className="space-y-4 pb-8">
+          <div className="space-y-1">
+            <h2 className="text-2xl font-bold tracking-tight text-foreground">🔄 Pedidos em Andamento</h2>
+            <p className="text-sm text-muted-foreground">Últimos pedidos em produção</p>
+          </div>
+          <RecentOrders pedidos={pedidos} />
+        </section>
+      </div>
     </div>
   );
 }

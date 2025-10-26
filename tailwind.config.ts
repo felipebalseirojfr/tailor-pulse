@@ -130,10 +130,12 @@ export default {
         "shimmer": "shimmer 2s linear infinite",
       },
       boxShadow: {
-        'premium': '0 8px 24px rgba(0, 0, 0, 0.25)',
-        'premium-hover': '0 10px 30px rgba(0, 0, 0, 0.35)',
-        'glow-blue': '0 0 20px rgba(37, 99, 235, 0.3)',
-        'glow-cyan': '0 0 20px rgba(56, 189, 248, 0.3)',
+        'premium': '0 4px 20px rgba(0, 0, 0, 0.08)',
+        'premium-hover': '0 8px 30px rgba(0, 0, 0, 0.12)',
+        'glow-blue': '0 4px 20px rgba(37, 99, 235, 0.15)',
+        'glow-cyan': '0 4px 20px rgba(56, 189, 248, 0.15)',
+        'executive': '0 2px 8px rgba(0, 0, 0, 0.04), 0 4px 16px rgba(0, 0, 0, 0.06)',
+        'executive-hover': '0 4px 16px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.1)',
       },
       backgroundImage: {
         'gradient-premium': 'linear-gradient(135deg, hsl(217, 91%, 60%), hsl(199, 89%, 60%))',

@@ -30,35 +30,46 @@ const StatCard = ({
   subtitle, 
   showProgress, 
   progressValue 
-}: StatCardProps) => (
-  <Link to={filterUrl}>
-    <Card className="cursor-pointer transition-all duration-300 hover:shadow-premium-hover hover:scale-[1.02] group bg-gradient-to-br from-card to-card/80">
-      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-        <CardTitle className="text-sm font-semibold uppercase tracking-wide text-muted-foreground">
-          {title}
-        </CardTitle>
-        <div className={`h-10 w-10 rounded-xl bg-${color}/10 flex items-center justify-center transition-all duration-300 group-hover:scale-110`}>
-          <Icon className={`h-5 w-5 text-${color}`} />
-        </div>
-      </CardHeader>
-      <CardContent className="space-y-2">
-        <div className="text-3xl font-bold tracking-tight">{value}</div>
-        {subtitle && (
-          <p className="text-xs text-muted-foreground">{subtitle}</p>
-        )}
-        {showProgress && progressValue !== undefined && (
-          <div className="space-y-1 pt-1">
-            <div className="flex items-center justify-between text-xs">
-              <span className="text-muted-foreground">Utilização</span>
-              <span className="font-semibold">{progressValue.toFixed(0)}%</span>
-            </div>
-            <Progress value={progressValue} className="h-1.5" />
+}: StatCardProps) => {
+  const colorClasses = {
+    primary: { bg: 'bg-primary/10', text: 'text-primary', border: 'border-primary/20' },
+    success: { bg: 'bg-success/10', text: 'text-success', border: 'border-success/20' },
+    destructive: { bg: 'bg-destructive/10', text: 'text-destructive', border: 'border-destructive/20' },
+    warning: { bg: 'bg-warning/10', text: 'text-warning', border: 'border-warning/20' },
+  };
+
+  const colors = colorClasses[color as keyof typeof colorClasses] || colorClasses.primary;
+
+  return (
+    <Link to={filterUrl}>
+      <Card className="cursor-pointer transition-all duration-300 hover:shadow-executive-hover hover:scale-[1.02] group bg-card border border-border shadow-executive">
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+          <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            {title}
+          </CardTitle>
+          <div className={`h-12 w-12 rounded-2xl ${colors.bg} flex items-center justify-center transition-all duration-300 group-hover:scale-110 border ${colors.border}`}>
+            <Icon className={`h-6 w-6 ${colors.text}`} />
           </div>
-        )}
-      </CardContent>
-    </Card>
-  </Link>
-);
+        </CardHeader>
+        <CardContent className="space-y-2">
+          <div className="text-4xl font-bold tracking-tight text-foreground">{value}</div>
+          {subtitle && (
+            <p className="text-xs text-muted-foreground font-medium">{subtitle}</p>
+          )}
+          {showProgress && progressValue !== undefined && (
+            <div className="space-y-2 pt-2">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-muted-foreground font-medium">Utilização</span>
+                <span className="font-bold text-foreground">{progressValue.toFixed(0)}%</span>
+              </div>
+              <Progress value={progressValue} className="h-2" />
+            </div>
+          )}
+        </CardContent>
+      </Card>
+    </Link>
+  );
+};
 
 interface DashboardStatsProps {
   totalPedidos: number;
