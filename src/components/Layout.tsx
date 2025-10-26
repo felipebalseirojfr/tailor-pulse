@@ -76,7 +76,6 @@ export default function Layout({ children }: LayoutProps) {
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Pedidos", href: "/pedidos", icon: Package },
     { name: "Clientes", href: "/clientes", icon: Users },
-    { name: "Referências", href: "/referencias", icon: Package },
     { name: "Calendário", href: "/calendario", icon: CalendarIcon },
   ];
 
