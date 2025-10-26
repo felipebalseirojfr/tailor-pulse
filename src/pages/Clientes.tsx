@@ -1,9 +1,9 @@
-import { useEffect, useState } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -13,94 +13,72 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
-import { useToast } from "@/hooks/use-toast";
-import { Plus, Users as UsersIcon, Mail, Phone, User, Pencil, Trash2 } from "lucide-react";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
+import { Building2, Plus, Search } from "lucide-react";
+import ClienteCard from "@/components/clientes/ClienteCard";
+import ClientePedidosSheet from "@/components/clientes/ClientePedidosSheet";
 
 interface Cliente {
   id: string;
   nome: string;
-  contato: string | null;
-  email: string | null;
   telefone: string | null;
+  email: string | null;
+  contato: string | null;
+  status_geral: string;
+  total_pedidos_ativos: number;
+  observacoes_gerais: string | null;
 }
 
 export default function Clientes() {
   const [clientes, setClientes] = useState<Cliente[]>([]);
-  const [clientesComPedidos, setClientesComPedidos] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedClienteId, setSelectedClienteId] = useState<string | null>(null);
+  const [selectedClienteNome, setSelectedClienteNome] = useState("");
+  const [sheetOpen, setSheetOpen] = useState(false);
   const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingCliente, setEditingCliente] = useState<Cliente | null>(null);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [clienteToDelete, setClienteToDelete] = useState<Cliente | null>(null);
-  const { toast } = useToast();
 
   const [formData, setFormData] = useState({
     nome: "",
     contato: "",
     email: "",
     telefone: "",
+    observacoes_gerais: "",
   });
 
   useEffect(() => {
     fetchClientes();
 
-    // Configurar listener de mudanças em tempo real
-    const clientesChannel = supabase
-      .channel('clientes-changes')
+    const channel = supabase
+      .channel("clientes-changes")
       .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'clientes'
-        },
-        (payload) => {
-          console.log('Mudança detectada em clientes:', payload);
-          // Não buscar novamente em DELETEs, pois já tratamos otimisticamente
-          if (payload.eventType !== 'DELETE') {
-            fetchClientes();
-          }
+        "postgres_changes",
+        { event: "*", schema: "public", table: "clientes" },
+        () => {
+          fetchClientes();
         }
       )
       .subscribe();
 
     return () => {
-      supabase.removeChannel(clientesChannel);
+      supabase.removeChannel(channel);
     };
   }, []);
 
   const fetchClientes = async () => {
     try {
-      const { data: clientesData, error: clientesError } = await supabase
+      setLoading(true);
+      const { data, error } = await supabase
         .from("clientes")
         .select("*")
         .order("nome");
 
-      if (clientesError) throw clientesError;
-      setClientes(clientesData || []);
-
-      // Buscar clientes com pedidos ativos
-      const { data: pedidosData, error: pedidosError } = await supabase
-        .from("pedidos")
-        .select("cliente_id, status_geral")
-        .neq("status_geral", "concluido");
-
-      if (pedidosError) throw pedidosError;
-
-      const clientesAtivos = new Set(pedidosData?.map(p => p.cliente_id) || []);
-      setClientesComPedidos(clientesAtivos);
+      if (error) throw error;
+      setClientes(data || []);
     } catch (error) {
       console.error("Erro ao buscar clientes:", error);
+      toast.error("Erro ao carregar clientes");
     } finally {
       setLoading(false);
     }
@@ -110,134 +88,27 @@ export default function Clientes() {
     e.preventDefault();
 
     try {
-      if (editingCliente) {
-        // Atualizar cliente existente
-        const { error } = await supabase
-          .from("clientes")
-          .update(formData)
-          .eq("id", editingCliente.id);
+      const { error } = await supabase.from("clientes").insert([formData]);
 
-        if (error) throw error;
+      if (error) throw error;
 
-        toast({
-          title: "Cliente atualizado!",
-          description: "As informações foram salvas com sucesso.",
-        });
-      } else {
-        // Criar novo cliente
-        const { error } = await supabase.from("clientes").insert([formData]);
-
-        if (error) throw error;
-
-        toast({
-          title: "Cliente cadastrado!",
-          description: "O cliente foi adicionado com sucesso.",
-        });
-      }
-
+      toast.success("Cliente cadastrado com sucesso!");
       setDialogOpen(false);
-      setEditingCliente(null);
-      setFormData({ nome: "", contato: "", email: "", telefone: "" });
+      setFormData({ nome: "", contato: "", email: "", telefone: "", observacoes_gerais: "" });
       fetchClientes();
     } catch (error: any) {
-      toast({
-        title: editingCliente ? "Erro ao atualizar cliente" : "Erro ao cadastrar cliente",
-        description: error.message,
-        variant: "destructive",
-      });
+      toast.error("Erro ao cadastrar cliente: " + error.message);
     }
   };
 
-  const handleEdit = (cliente: Cliente) => {
-    setEditingCliente(cliente);
-    setFormData({
-      nome: cliente.nome,
-      contato: cliente.contato || "",
-      email: cliente.email || "",
-      telefone: cliente.telefone || "",
-    });
-    setDialogOpen(true);
-  };
-
-  const handleDeleteClick = async (cliente: Cliente) => {
-    // Verificar se o cliente tem pedidos
-    const { data: pedidos, error } = await supabase
-      .from("pedidos")
-      .select("id")
-      .eq("cliente_id", cliente.id);
-
-    if (error) {
-      console.error("Erro ao verificar pedidos:", error);
-      toast({
-        title: "Erro",
-        description: "Não foi possível verificar os pedidos do cliente.",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    if (pedidos && pedidos.length > 0) {
-      toast({
-        title: "Não é possível excluir",
-        description: `Este cliente possui ${pedidos.length} pedido(s) cadastrado(s). Exclua os pedidos primeiro.`,
-        variant: "destructive",
-      });
-      return;
-    }
-
-    // Se não tem pedidos, abrir dialog de confirmação
-    setClienteToDelete(cliente);
-    setDeleteDialogOpen(true);
-  };
-
-  const handleDeleteConfirm = async () => {
-    if (!clienteToDelete) return;
-
-    try {
-      const { error } = await supabase
-        .from("clientes")
-        .delete()
-        .eq("id", clienteToDelete.id);
-
-      if (error) {
-        console.error("Erro ao deletar cliente:", error);
-        throw error;
-      }
-
-      // Remover da lista imediatamente (atualização otimista)
-      setClientes(prev => prev.filter(c => c.id !== clienteToDelete.id));
-
-      toast({
-        title: "Cliente excluído!",
-        description: "O cliente foi removido com sucesso.",
-      });
-
-      setDeleteDialogOpen(false);
-      setClienteToDelete(null);
-      
-      // O listener real-time vai atualizar automaticamente (para outros casos)
-    } catch (error: any) {
-      console.error("Erro completo:", error);
-      toast({
-        title: "Erro ao excluir cliente",
-        description: error.message || "Ocorreu um erro ao tentar excluir o cliente.",
-        variant: "destructive",
-      });
-    }
-  };
-
-  const handleDialogClose = (open: boolean) => {
-    setDialogOpen(open);
-    if (!open) {
-      setEditingCliente(null);
-      setFormData({ nome: "", contato: "", email: "", telefone: "" });
-    }
-  };
+  const filteredClientes = clientes.filter((cliente) =>
+    cliente.nome.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+      <div className="flex items-center justify-center h-96">
+        <div className="text-muted-foreground">Carregando clientes...</div>
       </div>
     );
   }
@@ -247,11 +118,11 @@ export default function Clientes() {
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Clientes</h1>
-          <p className="text-muted-foreground">
-            Gerencie os clientes (marcas) da confecção
+          <p className="text-muted-foreground mt-2">
+            Gerencie seus clientes e visualize seus pedidos
           </p>
         </div>
-        <Dialog open={dialogOpen} onOpenChange={handleDialogClose}>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="mr-2 h-4 w-4" />
@@ -261,18 +132,14 @@ export default function Clientes() {
           <DialogContent>
             <form onSubmit={handleSubmit}>
               <DialogHeader>
-                <DialogTitle>
-                  {editingCliente ? "Editar Cliente" : "Cadastrar Cliente"}
-                </DialogTitle>
+                <DialogTitle>Cadastrar Cliente</DialogTitle>
                 <DialogDescription>
-                  {editingCliente
-                    ? "Atualize as informações do cliente"
-                    : "Adicione um novo cliente à sua lista"}
+                  Adicione um novo cliente à sua lista
                 </DialogDescription>
               </DialogHeader>
               <div className="space-y-4 py-4">
                 <div className="space-y-2">
-                  <Label htmlFor="nome">Nome da Marca *</Label>
+                  <Label htmlFor="nome">Nome do Cliente *</Label>
                   <Input
                     id="nome"
                     value={formData.nome}
@@ -317,202 +184,88 @@ export default function Clientes() {
                     placeholder="(11) 99999-9999"
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label htmlFor="observacoes_gerais">Observações</Label>
+                  <Textarea
+                    id="observacoes_gerais"
+                    value={formData.observacoes_gerais}
+                    onChange={(e) =>
+                      setFormData({ ...formData, observacoes_gerais: e.target.value })
+                    }
+                    placeholder="Observações gerais sobre o cliente..."
+                    rows={3}
+                  />
+                </div>
               </div>
               <DialogFooter>
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => handleDialogClose(false)}
+                  onClick={() => setDialogOpen(false)}
                 >
                   Cancelar
                 </Button>
-                <Button type="submit">
-                  {editingCliente ? "Salvar" : "Cadastrar"}
-                </Button>
+                <Button type="submit">Cadastrar</Button>
               </DialogFooter>
             </form>
           </DialogContent>
         </Dialog>
       </div>
 
-      {clientes.length === 0 ? (
-        <Card>
-          <CardContent className="py-16 text-center">
-            <UsersIcon className="mx-auto mb-4 h-12 w-12 text-muted-foreground" />
-            <h3 className="mb-2 text-lg font-semibold">
-              Nenhum cliente cadastrado
-            </h3>
-            <p className="mb-4 text-muted-foreground">
-              Comece adicionando seu primeiro cliente
-            </p>
-            <Button onClick={() => setDialogOpen(true)}>
-              <Plus className="mr-2 h-4 w-4" />
-              Adicionar Cliente
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="space-y-8">
-          {/* Clientes com Pedidos Ativos */}
-          <div>
-            <h2 className="text-2xl font-semibold mb-4">Clientes com Pedidos Ativos</h2>
-            {clientes.filter(c => clientesComPedidos.has(c.id)).length === 0 ? (
-              <Card>
-                <CardContent className="py-8 text-center">
-                  <p className="text-muted-foreground">Nenhum cliente com pedidos ativos</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {clientes
-                  .filter(c => clientesComPedidos.has(c.id))
-                  .map((cliente) => (
-                    <Card key={cliente.id} className="border-primary/30">
-                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <CardTitle className="text-lg">{cliente.nome}</CardTitle>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => handleEdit(cliente)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive hover:text-destructive"
-                              onClick={() => handleDeleteClick(cliente)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-2">
-                        {cliente.contato && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <User className="h-4 w-4 text-muted-foreground" />
-                            <span>{cliente.contato}</span>
-                          </div>
-                        )}
-                        {cliente.email && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <Mail className="h-4 w-4 text-muted-foreground" />
-                            <span className="truncate">{cliente.email}</span>
-                          </div>
-                        )}
-                        {cliente.telefone && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <Phone className="h-4 w-4 text-muted-foreground" />
-                            <span>{cliente.telefone}</span>
-                          </div>
-                        )}
-                        {!cliente.contato && !cliente.email && !cliente.telefone && (
-                          <p className="text-sm text-muted-foreground">
-                            Sem informações de contato
-                          </p>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
-              </div>
-            )}
-          </div>
-
-          {/* Clientes sem Pedido */}
-          <div>
-            <h2 className="text-2xl font-semibold mb-4">Clientes sem Pedido</h2>
-            {clientes.filter(c => !clientesComPedidos.has(c.id)).length === 0 ? (
-              <Card>
-                <CardContent className="py-8 text-center">
-                  <p className="text-muted-foreground">Todos os clientes têm pedidos ativos</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {clientes
-                  .filter(c => !clientesComPedidos.has(c.id))
-                  .map((cliente) => (
-                    <Card key={cliente.id}>
-                      <CardHeader>
-                        <div className="flex items-start justify-between">
-                          <CardTitle className="text-lg">{cliente.nome}</CardTitle>
-                          <div className="flex gap-2">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8"
-                              onClick={() => handleEdit(cliente)}
-                            >
-                              <Pencil className="h-4 w-4" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-destructive hover:text-destructive"
-                              onClick={() => handleDeleteClick(cliente)}
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </Button>
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="space-y-2">
-                        {cliente.contato && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <User className="h-4 w-4 text-muted-foreground" />
-                            <span>{cliente.contato}</span>
-                          </div>
-                        )}
-                        {cliente.email && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <Mail className="h-4 w-4 text-muted-foreground" />
-                            <span className="truncate">{cliente.email}</span>
-                          </div>
-                        )}
-                        {cliente.telefone && (
-                          <div className="flex items-center gap-2 text-sm">
-                            <Phone className="h-4 w-4 text-muted-foreground" />
-                            <span>{cliente.telefone}</span>
-                          </div>
-                        )}
-                        {!cliente.contato && !cliente.email && !cliente.telefone && (
-                          <p className="text-sm text-muted-foreground">
-                            Sem informações de contato
-                          </p>
-                        )}
-                      </CardContent>
-                    </Card>
-                  ))}
-              </div>
-            )}
+      <Card className="p-6">
+        <div className="mb-6">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Buscar clientes..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
           </div>
         </div>
-      )}
 
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
-            <AlertDialogDescription>
-              Tem certeza que deseja excluir o cliente{" "}
-              <strong>{clienteToDelete?.nome}</strong>? Esta ação não pode ser desfeita.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteConfirm}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-            >
-              Excluir
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        {filteredClientes.length === 0 ? (
+          <div className="text-center py-16">
+            <Building2 className="mx-auto h-12 w-12 text-muted-foreground mb-4" />
+            <h3 className="text-lg font-semibold mb-2">
+              {searchTerm ? "Nenhum cliente encontrado" : "Nenhum cliente cadastrado"}
+            </h3>
+            <p className="text-muted-foreground mb-4">
+              {searchTerm
+                ? "Tente ajustar sua busca"
+                : "Comece adicionando seu primeiro cliente"}
+            </p>
+            {!searchTerm && (
+              <Button onClick={() => setDialogOpen(true)}>
+                <Plus className="mr-2 h-4 w-4" />
+                Adicionar Cliente
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {filteredClientes.map((cliente) => (
+              <ClienteCard
+                key={cliente.id}
+                cliente={cliente}
+                onClick={() => {
+                  setSelectedClienteId(cliente.id);
+                  setSelectedClienteNome(cliente.nome);
+                  setSheetOpen(true);
+                }}
+              />
+            ))}
+          </div>
+        )}
+      </Card>
+
+      <ClientePedidosSheet
+        clienteId={selectedClienteId}
+        clienteNome={selectedClienteNome}
+        open={sheetOpen}
+        onOpenChange={setSheetOpen}
+      />
     </div>
   );
 }

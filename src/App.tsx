@@ -12,6 +12,7 @@ import DetalhesPedido from "./pages/DetalhesPedido";
 import Clientes from "./pages/Clientes";
 import Calendario from "./pages/Calendario";
 import ScanQR from "./pages/ScanQR";
+import Referencias from "./pages/Referencias";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/pedidos/:id" element={<Layout><DetalhesPedido /></Layout>} />
           <Route path="/clientes" element={<Layout><Clientes /></Layout>} />
           <Route path="/calendario" element={<Layout><Calendario /></Layout>} />
+          <Route path="/referencias" element={<Layout><Referencias /></Layout>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
