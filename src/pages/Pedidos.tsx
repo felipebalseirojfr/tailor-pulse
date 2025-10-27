@@ -28,6 +28,7 @@ import { PedidoDetailsSheet } from "@/components/pedidos/PedidoDetailsSheet";
 import { EtapasVisuais } from "@/components/pedidos/EtapasVisuais";
 import { FiltroAvancado } from "@/components/pedidos/FiltroAvancado";
 import { PedidoCard } from "@/components/pedidos/PedidoCard";
+import { ClienteProducaoCard } from "@/components/pedidos/ClienteProducaoCard";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -633,18 +634,40 @@ export default function Pedidos() {
                 )}
               </CardContent>
             </Card>
-          ) : (viewMode === "cards" || modoTV) && activeTab === "controle" ? (
-            /* Vista de Cards */
-            <div className={`grid gap-4 ${modoTV ? 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3' : 'grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4'}`}>
+          ) : viewMode === "cards" && activeTab === "controle" && !modoTV ? (
+            /* Vista de Cards por Cliente */
+            (() => {
+              // Agrupar produções por cliente
+              const producoesPorCliente = filteredPedidos.reduce((acc, pedido) => {
+                const cliente = pedido.clientes?.nome || "Cliente não identificado";
+                if (!acc[cliente]) {
+                  acc[cliente] = [];
+                }
+                acc[cliente].push(pedido);
+                return acc;
+              }, {} as Record<string, typeof filteredPedidos>);
+
+              return (
+                <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                  {Object.entries(producoesPorCliente).map(([cliente, producoes]) => (
+                    <ClienteProducaoCard
+                      key={cliente}
+                      cliente={cliente}
+                      producoes={producoes}
+                      onViewProducao={(producao) => handleRowClick(producao)}
+                    />
+                  ))}
+                </div>
+              );
+            })()
+          ) : modoTV && activeTab === "controle" ? (
+            /* Vista de Cards individual para Modo TV */
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
               {filteredPedidos.map((pedido) => (
                 <PedidoCard
                   key={pedido.id}
                   pedido={pedido}
-                  onViewDetails={() => {
-                    if (!modoTV) {
-                      handleRowClick(pedido);
-                    }
-                  }}
+                  onViewDetails={() => {}}
                   onAdvanceStage={() => {
                     const etapas = pedido.etapas_producao?.sort((a, b) => a.ordem - b.ordem);
                     const etapaAtual = etapas?.find((et) => et.status === "em_andamento");
