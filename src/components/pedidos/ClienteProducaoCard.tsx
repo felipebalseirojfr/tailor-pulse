@@ -135,37 +135,17 @@ export function ClienteProducaoCard({ cliente, producoes, onViewProducao }: Clie
           </div>
         </CardHeader>
         <CardContent>
-          <div className="space-y-3">
-            {/* Etapas em Andamento */}
-            <div className="space-y-2">
-              <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
-                Etapas em Andamento
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {Object.entries(etapasResumo).length > 0 ? (
-                  Object.entries(etapasResumo).map(([etapa, count]) => (
-                    <Badge key={etapa} variant="outline" className="text-xs">
-                      {etapa}: {count}
-                    </Badge>
-                  ))
-                ) : (
-                  <span className="text-sm text-muted-foreground">Aguardando início</span>
-                )}
-              </div>
-            </div>
-
-            <Button 
-              variant="ghost" 
-              className="w-full justify-between text-primary hover:text-primary hover:bg-primary/10"
-              onClick={(e) => {
-                e.stopPropagation();
-                setExpanded(true);
-              }}
-            >
-              Ver produções
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-          </div>
+          <Button 
+            variant="ghost" 
+            className="w-full justify-between text-primary hover:text-primary hover:bg-primary/10"
+            onClick={(e) => {
+              e.stopPropagation();
+              setExpanded(true);
+            }}
+          >
+            Ver produções
+            <ChevronRight className="h-4 w-4" />
+          </Button>
         </CardContent>
       </Card>
 
