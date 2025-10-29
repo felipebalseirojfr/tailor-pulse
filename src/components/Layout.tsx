@@ -7,12 +7,14 @@ import {
   Package,
   Users,
   Calendar as CalendarIcon,
+  PackageCheck,
   LogOut,
   Menu,
   X,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useUserRoles } from "@/hooks/useUserRoles";
 
 interface LayoutProps {
   children: ReactNode;
@@ -25,6 +27,7 @@ export default function Layout({ children }: LayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const { hasAnyRole, loading: rolesLoading } = useUserRoles();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -75,9 +78,21 @@ export default function Layout({ children }: LayoutProps) {
   const navigation = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Pedidos", href: "/pedidos", icon: Package },
+    { 
+      name: "Fechamento/Emissão NF", 
+      href: "/pcp/fechamentos", 
+      icon: PackageCheck,
+      requiredRoles: ["pcp_closer", "backoffice_fiscal", "admin"]
+    },
     { name: "Clientes", href: "/clientes", icon: Users },
     { name: "Calendário", href: "/calendario", icon: CalendarIcon },
   ];
+
+  // Filtrar navegação baseado nas roles do usuário
+  const filteredNavigation = navigation.filter((item) => {
+    if (!item.requiredRoles) return true;
+    return hasAnyRole(item.requiredRoles);
+  });
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -91,7 +106,7 @@ export default function Layout({ children }: LayoutProps) {
             <ul role="list" className="flex flex-1 flex-col gap-y-7">
               <li>
                 <ul role="list" className="-mx-2 space-y-1">
-                  {navigation.map((item) => {
+                  {filteredNavigation.map((item) => {
                     const isActive = location.pathname === item.href;
                     return (
                       <li key={item.name}>
@@ -152,7 +167,7 @@ export default function Layout({ children }: LayoutProps) {
             <div className="fixed inset-y-0 left-0 w-full max-w-xs bg-background p-6">
               <nav className="mt-16">
                 <ul role="list" className="space-y-1">
-                  {navigation.map((item) => {
+                  {filteredNavigation.map((item) => {
                     const isActive = location.pathname === item.href;
                     return (
                       <li key={item.name}>

@@ -170,6 +170,163 @@ export type Database = {
           },
         ]
       }
+      fechamento_itens: {
+        Row: {
+          caixas: number | null
+          cor: string
+          created_at: string | null
+          fechamento_id: string
+          id: string
+          modelo: string
+          saldo_a_fechar: number
+          sku: string
+          tamanho: string
+          total_calculado: number | null
+          unidades: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          caixas?: number | null
+          cor: string
+          created_at?: string | null
+          fechamento_id: string
+          id?: string
+          modelo: string
+          saldo_a_fechar?: number
+          sku: string
+          tamanho: string
+          total_calculado?: number | null
+          unidades?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          caixas?: number | null
+          cor?: string
+          created_at?: string | null
+          fechamento_id?: string
+          id?: string
+          modelo?: string
+          saldo_a_fechar?: number
+          sku?: string
+          tamanho?: string
+          total_calculado?: number | null
+          unidades?: number | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fechamento_itens_fechamento_id_fkey"
+            columns: ["fechamento_id"]
+            isOneToOne: false
+            referencedRelation: "fechamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fechamento_logs: {
+        Row: {
+          acao: string
+          created_at: string | null
+          dados_antes: Json | null
+          dados_depois: Json | null
+          fechamento_id: string
+          id: string
+          ip_address: string | null
+          user_agent: string | null
+          usuario_id: string | null
+        }
+        Insert: {
+          acao: string
+          created_at?: string | null
+          dados_antes?: Json | null
+          dados_depois?: Json | null
+          fechamento_id: string
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          usuario_id?: string | null
+        }
+        Update: {
+          acao?: string
+          created_at?: string | null
+          dados_antes?: Json | null
+          dados_depois?: Json | null
+          fechamento_id?: string
+          id?: string
+          ip_address?: string | null
+          user_agent?: string | null
+          usuario_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fechamento_logs_fechamento_id_fkey"
+            columns: ["fechamento_id"]
+            isOneToOne: false
+            referencedRelation: "fechamentos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fechamentos: {
+        Row: {
+          atribuido_para: string | null
+          created_at: string | null
+          fechado_em: string | null
+          fechado_por: string | null
+          foto_caderno_url: string | null
+          id: string
+          lote_of: string
+          observacoes: string | null
+          pedido_id: string
+          referencia_id: string | null
+          status: string
+          updated_at: string | null
+        }
+        Insert: {
+          atribuido_para?: string | null
+          created_at?: string | null
+          fechado_em?: string | null
+          fechado_por?: string | null
+          foto_caderno_url?: string | null
+          id?: string
+          lote_of: string
+          observacoes?: string | null
+          pedido_id: string
+          referencia_id?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Update: {
+          atribuido_para?: string | null
+          created_at?: string | null
+          fechado_em?: string | null
+          fechado_por?: string | null
+          foto_caderno_url?: string | null
+          id?: string
+          lote_of?: string
+          observacoes?: string | null
+          pedido_id?: string
+          referencia_id?: string | null
+          status?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fechamentos_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fechamentos_referencia_id_fkey"
+            columns: ["referencia_id"]
+            isOneToOne: false
+            referencedRelation: "referencias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pedidos: {
         Row: {
           arquivos: Json | null
