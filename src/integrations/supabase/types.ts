@@ -21,7 +21,10 @@ export type Database = {
           email: string | null
           id: string
           nome: string
+          observacoes_gerais: string | null
+          status_geral: string | null
           telefone: string | null
+          total_pedidos_ativos: number | null
           updated_at: string | null
         }
         Insert: {
@@ -30,7 +33,10 @@ export type Database = {
           email?: string | null
           id?: string
           nome: string
+          observacoes_gerais?: string | null
+          status_geral?: string | null
           telefone?: string | null
+          total_pedidos_ativos?: number | null
           updated_at?: string | null
         }
         Update: {
@@ -39,7 +45,10 @@ export type Database = {
           email?: string | null
           id?: string
           nome?: string
+          observacoes_gerais?: string | null
+          status_geral?: string | null
           telefone?: string | null
+          total_pedidos_ativos?: number | null
           updated_at?: string | null
         }
         Relationships: []
@@ -99,6 +108,7 @@ export type Database = {
           observacoes: string | null
           ordem: number
           pedido_id: string
+          referencia_id: string | null
           responsavel_id: string | null
           status: Database["public"]["Enums"]["status_etapa"] | null
           tipo_etapa: Database["public"]["Enums"]["tipo_etapa"]
@@ -114,6 +124,7 @@ export type Database = {
           observacoes?: string | null
           ordem: number
           pedido_id: string
+          referencia_id?: string | null
           responsavel_id?: string | null
           status?: Database["public"]["Enums"]["status_etapa"] | null
           tipo_etapa: Database["public"]["Enums"]["tipo_etapa"]
@@ -129,6 +140,7 @@ export type Database = {
           observacoes?: string | null
           ordem?: number
           pedido_id?: string
+          referencia_id?: string | null
           responsavel_id?: string | null
           status?: Database["public"]["Enums"]["status_etapa"] | null
           tipo_etapa?: Database["public"]["Enums"]["tipo_etapa"]
@@ -149,6 +161,13 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fk_referencia"
+            columns: ["referencia_id"]
+            isOneToOne: false
+            referencedRelation: "referencias"
+            referencedColumns: ["id"]
+          },
         ]
       }
       pedidos: {
@@ -156,10 +175,12 @@ export type Database = {
           arquivos: Json | null
           aviamentos: string[] | null
           cliente_id: string
+          codigo_pedido: string | null
           created_at: string | null
           data_inicio: string
           grade_tamanhos: Json | null
           id: string
+          observacoes_pedido: string | null
           prazo_final: string
           prioridade: Database["public"]["Enums"]["prioridade_pedido"] | null
           produto_modelo: string
@@ -168,6 +189,7 @@ export type Database = {
           qr_code_link: string | null
           qr_code_ref: string | null
           quantidade_total: number
+          quantidade_total_referencias: number | null
           responsavel_comercial_id: string
           status_geral: string | null
           tecido: string | null
@@ -175,15 +197,18 @@ export type Database = {
           tipo_peca: string
           tipos_personalizacao: string[] | null
           updated_at: string | null
+          valor_total_pedido: number | null
         }
         Insert: {
           arquivos?: Json | null
           aviamentos?: string[] | null
           cliente_id: string
+          codigo_pedido?: string | null
           created_at?: string | null
           data_inicio: string
           grade_tamanhos?: Json | null
           id?: string
+          observacoes_pedido?: string | null
           prazo_final: string
           prioridade?: Database["public"]["Enums"]["prioridade_pedido"] | null
           produto_modelo: string
@@ -192,6 +217,7 @@ export type Database = {
           qr_code_link?: string | null
           qr_code_ref?: string | null
           quantidade_total: number
+          quantidade_total_referencias?: number | null
           responsavel_comercial_id: string
           status_geral?: string | null
           tecido?: string | null
@@ -199,15 +225,18 @@ export type Database = {
           tipo_peca: string
           tipos_personalizacao?: string[] | null
           updated_at?: string | null
+          valor_total_pedido?: number | null
         }
         Update: {
           arquivos?: Json | null
           aviamentos?: string[] | null
           cliente_id?: string
+          codigo_pedido?: string | null
           created_at?: string | null
           data_inicio?: string
           grade_tamanhos?: Json | null
           id?: string
+          observacoes_pedido?: string | null
           prazo_final?: string
           prioridade?: Database["public"]["Enums"]["prioridade_pedido"] | null
           produto_modelo?: string
@@ -216,6 +245,7 @@ export type Database = {
           qr_code_link?: string | null
           qr_code_ref?: string | null
           quantidade_total?: number
+          quantidade_total_referencias?: number | null
           responsavel_comercial_id?: string
           status_geral?: string | null
           tecido?: string | null
@@ -223,6 +253,7 @@ export type Database = {
           tipo_peca?: string
           tipos_personalizacao?: string[] | null
           updated_at?: string | null
+          valor_total_pedido?: number | null
         }
         Relationships: [
           {
@@ -267,6 +298,62 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      referencias: {
+        Row: {
+          codigo_referencia: string
+          created_at: string | null
+          data_inicio_producao: string | null
+          data_termino: string | null
+          etapa_producao: Database["public"]["Enums"]["etapa_referencia"]
+          id: string
+          observacoes: string | null
+          pedido_id: string
+          quantidade: number
+          tecido_material: string | null
+          updated_at: string | null
+          valor_total: number | null
+          valor_unitario: number | null
+        }
+        Insert: {
+          codigo_referencia: string
+          created_at?: string | null
+          data_inicio_producao?: string | null
+          data_termino?: string | null
+          etapa_producao?: Database["public"]["Enums"]["etapa_referencia"]
+          id?: string
+          observacoes?: string | null
+          pedido_id: string
+          quantidade?: number
+          tecido_material?: string | null
+          updated_at?: string | null
+          valor_total?: number | null
+          valor_unitario?: number | null
+        }
+        Update: {
+          codigo_referencia?: string
+          created_at?: string | null
+          data_inicio_producao?: string | null
+          data_termino?: string | null
+          etapa_producao?: Database["public"]["Enums"]["etapa_referencia"]
+          id?: string
+          observacoes?: string | null
+          pedido_id?: string
+          quantidade?: number
+          tecido_material?: string | null
+          updated_at?: string | null
+          valor_total?: number | null
+          valor_unitario?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_pedido"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {
@@ -316,7 +403,14 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "commercial" | "production" | "viewer"
+      app_role:
+        | "admin"
+        | "commercial"
+        | "production"
+        | "viewer"
+        | "pcp_closer"
+        | "backoffice_fiscal"
+      etapa_referencia: "corte" | "costura" | "acabamento" | "pronto"
       prioridade_pedido: "baixa" | "media" | "alta"
       status_etapa: "pendente" | "em_andamento" | "concluido"
       tipo_etapa:
@@ -456,7 +550,15 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "commercial", "production", "viewer"],
+      app_role: [
+        "admin",
+        "commercial",
+        "production",
+        "viewer",
+        "pcp_closer",
+        "backoffice_fiscal",
+      ],
+      etapa_referencia: ["corte", "costura", "acabamento", "pronto"],
       prioridade_pedido: ["baixa", "media", "alta"],
       status_etapa: ["pendente", "em_andamento", "concluido"],
       tipo_etapa: [
