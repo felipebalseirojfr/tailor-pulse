@@ -229,6 +229,8 @@ export default function DetalhesPedido() {
       const etapaAtual = etapas.find((e) => e.id === etapaId);
       if (!etapaAtual) return;
 
+      console.log('🔄 Avançando etapa:', { etapaId, etapaAtual });
+
       // Marcar etapa atual como concluída
       const { error } = await supabase
         .from("etapas_producao")
@@ -238,20 +240,29 @@ export default function DetalhesPedido() {
         })
         .eq("id", etapaId);
 
-      if (error) throw error;
+      if (error) {
+        console.error('❌ Erro ao atualizar etapa:', error);
+        throw error;
+      }
 
       // Liberar próxima etapa (se existir)
       const proximaEtapa = etapas.find((e) => e.ordem === etapaAtual.ordem + 1);
       if (proximaEtapa && proximaEtapa.status === "pendente") {
-        await supabase
+        const { error: proximaError } = await supabase
           .from("etapas_producao")
           .update({
             status: "em_andamento",
             data_inicio: new Date().toISOString(),
           })
           .eq("id", proximaEtapa.id);
+        
+        if (proximaError) {
+          console.error('❌ Erro ao liberar próxima etapa:', proximaError);
+          throw proximaError;
+        }
       }
 
+      console.log('✅ Etapa avançada com sucesso!');
       toast({
         title: "Etapa avançada",
         description: "Etapa concluída e próxima etapa liberada automaticamente.",
@@ -259,9 +270,10 @@ export default function DetalhesPedido() {
 
       fetchPedidoDetails();
     } catch (error: any) {
+      console.error('❌ Erro ao avançar etapa:', error);
       toast({
         title: "Erro ao avançar",
-        description: error.message,
+        description: error.message || "Erro desconhecido ao avançar etapa",
         variant: "destructive",
       });
     }

@@ -150,8 +150,10 @@ export function PedidoDetailsSheet({
 
     setLoading(true);
     try {
+      console.log('🔄 Avançando etapa:', { etapaAtual, pedidoId: pedido.id });
+
       // Marcar etapa atual como concluída
-      await supabase
+      const { error: updateError } = await supabase
         .from("etapas_producao")
         .update({
           status: "concluido",
@@ -159,13 +161,18 @@ export function PedidoDetailsSheet({
         })
         .eq("id", etapaAtual.id);
 
+      if (updateError) {
+        console.error('❌ Erro ao atualizar etapa atual:', updateError);
+        throw new Error(updateError.message);
+      }
+
       // Buscar próxima etapa
       const proximaEtapa = etapas.find(
         (e: any) => e.ordem === etapaAtual.ordem + 1
       );
 
       if (proximaEtapa) {
-        await supabase
+        const { error: proximaError } = await supabase
           .from("etapas_producao")
           .update({
             status: "em_andamento",
@@ -173,10 +180,16 @@ export function PedidoDetailsSheet({
           })
           .eq("id", proximaEtapa.id);
 
+        if (proximaError) {
+          console.error('❌ Erro ao iniciar próxima etapa:', proximaError);
+          throw new Error(proximaError.message);
+        }
+
+        console.log('✅ Etapa avançada com sucesso!');
         toast.success("Etapa avançada com sucesso!");
       } else {
         // Última etapa, marcar pedido como concluído
-        await supabase
+        const { error: pedidoError } = await supabase
           .from("pedidos")
           .update({
             status_geral: "concluido",
@@ -184,14 +197,20 @@ export function PedidoDetailsSheet({
           })
           .eq("id", pedido.id);
 
+        if (pedidoError) {
+          console.error('❌ Erro ao concluir pedido:', pedidoError);
+          throw new Error(pedidoError.message);
+        }
+
+        console.log('✅ Pedido concluído!');
         toast.success("Pedido concluído!");
       }
 
       onUpdate();
       onOpenChange(false);
-    } catch (error) {
-      console.error("Erro ao avançar etapa:", error);
-      toast.error("Erro ao avançar etapa");
+    } catch (error: any) {
+      console.error("❌ Erro ao avançar etapa:", error);
+      toast.error(`Erro ao avançar etapa: ${error.message || 'Erro desconhecido'}`);
     } finally {
       setLoading(false);
     }

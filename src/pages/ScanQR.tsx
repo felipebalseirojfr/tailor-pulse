@@ -44,6 +44,8 @@ export default function ScanQR() {
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const supabaseAnonKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
       
+      console.log('🔍 Iniciando processamento do QR Code:', qrRef);
+      
       const response = await fetch(`${supabaseUrl}/functions/v1/processar-qr-scan`, {
         method: 'POST',
         headers: {
@@ -59,9 +61,10 @@ export default function ScanQR() {
       });
 
       const data = await response.json();
+      console.log('✅ Resposta do servidor:', data);
       setResult(data);
     } catch (error: any) {
-      console.error('Erro ao processar QR scan:', error);
+      console.error('❌ Erro ao processar QR scan:', error);
       const errorMessage = error.message || "Erro ao processar o escaneamento";
       setResult({ success: false, message: errorMessage });
     } finally {
