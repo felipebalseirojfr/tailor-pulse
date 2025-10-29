@@ -76,22 +76,52 @@ export default function Layout({ children }: LayoutProps) {
   }
 
   const navigation = [
-    { name: "Dashboard", href: "/", icon: LayoutDashboard },
-    { name: "Pedidos", href: "/pedidos", icon: Package },
+    { 
+      name: "Dashboard", 
+      href: "/", 
+      icon: LayoutDashboard,
+      excludeRoles: ["pcp_closer"] // PCP não vê Dashboard
+    },
+    { 
+      name: "Pedidos", 
+      href: "/pedidos", 
+      icon: Package,
+      excludeRoles: ["pcp_closer"] // PCP não vê Pedidos
+    },
     { 
       name: "Fechamento/Emissão NF", 
       href: "/pcp/fechamentos", 
       icon: PackageCheck,
       requiredRoles: ["pcp_closer", "backoffice_fiscal", "admin"]
     },
-    { name: "Clientes", href: "/clientes", icon: Users },
-    { name: "Calendário", href: "/calendario", icon: CalendarIcon },
+    { 
+      name: "Clientes", 
+      href: "/clientes", 
+      icon: Users,
+      excludeRoles: ["pcp_closer"] // PCP não vê Clientes
+    },
+    { 
+      name: "Calendário", 
+      href: "/calendario", 
+      icon: CalendarIcon,
+      excludeRoles: ["pcp_closer"] // PCP não vê Calendário
+    },
   ];
 
   // Filtrar navegação baseado nas roles do usuário
   const filteredNavigation = navigation.filter((item) => {
-    if (!item.requiredRoles) return true;
-    return hasAnyRole(item.requiredRoles);
+    // Se tem excludeRoles, verificar se usuário NÃO tem essas roles
+    if (item.excludeRoles && hasAnyRole(item.excludeRoles)) {
+      return false;
+    }
+    
+    // Se tem requiredRoles, verificar se usuário TEM alguma dessas roles
+    if (item.requiredRoles) {
+      return hasAnyRole(item.requiredRoles);
+    }
+    
+    // Se não tem restrições, mostrar para todos
+    return true;
   });
 
   return (
