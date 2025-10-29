@@ -57,13 +57,28 @@ const Fechamentos = () => {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    const variants: Record<string, { variant: any; label: string }> = {
-      em_aberto: { variant: "secondary", label: "Em Aberto" },
-      em_conferencia: { variant: "default", label: "Em Conferência" },
-      fechado: { variant: "outline", label: "Fechado" }
+  const getStatusConfig = (status: string) => {
+    const configs: Record<string, { color: string; bgColor: string; label: string; icon: string }> = {
+      em_aberto: { 
+        color: "text-red-600", 
+        bgColor: "bg-red-100 border-red-300", 
+        label: "Em Aberto",
+        icon: "🔴"
+      },
+      em_conferencia: { 
+        color: "text-yellow-600", 
+        bgColor: "bg-yellow-100 border-yellow-300", 
+        label: "Em Conferência",
+        icon: "🟡"
+      },
+      fechado: { 
+        color: "text-green-600", 
+        bgColor: "bg-green-100 border-green-300", 
+        label: "Fechado / Pronto para NF",
+        icon: "🟢"
+      }
     };
-    return variants[status] || variants.em_aberto;
+    return configs[status] || configs.em_aberto;
   };
 
   const filteredFechamentos = fechamentos.filter((f) => {
@@ -141,25 +156,28 @@ const Fechamentos = () => {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {filteredFechamentos.map((fechamento) => {
-            const statusInfo = getStatusBadge(fechamento.status);
+            const statusConfig = getStatusConfig(fechamento.status);
             return (
               <Card
                 key={fechamento.id}
-                className="cursor-pointer hover:shadow-lg transition-shadow"
+                className={`cursor-pointer hover:shadow-lg transition-all duration-300 border-2 ${statusConfig.bgColor}`}
                 onClick={() => navigate(`/pcp/fechamentos/${fechamento.id}`)}
               >
                 <CardHeader>
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-base mb-1">
-                        {fechamento.pedidos.codigo_pedido}
-                      </CardTitle>
-                      <p className="text-sm text-muted-foreground">
-                        Lote/OF: {fechamento.lote_of}
-                      </p>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-start gap-2 flex-1">
+                      <span className="text-2xl mt-0.5">{statusConfig.icon}</span>
+                      <div className="flex-1">
+                        <CardTitle className="text-base mb-1 flex items-center gap-2">
+                          {fechamento.pedidos.codigo_pedido}
+                        </CardTitle>
+                        <p className="text-sm text-muted-foreground">
+                          Lote/OF: {fechamento.lote_of}
+                        </p>
+                      </div>
                     </div>
-                    <Badge variant={statusInfo.variant}>
-                      {statusInfo.label}
+                    <Badge className={`${statusConfig.color} ${statusConfig.bgColor} border`}>
+                      {statusConfig.label}
                     </Badge>
                   </div>
                 </CardHeader>

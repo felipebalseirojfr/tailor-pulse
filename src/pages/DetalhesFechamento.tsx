@@ -115,16 +115,74 @@ const DetalhesFechamento = () => {
 
   const validateItem = (item: FechamentoItem) => {
     const total = item.caixas * item.unidades;
+    
+    // Verificar se está vazio
+    if (item.caixas === 0 || item.unidades === 0) return "empty";
+    
+    // Verificar se excede o planejado
     if (total > item.saldo_a_fechar) return "exceed";
-    if (total !== item.total_calculado && item.caixas > 0 && item.unidades > 0) return "mismatch";
+    
     return "valid";
   };
 
+  const getTotalPlanejado = () => {
+    return itens.reduce((sum, item) => sum + item.saldo_a_fechar, 0);
+  };
+
+  const getTotalFechado = () => {
+    return itens.reduce((sum, item) => sum + (item.caixas * item.unidades), 0);
+  };
+
+  const getPercentageDiff = () => {
+    const planejado = getTotalPlanejado();
+    const fechado = getTotalFechado();
+    if (planejado === 0) return "0";
+    return ((fechado / planejado) * 100).toFixed(1);
+  };
+
+  const getValidationStatus = () => {
+    const percentage = parseFloat(getPercentageDiff());
+    
+    // Verificar se tem campos vazios
+    const hasEmpty = itens.some(item => item.caixas === 0 || item.unidades === 0);
+    if (hasEmpty) return { type: "empty", message: "Preencha todos os campos" };
+    
+    // Verificar se está acima de 110%
+    if (percentage > 110) return { type: "exceed", message: "⚠️ Quantidade acima do planejado" };
+    
+    // Verificar se está abaixo de 90%
+    if (percentage < 90) return { type: "loss", message: "⚠️ Possível perda na produção" };
+    
+    return { type: "valid", message: "✅ Quantidades dentro do esperado" };
+  };
+
   const canSendToConferencia = () => {
-    return itens.every((item) => {
-      const validation = validateItem(item);
-      return validation === "valid" || (validation === "mismatch" && item.saldo_a_fechar === 0);
-    });
+    const validation = getValidationStatus();
+    return validation.type === "valid" || validation.type === "loss" || validation.type === "exceed";
+  };
+
+  const getStatusConfig = (status: string) => {
+    const configs: Record<string, { color: string; bgColor: string; label: string; icon: string }> = {
+      em_aberto: { 
+        color: "text-red-600", 
+        bgColor: "bg-red-100 border-red-300", 
+        label: "Em Aberto",
+        icon: "🔴"
+      },
+      em_conferencia: { 
+        color: "text-yellow-600", 
+        bgColor: "bg-yellow-100 border-yellow-300", 
+        label: "Em Conferência",
+        icon: "🟡"
+      },
+      fechado: { 
+        color: "text-green-600", 
+        bgColor: "bg-green-100 border-green-300", 
+        label: "Fechado / Pronto para NF",
+        icon: "🟢"
+      }
+    };
+    return configs[status] || configs.em_aberto;
   };
 
   const handleSaveRascunho = async (isAutoSave = false) => {
@@ -165,15 +223,35 @@ const DetalhesFechamento = () => {
   };
 
   const handleEnviarParaConferencia = async () => {
-    if (!canSendToConferencia()) {
-      toast.error("Corrija as inconsistências antes de enviar para conferência");
+    const validation = getValidationStatus();
+    
+    if (validation.type === "empty") {
+      toast.error("Preencha todos os campos antes de enviar para conferência");
       return;
     }
 
+    setSaving(true);
     try {
+      // Primeiro, salvar os itens
+      for (const item of itens) {
+        const { error: itemError } = await supabase
+          .from("fechamento_itens")
+          .update({
+            caixas: item.caixas,
+            unidades: item.unidades,
+          })
+          .eq("id", item.id);
+
+        if (itemError) throw itemError;
+      }
+
+      // Depois, atualizar status
       const { error } = await supabase
         .from("fechamentos")
-        .update({ status: "em_conferencia" })
+        .update({ 
+          status: "em_conferencia",
+          observacoes 
+        })
         .eq("id", id);
 
       if (error) throw error;
@@ -183,6 +261,8 @@ const DetalhesFechamento = () => {
     } catch (error: any) {
       console.error("Erro ao enviar:", error);
       toast.error("Erro ao enviar para conferência");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -277,25 +357,69 @@ const DetalhesFechamento = () => {
       </Button>
 
       {/* Cabeçalho */}
-      <Card className="mb-6">
+      <Card className={`mb-6 border-2 ${getStatusConfig(fechamento.status).bgColor}`}>
         <CardHeader>
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-            <div>
-              <CardTitle className="text-2xl mb-2">{fechamento.pedidos.codigo_pedido}</CardTitle>
-              <div className="space-y-1 text-sm text-muted-foreground">
-                <p><span className="font-medium">Lote/OF:</span> {fechamento.lote_of}</p>
-                {fechamento.referencias && (
-                  <p><span className="font-medium">Referência:</span> {fechamento.referencias.codigo_referencia}</p>
-                )}
+          <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+            <div className="flex items-start gap-3">
+              <span className="text-3xl">{getStatusConfig(fechamento.status).icon}</span>
+              <div>
+                <CardTitle className="text-2xl mb-2">{fechamento.pedidos.codigo_pedido}</CardTitle>
+                <div className="space-y-1 text-sm text-muted-foreground">
+                  <p><span className="font-medium">Lote/OF:</span> {fechamento.lote_of}</p>
+                  {fechamento.referencias && (
+                    <p><span className="font-medium">Referência:</span> {fechamento.referencias.codigo_referencia}</p>
+                  )}
+                </div>
               </div>
             </div>
-            <Badge variant={fechamento.status === "em_aberto" ? "secondary" : "default"}>
-              {fechamento.status === "em_aberto" ? "Em Aberto" : 
-               fechamento.status === "em_conferencia" ? "Em Conferência" : "Fechado"}
+            <Badge className={`${getStatusConfig(fechamento.status).color} ${getStatusConfig(fechamento.status).bgColor} border`}>
+              {getStatusConfig(fechamento.status).label}
             </Badge>
           </div>
         </CardHeader>
       </Card>
+
+      {/* Alertas de validação */}
+      {!isReadOnly && (
+        <Card className={`mb-6 border-2 ${
+          getValidationStatus().type === "exceed" ? "bg-red-50 border-red-300" :
+          getValidationStatus().type === "loss" ? "bg-yellow-50 border-yellow-300" :
+          getValidationStatus().type === "valid" ? "bg-green-50 border-green-300" :
+          "bg-gray-50 border-gray-300"
+        }`}>
+          <CardContent className="p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <AlertTriangle className={`h-5 w-5 ${
+                  getValidationStatus().type === "exceed" ? "text-red-600" :
+                  getValidationStatus().type === "loss" ? "text-yellow-600" :
+                  getValidationStatus().type === "valid" ? "text-green-600" :
+                  "text-gray-600"
+                }`} />
+                <span className={`font-medium ${
+                  getValidationStatus().type === "exceed" ? "text-red-700" :
+                  getValidationStatus().type === "loss" ? "text-yellow-700" :
+                  getValidationStatus().type === "valid" ? "text-green-700" :
+                  "text-gray-700"
+                }`}>
+                  {getValidationStatus().message}
+                </span>
+              </div>
+              <div className="text-sm">
+                <span className="font-medium">Planejado:</span> {getTotalPlanejado()} | 
+                <span className="font-medium ml-2">Fechado:</span> {getTotalFechado()} | 
+                <span className={`font-bold ml-2 ${
+                  parseFloat(getPercentageDiff()) > 110 ? "text-red-600" :
+                  parseFloat(getPercentageDiff()) < 90 ? "text-yellow-600" :
+                  "text-green-600"
+                }`}>
+                  {getPercentageDiff()}%
+                </span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Coluna principal */}
@@ -349,37 +473,59 @@ const DetalhesFechamento = () => {
                   <tbody>
                     {itens.map((item) => {
                       const validation = validateItem(item);
-                      const hasError = validation !== "valid";
+                      const total = item.caixas * item.unidades;
+                      const percentOfPlanned = item.saldo_a_fechar > 0 
+                        ? ((total / item.saldo_a_fechar) * 100).toFixed(0)
+                        : "0";
+                      
                       return (
-                        <tr key={item.id} className={`border-b ${hasError ? "bg-destructive/10" : ""}`}>
+                        <tr key={item.id} className={`border-b ${
+                          validation === "empty" ? "bg-gray-100" :
+                          validation === "exceed" ? "bg-red-50" :
+                          "bg-white"
+                        }`}>
                           <td className="p-2">{item.sku}</td>
                           <td className="p-2">{item.modelo}</td>
                           <td className="p-2">{item.cor}</td>
                           <td className="p-2">{item.tamanho}</td>
-                          <td className="text-right p-2">{item.saldo_a_fechar}</td>
+                          <td className="text-right p-2 font-medium">{item.saldo_a_fechar}</td>
                           <td className="p-2">
                             <Input
                               type="number"
                               min="0"
-                              value={item.caixas || ""}
+                              value={item.caixas === 0 ? "" : item.caixas}
                               onChange={(e) => handleItemChange(item.id, "caixas", e.target.value)}
                               disabled={isReadOnly}
-                              className="w-20 text-right"
+                              className={`w-20 text-right ${validation === "empty" ? "border-gray-400" : ""}`}
                             />
                           </td>
                           <td className="p-2">
                             <Input
                               type="number"
                               min="0"
-                              value={item.unidades || ""}
+                              value={item.unidades === 0 ? "" : item.unidades}
                               onChange={(e) => handleItemChange(item.id, "unidades", e.target.value)}
                               disabled={isReadOnly}
-                              className="w-20 text-right"
+                              className={`w-20 text-right ${validation === "empty" ? "border-gray-400" : ""}`}
                             />
                           </td>
-                          <td className={`text-right p-2 font-medium ${hasError ? "text-destructive" : ""}`}>
-                            {item.caixas * item.unidades}
-                            {hasError && <AlertTriangle className="inline h-3 w-3 ml-1" />}
+                          <td className="text-right p-2">
+                            <div className="flex items-center justify-end gap-2">
+                              <span className={`font-medium ${
+                                validation === "exceed" ? "text-red-600" :
+                                validation === "empty" ? "text-gray-500" :
+                                "text-green-600"
+                              }`}>
+                                {total}
+                              </span>
+                              {validation === "exceed" && <AlertTriangle className="h-3 w-3 text-red-600" />}
+                              {validation === "empty" && item.saldo_a_fechar > 0 && (
+                                <span className="text-xs text-gray-500">0%</span>
+                              )}
+                              {validation === "valid" && total > 0 && (
+                                <span className="text-xs text-green-600">({percentOfPlanned}%)</span>
+                              )}
+                            </div>
                           </td>
                         </tr>
                       );
