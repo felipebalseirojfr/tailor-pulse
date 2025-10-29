@@ -11,24 +11,13 @@ interface QRCodeDisplayProps {
 }
 
 export function QRCodeDisplay({ qrCodeRef, produtoModelo, pedidoId }: QRCodeDisplayProps) {
-  const qrUrl = `${window.location.origin}/scan/${qrCodeRef}`;
-  const [qrCodeLink, setQrCodeLink] = useState<string | null>(null);
+  // Usar URL do app deployado ou preview
+  const appUrl = window.location.hostname.includes('lovableproject.com') 
+    ? window.location.origin 
+    : window.location.origin;
+  const qrUrl = `${appUrl}/scan/${qrCodeRef}`;
 
-  useEffect(() => {
-    const fetchQrCodeLink = async () => {
-      const { supabase } = await import("@/integrations/supabase/client");
-      const { data } = await supabase
-        .from('pedidos')
-        .select('qr_code_link')
-        .eq('id', pedidoId)
-        .single();
-      
-      if (data?.qr_code_link) {
-        setQrCodeLink(data.qr_code_link);
-      }
-    };
-    fetchQrCodeLink();
-  }, [pedidoId]);
+  console.log('🔗 QR Code URL gerado:', qrUrl);
 
   const handleDownload = () => {
     const svg = document.getElementById('qr-code-svg') as unknown as SVGElement;
@@ -139,21 +128,13 @@ export function QRCodeDisplay({ qrCodeRef, produtoModelo, pedidoId }: QRCodeDisp
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="flex justify-center p-6 bg-white rounded-lg border-2 border-dashed border-border">
-          {qrCodeLink ? (
-            <img 
-              src={qrCodeLink} 
-              alt="QR Code" 
-              className="w-[200px] h-[200px]"
-            />
-          ) : (
-            <QRCodeSVG
-              id="qr-code-svg"
-              value={qrUrl}
-              size={200}
-              level="H"
-              includeMargin={true}
-            />
-          )}
+          <QRCodeSVG
+            id="qr-code-svg"
+            value={qrUrl}
+            size={200}
+            level="H"
+            includeMargin={true}
+          />
         </div>
         
         <div className="text-center space-y-2">
