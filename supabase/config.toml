@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.gerar-qr-code]
 verify_jwt = false
+
+[functions.qr-update-etapa]
+verify_jwt = false

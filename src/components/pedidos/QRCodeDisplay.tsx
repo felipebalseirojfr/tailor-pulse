@@ -11,13 +11,11 @@ interface QRCodeDisplayProps {
 }
 
 export function QRCodeDisplay({ qrCodeRef, produtoModelo, pedidoId }: QRCodeDisplayProps) {
-  // Usar URL do app deployado ou preview
-  const appUrl = window.location.hostname.includes('lovableproject.com') 
-    ? window.location.origin 
-    : window.location.origin;
-  const qrUrl = `${appUrl}/scan/${qrCodeRef}`;
+  // URL pública para atualização automática via QR Code
+  const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+  const qrUrl = `${supabaseUrl}/functions/v1/qr-update-etapa?ref=${qrCodeRef}`;
 
-  console.log('🔗 QR Code URL gerado:', qrUrl);
+  console.log('🔗 QR Code URL para atualização automática:', qrUrl);
 
   const handleDownload = () => {
     const svg = document.getElementById('qr-code-svg') as unknown as SVGElement;
@@ -164,9 +162,9 @@ export function QRCodeDisplay({ qrCodeRef, produtoModelo, pedidoId }: QRCodeDisp
         <div className="text-xs text-muted-foreground space-y-1 mt-4 p-3 bg-muted/50 rounded-md">
           <p className="font-semibold">Como funciona:</p>
           <ul className="list-disc list-inside space-y-1">
-            <li>Cada fornecedor escaneia o QR Code uma vez</li>
-            <li>O sistema avança automaticamente para a próxima etapa</li>
-            <li>Múltiplos escaneamentos pelo mesmo dispositivo são bloqueados</li>
+            <li>Escanear o QR Code atualiza a etapa automaticamente</li>
+            <li>Nenhuma página é aberta - o processo é invisível</li>
+            <li>A etapa atual é concluída e a próxima é iniciada</li>
             <li>Histórico completo de rastreamento é mantido</li>
           </ul>
         </div>
