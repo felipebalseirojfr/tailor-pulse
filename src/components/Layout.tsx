@@ -28,10 +28,14 @@ export default function Layout({ children }: LayoutProps) {
   const { toast } = useToast();
 
   useEffect(() => {
+    // Rotas públicas que não exigem autenticação
+    const publicRoutes = ["/auth", "/scan"];
+    const isPublicRoute = publicRoutes.some(route => location.pathname.startsWith(route));
+
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
       setLoading(false);
-      if (!session && location.pathname !== "/auth") {
+      if (!session && !isPublicRoute) {
         navigate("/auth");
       }
     });
@@ -40,7 +44,7 @@ export default function Layout({ children }: LayoutProps) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
       setSession(session);
-      if (!session && location.pathname !== "/auth") {
+      if (!session && !isPublicRoute) {
         navigate("/auth");
       }
     });
@@ -65,11 +69,15 @@ export default function Layout({ children }: LayoutProps) {
     );
   }
 
-  if (!session && location.pathname !== "/auth") {
+  // Rotas públicas que não precisam de autenticação
+  const publicRoutes = ["/auth", "/scan"];
+  const isPublicRoute = publicRoutes.some(route => location.pathname.startsWith(route));
+
+  if (!session && !isPublicRoute) {
     return null;
   }
 
-  if (location.pathname === "/auth") {
+  if (isPublicRoute) {
     return <>{children}</>;
   }
 
