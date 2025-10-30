@@ -21,6 +21,9 @@ interface Fechamento {
     produto_modelo: string;
     quantidade_total: number;
     valor_total_pedido: number;
+    clientes: {
+      nome: string;
+    };
   };
   referencias: {
     codigo_referencia: string;
@@ -45,7 +48,7 @@ const Fechamentos = () => {
         .from("fechamentos")
         .select(`
           *,
-          pedidos!inner(codigo_pedido, produto_modelo, quantidade_total, valor_total_pedido),
+          pedidos!inner(codigo_pedido, produto_modelo, quantidade_total, valor_total_pedido, clientes!inner(nome)),
           referencias(codigo_referencia)
         `)
         .order("updated_at", { ascending: false });
@@ -172,9 +175,12 @@ const Fechamentos = () => {
                       <span className="text-2xl mt-0.5">{statusConfig.icon}</span>
                       <div className="flex-1">
                         <CardTitle className="text-base mb-1 flex items-center gap-2">
-                          {fechamento.pedidos.codigo_pedido}
+                          {fechamento.pedidos.produto_modelo}
                         </CardTitle>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-sm text-muted-foreground font-medium">
+                          {fechamento.pedidos.clientes.nome}
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
                           Lote/OF: {fechamento.lote_of}
                         </p>
                       </div>
@@ -187,9 +193,10 @@ const Fechamentos = () => {
                 <CardContent>
                   <div className="space-y-2 text-sm">
                     <div className="bg-background/50 rounded-lg p-3 space-y-2 mb-3">
-                      <p className="font-medium text-foreground">
-                        {fechamento.pedidos.produto_modelo}
-                      </p>
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Pedido:</span>
+                        <span className="font-semibold">{fechamento.pedidos.codigo_pedido}</span>
+                      </div>
                       <div className="flex justify-between items-center">
                         <span className="text-muted-foreground">Quantidade:</span>
                         <span className="font-semibold">{fechamento.pedidos.quantidade_total} un</span>
