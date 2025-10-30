@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { ArrowLeft, Upload, Save, Send, Loader2, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
@@ -31,6 +32,11 @@ interface Fechamento {
   observacoes: string | null;
   pedidos: {
     codigo_pedido: string;
+    produto_modelo: string;
+    grade_tamanhos: any;
+    clientes: {
+      nome: string;
+    };
   };
   referencias: {
     codigo_referencia: string;
@@ -72,7 +78,7 @@ const DetalhesFechamento = () => {
         .from("fechamentos")
         .select(`
           *,
-          pedidos!inner(codigo_pedido),
+          pedidos!inner(codigo_pedido, produto_modelo, grade_tamanhos, clientes!inner(nome)),
           referencias(codigo_referencia)
         `)
         .eq("id", id)
@@ -104,23 +110,21 @@ const DetalhesFechamento = () => {
     }
   };
 
-  const handleItemChange = (itemId: string, field: "caixas" | "unidades", value: string) => {
+  const handleItemChange = (tamanho: string, value: string) => {
     const numValue = parseInt(value) || 0;
     setItens((prev) =>
       prev.map((item) =>
-        item.id === itemId ? { ...item, [field]: numValue } : item
+        item.tamanho === tamanho ? { ...item, unidades: numValue, caixas: numValue > 0 ? 1 : 0 } : item
       )
     );
   };
 
   const validateItem = (item: FechamentoItem) => {
-    const total = item.caixas * item.unidades;
-    
     // Verificar se está vazio
-    if (item.caixas === 0 || item.unidades === 0) return "empty";
+    if (item.unidades === 0) return "empty";
     
     // Verificar se excede o planejado
-    if (total > item.saldo_a_fechar) return "exceed";
+    if (item.unidades > item.saldo_a_fechar) return "exceed";
     
     return "valid";
   };
@@ -130,7 +134,7 @@ const DetalhesFechamento = () => {
   };
 
   const getTotalFechado = () => {
-    return itens.reduce((sum, item) => sum + (item.caixas * item.unidades), 0);
+    return itens.reduce((sum, item) => sum + item.unidades, 0);
   };
 
   const getPercentageDiff = () => {
@@ -144,8 +148,8 @@ const DetalhesFechamento = () => {
     const percentage = parseFloat(getPercentageDiff());
     
     // Verificar se tem campos vazios
-    const hasEmpty = itens.some(item => item.caixas === 0 || item.unidades === 0);
-    if (hasEmpty) return { type: "empty", message: "Preencha todos os campos" };
+    const hasEmpty = itens.some(item => item.unidades === 0);
+    if (hasEmpty) return { type: "empty", message: "Preencha todos os tamanhos" };
     
     // Verificar se está acima de 110%
     if (percentage > 110) return { type: "exceed", message: "⚠️ Quantidade acima do planejado" };
@@ -201,7 +205,6 @@ const DetalhesFechamento = () => {
         const { error: itemError } = await supabase
           .from("fechamento_itens")
           .update({
-            caixas: item.caixas,
             unidades: item.unidades,
           })
           .eq("id", item.id);
@@ -237,7 +240,6 @@ const DetalhesFechamento = () => {
         const { error: itemError } = await supabase
           .from("fechamento_itens")
           .update({
-            caixas: item.caixas,
             unidades: item.unidades,
           })
           .eq("id", item.id);
@@ -309,26 +311,8 @@ const DetalhesFechamento = () => {
     }
   };
 
-  const getSumByCor = () => {
-    const sumByCor: Record<string, number> = {};
-    itens.forEach((item) => {
-      const total = item.caixas * item.unidades;
-      sumByCor[item.cor] = (sumByCor[item.cor] || 0) + total;
-    });
-    return sumByCor;
-  };
-
-  const getSumByTamanho = () => {
-    const sumByTamanho: Record<string, number> = {};
-    itens.forEach((item) => {
-      const total = item.caixas * item.unidades;
-      sumByTamanho[item.tamanho] = (sumByTamanho[item.tamanho] || 0) + total;
-    });
-    return sumByTamanho;
-  };
-
   const getTotalGeral = () => {
-    return itens.reduce((sum, item) => sum + item.caixas * item.unidades, 0);
+    return itens.reduce((sum, item) => sum + item.unidades, 0);
   };
 
   if (loading) {
@@ -363,8 +347,10 @@ const DetalhesFechamento = () => {
             <div className="flex items-start gap-3">
               <span className="text-3xl">{getStatusConfig(fechamento.status).icon}</span>
               <div>
-                <CardTitle className="text-2xl mb-2">{fechamento.pedidos.codigo_pedido}</CardTitle>
+                <CardTitle className="text-2xl mb-2">{fechamento.pedidos.produto_modelo}</CardTitle>
+                <p className="text-base font-medium text-muted-foreground mb-2">{fechamento.pedidos.clientes.nome}</p>
                 <div className="space-y-1 text-sm text-muted-foreground">
+                  <p><span className="font-medium">Pedido:</span> {fechamento.pedidos.codigo_pedido}</p>
                   <p><span className="font-medium">Lote/OF:</span> {fechamento.lote_of}</p>
                   {fechamento.referencias && (
                     <p><span className="font-medium">Referência:</span> {fechamento.referencias.codigo_referencia}</p>
@@ -450,88 +436,53 @@ const DetalhesFechamento = () => {
             </Card>
           )}
 
-          {/* Tabela de itens */}
+          {/* Grade de Tamanhos */}
           <Card>
             <CardHeader>
-              <CardTitle className="text-lg">Itens do Fechamento</CardTitle>
+              <CardTitle className="text-lg">Quantidades por Tamanho</CardTitle>
+              <p className="text-sm text-muted-foreground">Preencha a quantidade produzida para cada tamanho</p>
             </CardHeader>
             <CardContent>
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left p-2">SKU</th>
-                      <th className="text-left p-2">Modelo</th>
-                      <th className="text-left p-2">Cor</th>
-                      <th className="text-left p-2">Tamanho</th>
-                      <th className="text-right p-2">Saldo</th>
-                      <th className="text-right p-2">Caixas</th>
-                      <th className="text-right p-2">Unidades</th>
-                      <th className="text-right p-2">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {itens.map((item) => {
-                      const validation = validateItem(item);
-                      const total = item.caixas * item.unidades;
-                      const percentOfPlanned = item.saldo_a_fechar > 0 
-                        ? ((total / item.saldo_a_fechar) * 100).toFixed(0)
-                        : "0";
-                      
-                      return (
-                        <tr key={item.id} className={`border-b ${
-                          validation === "empty" ? "bg-gray-100" :
-                          validation === "exceed" ? "bg-red-50" :
-                          "bg-white"
-                        }`}>
-                          <td className="p-2">{item.sku}</td>
-                          <td className="p-2">{item.modelo}</td>
-                          <td className="p-2">{item.cor}</td>
-                          <td className="p-2">{item.tamanho}</td>
-                          <td className="text-right p-2 font-medium">{item.saldo_a_fechar}</td>
-                          <td className="p-2">
-                            <Input
-                              type="number"
-                              min="0"
-                              value={item.caixas === 0 ? "" : item.caixas}
-                              onChange={(e) => handleItemChange(item.id, "caixas", e.target.value)}
-                              disabled={isReadOnly}
-                              className={`w-20 text-right ${validation === "empty" ? "border-gray-400" : ""}`}
-                            />
-                          </td>
-                          <td className="p-2">
-                            <Input
-                              type="number"
-                              min="0"
-                              value={item.unidades === 0 ? "" : item.unidades}
-                              onChange={(e) => handleItemChange(item.id, "unidades", e.target.value)}
-                              disabled={isReadOnly}
-                              className={`w-20 text-right ${validation === "empty" ? "border-gray-400" : ""}`}
-                            />
-                          </td>
-                          <td className="text-right p-2">
-                            <div className="flex items-center justify-end gap-2">
-                              <span className={`font-medium ${
-                                validation === "exceed" ? "text-red-600" :
-                                validation === "empty" ? "text-gray-500" :
-                                "text-green-600"
-                              }`}>
-                                {total}
-                              </span>
-                              {validation === "exceed" && <AlertTriangle className="h-3 w-3 text-red-600" />}
-                              {validation === "empty" && item.saldo_a_fechar > 0 && (
-                                <span className="text-xs text-gray-500">0%</span>
-                              )}
-                              {validation === "valid" && total > 0 && (
-                                <span className="text-xs text-green-600">({percentOfPlanned}%)</span>
-                              )}
-                            </div>
-                          </td>
-                        </tr>
-                      );
-                    })}
-                  </tbody>
-                </table>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                {Object.keys((fechamento.pedidos.grade_tamanhos as Record<string, number>) || {})
+                  .filter(tamanho => ((fechamento.pedidos.grade_tamanhos as Record<string, number>)[tamanho] || 0) > 0)
+                  .map((tamanho) => {
+                    const item = itens.find(i => i.tamanho === tamanho);
+                    const validation = item ? validateItem(item) : "empty";
+                    const planejado = (fechamento.pedidos.grade_tamanhos as Record<string, number>)[tamanho];
+                    const atual = item?.unidades || 0;
+                    
+                    return (
+                      <div key={tamanho} className={`p-4 rounded-lg border-2 ${
+                        validation === "empty" ? "bg-gray-50 border-gray-300" :
+                        validation === "exceed" ? "bg-red-50 border-red-300" :
+                        "bg-green-50 border-green-300"
+                      }`}>
+                        <Label className="text-lg font-bold mb-2 block">{tamanho}</Label>
+                        <div className="text-sm text-muted-foreground mb-2">
+                          Planejado: <span className="font-semibold">{planejado}</span>
+                        </div>
+                        <Input
+                          type="number"
+                          min="0"
+                          value={atual === 0 ? "" : atual}
+                          onChange={(e) => handleItemChange(tamanho, e.target.value)}
+                          disabled={isReadOnly}
+                          placeholder="0"
+                          className="text-center text-lg font-semibold h-12"
+                        />
+                        {atual > 0 && (
+                          <div className={`text-xs mt-2 text-center font-medium ${
+                            atual > planejado ? "text-red-600" :
+                            atual < planejado ? "text-yellow-600" :
+                            "text-green-600"
+                          }`}>
+                            {((atual / planejado) * 100).toFixed(0)}% do planejado
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
               </div>
             </CardContent>
           </Card>
@@ -561,30 +512,34 @@ const DetalhesFechamento = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <h4 className="font-medium mb-2">Por Cor</h4>
-                {Object.entries(getSumByCor()).map(([cor, total]) => (
-                  <div key={cor} className="flex justify-between text-sm">
-                    <span>{cor}:</span>
-                    <span className="font-medium">{total}</span>
-                  </div>
-                ))}
-              </div>
-
-              <div>
-                <h4 className="font-medium mb-2">Por Tamanho</h4>
-                {Object.entries(getSumByTamanho()).map(([tamanho, total]) => (
-                  <div key={tamanho} className="flex justify-between text-sm">
-                    <span>{tamanho}:</span>
-                    <span className="font-medium">{total}</span>
-                  </div>
-                ))}
+                <h4 className="font-medium mb-2">Total Produzido</h4>
+                <div className="text-2xl font-bold text-primary">
+                  {getTotalGeral()} unidades
+                </div>
               </div>
 
               <div className="pt-4 border-t">
-                <div className="flex justify-between text-base font-bold">
-                  <span>Total Geral:</span>
-                  <span>{getTotalGeral()}</span>
-                </div>
+                <h4 className="font-medium mb-2">Por Tamanho</h4>
+                {Object.keys((fechamento.pedidos.grade_tamanhos as Record<string, number>) || {})
+                  .filter(tamanho => ((fechamento.pedidos.grade_tamanhos as Record<string, number>)[tamanho] || 0) > 0)
+                  .map((tamanho) => {
+                    const item = itens.find(i => i.tamanho === tamanho);
+                    const atual = item?.unidades || 0;
+                    const planejado = (fechamento.pedidos.grade_tamanhos as Record<string, number>)[tamanho];
+                    return (
+                      <div key={tamanho} className="flex justify-between text-sm mb-1">
+                        <span>{tamanho}:</span>
+                        <span className={`font-medium ${
+                          atual === 0 ? "text-gray-500" :
+                          atual > planejado ? "text-red-600" :
+                          atual < planejado ? "text-yellow-600" :
+                          "text-green-600"
+                        }`}>
+                          {atual} / {planejado}
+                        </span>
+                      </div>
+                    );
+                  })}
               </div>
             </CardContent>
           </Card>

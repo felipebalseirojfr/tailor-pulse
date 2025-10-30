@@ -20,7 +20,7 @@ interface Fechamento {
     codigo_pedido: string;
     produto_modelo: string;
     quantidade_total: number;
-    valor_total_pedido: number;
+    grade_tamanhos: any;
     clientes: {
       nome: string;
     };
@@ -48,7 +48,7 @@ const Fechamentos = () => {
         .from("fechamentos")
         .select(`
           *,
-          pedidos!inner(codigo_pedido, produto_modelo, quantidade_total, valor_total_pedido, clientes!inner(nome)),
+          pedidos!inner(codigo_pedido, produto_modelo, quantidade_total, grade_tamanhos, clientes!inner(nome)),
           referencias(codigo_referencia)
         `)
         .order("updated_at", { ascending: false });
@@ -202,12 +202,9 @@ const Fechamentos = () => {
                         <span className="font-semibold">{fechamento.pedidos.quantidade_total} un</span>
                       </div>
                       <div className="flex justify-between items-center">
-                        <span className="text-muted-foreground">Valor Total:</span>
-                        <span className="font-semibold text-primary">
-                          {new Intl.NumberFormat('pt-BR', { 
-                            style: 'currency', 
-                            currency: 'BRL' 
-                          }).format(fechamento.pedidos.valor_total_pedido)}
+                        <span className="text-muted-foreground">Tamanhos:</span>
+                        <span className="font-semibold">
+                          {Object.keys(fechamento.pedidos.grade_tamanhos as Record<string, number> || {}).filter(t => (fechamento.pedidos.grade_tamanhos as Record<string, number>)[t] > 0).join(", ") || "N/A"}
                         </span>
                       </div>
                     </div>
