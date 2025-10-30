@@ -18,6 +18,9 @@ interface Fechamento {
   updated_at: string;
   pedidos: {
     codigo_pedido: string;
+    produto_modelo: string;
+    quantidade_total: number;
+    valor_total_pedido: number;
   };
   referencias: {
     codigo_referencia: string;
@@ -42,7 +45,7 @@ const Fechamentos = () => {
         .from("fechamentos")
         .select(`
           *,
-          pedidos!inner(codigo_pedido),
+          pedidos!inner(codigo_pedido, produto_modelo, quantidade_total, valor_total_pedido),
           referencias(codigo_referencia)
         `)
         .order("updated_at", { ascending: false });
@@ -183,6 +186,24 @@ const Fechamentos = () => {
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-2 text-sm">
+                    <div className="bg-background/50 rounded-lg p-3 space-y-2 mb-3">
+                      <p className="font-medium text-foreground">
+                        {fechamento.pedidos.produto_modelo}
+                      </p>
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Quantidade:</span>
+                        <span className="font-semibold">{fechamento.pedidos.quantidade_total} un</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-muted-foreground">Valor Total:</span>
+                        <span className="font-semibold text-primary">
+                          {new Intl.NumberFormat('pt-BR', { 
+                            style: 'currency', 
+                            currency: 'BRL' 
+                          }).format(fechamento.pedidos.valor_total_pedido)}
+                        </span>
+                      </div>
+                    </div>
                     {fechamento.referencias && (
                       <p className="text-muted-foreground">
                         <span className="font-medium">Ref:</span> {fechamento.referencias.codigo_referencia}
