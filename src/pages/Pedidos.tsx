@@ -224,6 +224,10 @@ export default function Pedidos() {
   };
 
   const getSituacaoBadge = (pedido: Pedido) => {
+    if (pedido.status_geral === "aguardando_inicio") {
+      return <Badge variant="secondary">Aguardando Início</Badge>;
+    }
+
     const hoje = new Date().toISOString().split("T")[0];
     const atrasado = pedido.prazo_final < hoje && pedido.status_geral !== "concluido";
 
@@ -393,6 +397,7 @@ export default function Pedidos() {
     const hoje = new Date().toISOString().split("T")[0];
     return {
       total: pedidos.length,
+      aguardandoInicio: pedidos.filter((p) => p.status_geral === "aguardando_inicio").length,
       emProducao: pedidos.filter((p) => p.status_geral === "em_producao").length,
       concluidos: pedidos.filter((p) => p.status_geral === "concluido").length,
       atrasados: pedidos.filter(
@@ -464,6 +469,7 @@ export default function Pedidos() {
       <div className={modoTV ? 'px-6' : ''}>
         <PedidosSummaryCards
           total={summaryData.total}
+          aguardandoInicio={summaryData.aguardandoInicio}
           emProducao={summaryData.emProducao}
           concluidos={summaryData.concluidos}
           atrasados={summaryData.atrasados}
@@ -567,8 +573,10 @@ export default function Pedidos() {
                           </SelectTrigger>
                           <SelectContent>
                             <SelectItem value="todos">Todos os status</SelectItem>
+                            <SelectItem value="aguardando_inicio">Aguardando Início</SelectItem>
                             <SelectItem value="em_producao">Em Produção</SelectItem>
                             <SelectItem value="atrasado">Atrasados</SelectItem>
+                            <SelectItem value="concluido">Concluídos</SelectItem>
                           </SelectContent>
                         </Select>
                       )}

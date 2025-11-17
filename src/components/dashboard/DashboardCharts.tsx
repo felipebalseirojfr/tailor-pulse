@@ -15,6 +15,11 @@ export const DashboardCharts = ({ pedidos }: DashboardChartsProps) => {
   // Dados para gráfico de status
   const statusData = [
     {
+      name: "Aguardando Início",
+      value: pedidos.filter((p) => p.status_geral === "aguardando_inicio").length,
+      fill: "#94a3b8",
+    },
+    {
       name: "Em Produção",
       value: pedidos.filter((p) => p.status_geral === "em_producao").length,
       fill: "#3b82f6",
@@ -23,11 +28,6 @@ export const DashboardCharts = ({ pedidos }: DashboardChartsProps) => {
       name: "Concluídos",
       value: pedidos.filter((p) => p.status_geral === "concluido").length,
       fill: "#22c55e",
-    },
-    {
-      name: "Aguardando",
-      value: pedidos.filter((p) => p.status_geral === "aguardando").length,
-      fill: "#94a3b8",
     },
   ];
 

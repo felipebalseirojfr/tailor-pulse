@@ -1,8 +1,9 @@
 import { Card, CardContent } from "@/components/ui/card";
-import { Package, Clock, CheckCircle2, AlertCircle } from "lucide-react";
+import { Package, Clock, CheckCircle2, AlertCircle, PlayCircle } from "lucide-react";
 
 interface SummaryCardsProps {
   total: number;
+  aguardandoInicio: number;
   emProducao: number;
   concluidos: number;
   atrasados: number;
@@ -12,6 +13,7 @@ interface SummaryCardsProps {
 
 export function PedidosSummaryCards({
   total,
+  aguardandoInicio,
   emProducao,
   concluidos,
   atrasados,
@@ -26,6 +28,14 @@ export function PedidosSummaryCards({
       color: "text-muted-foreground",
       bgColor: "bg-muted",
       filter: "todos",
+    },
+    {
+      title: "Aguardando Início",
+      value: aguardandoInicio,
+      icon: PlayCircle,
+      color: "text-muted-foreground",
+      bgColor: "bg-muted/50",
+      filter: "aguardando_inicio",
     },
     {
       title: "Em Produção",

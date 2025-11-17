@@ -61,6 +61,13 @@ export function PedidoCard({ pedido, onViewDetails, onAdvanceStage, isTV = false
   };
 
   const getStatusConfig = () => {
+    if (pedido.status_geral === "aguardando_inicio") {
+      return { 
+        label: "Aguardando Início", 
+        color: "bg-muted/50 text-muted-foreground border-muted",
+        dot: "bg-muted-foreground"
+      };
+    }
     if (pedido.status_geral === "concluido") {
       return { 
         label: "Concluído", 
