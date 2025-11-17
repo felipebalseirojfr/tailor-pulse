@@ -111,6 +111,7 @@ export default function NovoPedido() {
           tipos_personalizacao: formData.tipos_personalizacao,
           grade_tamanhos: formData.grade_tamanhos,
           arquivos: arquivosUpload,
+          status_geral: 'aguardando_inicio',
         },
       ]).select();
 
@@ -119,14 +120,14 @@ export default function NovoPedido() {
 
       const pedidoId = pedidoData[0].id;
 
-      // Criar etapas manualmente
+      // Criar etapas manualmente (todas começam pendentes)
       if (etapas.length > 0) {
-        const etapasData = etapas.map((etapa, index) => ({
+        const etapasData = etapas.map((etapa) => ({
           pedido_id: pedidoId,
           tipo_etapa: etapa.tipo_etapa as any,
           ordem: etapa.ordem,
-          status: (index === 0 ? 'em_andamento' : 'pendente') as "em_andamento" | "pendente" | "concluido",
-          data_inicio: index === 0 ? new Date().toISOString() : null,
+          status: 'pendente' as "pendente" | "em_andamento" | "concluido",
+          data_inicio: null,
           data_inicio_prevista: etapa.data_inicio_prevista?.toISOString().split('T')[0] || null,
           data_termino_prevista: etapa.data_termino_prevista?.toISOString().split('T')[0] || null,
         }));
