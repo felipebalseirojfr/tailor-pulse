@@ -73,27 +73,40 @@ export default function NovoPedido() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Usuário não autenticado");
 
-      // Upload arquivos primeiro
+      // Upload arquivos primeiro (mas não falha se houver erro)
       const arquivosUpload = [];
       for (const arquivo of arquivos) {
-        const fileName = `${Date.now()}_${arquivo.name}`;
-        const filePath = `${user.id}/${fileName}`;
-        
-        const { error: uploadError } = await supabase.storage
-          .from('pedidos-arquivos')
-          .upload(filePath, arquivo);
+        try {
+          const fileName = `${Date.now()}_${arquivo.name}`;
+          const filePath = `${user.id}/${fileName}`;
+          
+          const { error: uploadError } = await supabase.storage
+            .from('pedidos-arquivos')
+            .upload(filePath, arquivo, {
+              cacheControl: '3600',
+              upsert: false
+            });
 
-        if (uploadError) {
-          console.error('Erro ao fazer upload:', uploadError);
-          throw new Error(`Erro ao fazer upload do arquivo ${arquivo.name}`);
+          if (uploadError) {
+            console.error('Erro ao fazer upload:', uploadError);
+            toast({
+              title: "Aviso",
+              description: `Não foi possível fazer upload do arquivo ${arquivo.name}`,
+              variant: "default",
+            });
+            continue; // Continua sem este arquivo
+          }
+
+          arquivosUpload.push({
+            nome: arquivo.name,
+            caminho: filePath,
+            tipo: arquivo.type,
+            tamanho: arquivo.size,
+          });
+        } catch (fileError) {
+          console.error('Erro ao processar arquivo:', fileError);
+          // Continua sem este arquivo
         }
-
-        arquivosUpload.push({
-          nome: arquivo.name,
-          caminho: filePath,
-          tipo: arquivo.type,
-          tamanho: arquivo.size,
-        });
       }
 
       const { data: pedidoData, error } = await supabase.from("pedidos").insert([
@@ -206,9 +219,13 @@ export default function NovoPedido() {
         console.error('Erro ao salvar QR Code:', uploadError);
       }
 
+      const mensagemArquivos = arquivosUpload.length > 0 
+        ? ` ${arquivosUpload.length} arquivo(s) anexado(s).`
+        : '';
+      
       toast({
         title: "Pedido criado!",
-        description: "O pedido foi criado com sucesso e o QR Code foi gerado.",
+        description: `O pedido foi criado com sucesso e o QR Code foi gerado.${mensagemArquivos}`,
       });
       navigate("/pedidos");
     } catch (error: any) {
