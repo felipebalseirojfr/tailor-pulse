@@ -8,6 +8,7 @@ import Auth from "./pages/Auth";
 import Dashboard from "./pages/Dashboard";
 import Pedidos from "./pages/Pedidos";
 import NovoPedido from "./pages/NovoPedido";
+import EditarPedido from "./pages/EditarPedido";
 import DetalhesPedido from "./pages/DetalhesPedido";
 import Clientes from "./pages/Clientes";
 import Calendario from "./pages/Calendario";
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/pedidos" element={<Layout><Pedidos /></Layout>} />
           <Route path="/pedidos/novo" element={<Layout><NovoPedido /></Layout>} />
           <Route path="/pedidos/:id" element={<Layout><DetalhesPedido /></Layout>} />
+          <Route path="/pedidos/:id/editar" element={<Layout><EditarPedido /></Layout>} />
           <Route path="/clientes" element={<Layout><Clientes /></Layout>} />
           <Route path="/calendario" element={<Layout><Calendario /></Layout>} />
           <Route path="/pcp/fechamentos" element={<Layout><Fechamentos /></Layout>} />
