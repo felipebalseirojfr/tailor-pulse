@@ -386,6 +386,16 @@ export default function DetalhesPedido() {
                 Atrasado
               </Badge>
             )}
+            {podeEditar && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate(`/pedidos/${id}/editar`)}
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                Editar Produção
+              </Button>
+            )}
             <Button
               variant="destructive"
               size="sm"
@@ -483,6 +493,7 @@ export default function DetalhesPedido() {
               <HistoricoEscaneamentos pedidoId={pedido.id} />
             </>
           )}
+          <HistoricoAuditoria pedidoId={pedido.id} />
         </div>
       </div>
 

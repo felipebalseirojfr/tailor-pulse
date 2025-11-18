@@ -106,7 +106,7 @@ export default function EditarPedido() {
 
       // Carregar arquivos existentes
       if (data.arquivos && Array.isArray(data.arquivos)) {
-        setArquivosExistentes(data.arquivos as ArquivoExistente[]);
+        setArquivosExistentes(data.arquivos as unknown as ArquivoExistente[]);
       }
 
       setLoading(false);
