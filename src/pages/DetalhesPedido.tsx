@@ -22,6 +22,10 @@ import {
   PlayCircle,
   Trash2,
   Edit,
+  Download,
+  FileText,
+  Image as ImageIcon,
+  File,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -50,6 +54,12 @@ interface Pedido {
   progresso_percentual: number;
   status_geral: string;
   qr_code_ref: string;
+  arquivos: Array<{
+    nome: string;
+    tipo: string;
+    tamanho: number;
+    caminho: string;
+  }> | null;
   clientes: {
     nome: string;
     contato: string;
@@ -167,7 +177,15 @@ export default function DetalhesPedido() {
 
       if (etapasError) throw etapasError;
 
-      setPedido(pedidoData);
+      setPedido({
+        ...pedidoData,
+        arquivos: pedidoData.arquivos as Array<{
+          nome: string;
+          tipo: string;
+          tamanho: number;
+          caminho: string;
+        }> | null,
+      } as Pedido);
       setEtapas(etapasData);
     } catch (error) {
       console.error("Erro ao buscar pedido:", error);
@@ -190,6 +208,49 @@ export default function DetalhesPedido() {
     if (data) {
       setResponsaveis(data);
     }
+  };
+
+  const downloadArquivo = async (caminho: string, nome: string) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from("pedidos-arquivos")
+        .download(caminho);
+
+      if (error) throw error;
+
+      const url = URL.createObjectURL(data);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = nome;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      toast({
+        title: "Download iniciado",
+        description: `Arquivo ${nome} está sendo baixado.`,
+      });
+    } catch (error) {
+      console.error("Erro ao baixar arquivo:", error);
+      toast({
+        title: "Erro ao baixar",
+        description: "Não foi possível baixar o arquivo.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const formatFileSize = (bytes: number) => {
+    if (bytes < 1024) return bytes + " B";
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + " KB";
+    return (bytes / (1024 * 1024)).toFixed(2) + " MB";
+  };
+
+  const getFileIcon = (tipo: string) => {
+    if (tipo.startsWith("image/")) return <ImageIcon className="h-5 w-5" />;
+    if (tipo === "application/pdf") return <FileText className="h-5 w-5" />;
+    return <File className="h-5 w-5" />;
   };
 
   const atualizarEtapa = async (
@@ -496,6 +557,45 @@ export default function DetalhesPedido() {
           <HistoricoAuditoria pedidoId={pedido.id} />
         </div>
       </div>
+
+      {/* Arquivos Anexados */}
+      {pedido.arquivos && pedido.arquivos.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Arquivos Anexados</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-3">
+              {pedido.arquivos.map((arquivo, index) => (
+                <div
+                  key={index}
+                  className="flex items-center justify-between rounded-lg border border-border p-4 hover:bg-accent/50 transition-colors"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-muted">
+                      {getFileIcon(arquivo.tipo)}
+                    </div>
+                    <div>
+                      <p className="font-medium">{arquivo.nome}</p>
+                      <p className="text-sm text-muted-foreground">
+                        {formatFileSize(arquivo.tamanho)}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => downloadArquivo(arquivo.caminho, arquivo.nome)}
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Baixar
+                  </Button>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Etapas de Produção */}
       <Card>
