@@ -29,6 +29,27 @@ interface ArquivoExistente {
   tamanho: number;
 }
 
+interface Etapa {
+  id: string;
+  tipo_etapa: string;
+  ordem: number;
+  data_inicio_prevista: string | null;
+  data_termino_prevista: string | null;
+  observacoes: string | null;
+}
+
+const ETAPAS_NOMES: Record<string, string> = {
+  pilotagem: "Pilotagem",
+  liberacao_corte: "Liberação de Corte",
+  corte: "Corte",
+  lavanderia: "Lavanderia",
+  costura: "Costura",
+  caseado: "Caseado",
+  estamparia_bordado: "Estamparia/Bordado",
+  acabamento: "Acabamento",
+  entrega: "Entrega",
+};
+
 export default function EditarPedido() {
   const { id } = useParams();
   const [loading, setLoading] = useState(true);
@@ -37,9 +58,11 @@ export default function EditarPedido() {
   const [arquivos, setArquivos] = useState<File[]>([]);
   const [arquivosExistentes, setArquivosExistentes] = useState<ArquivoExistente[]>([]);
   const [arquivosParaRemover, setArquivosParaRemover] = useState<string[]>([]);
+  const [etapas, setEtapas] = useState<Etapa[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
   const [dadosOriginais, setDadosOriginais] = useState<any>(null);
+  const [etapasOriginais, setEtapasOriginais] = useState<Etapa[]>([]);
 
   const [formData, setFormData] = useState({
     cliente_id: "",
@@ -61,6 +84,7 @@ export default function EditarPedido() {
   useEffect(() => {
     fetchClientes();
     fetchPedido();
+    fetchEtapas();
   }, [id]);
 
   const fetchClientes = async () => {
@@ -109,7 +133,6 @@ export default function EditarPedido() {
         setArquivosExistentes(data.arquivos as unknown as ArquivoExistente[]);
       }
 
-      setLoading(false);
     } catch (error: any) {
       console.error("Erro ao carregar pedido:", error);
       toast({
@@ -119,6 +142,33 @@ export default function EditarPedido() {
       });
       navigate("/pedidos");
     }
+  };
+
+  const fetchEtapas = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("etapas_producao")
+        .select("*")
+        .eq("pedido_id", id)
+        .order("ordem");
+
+      if (error) throw error;
+      if (data) {
+        setEtapas(data);
+        setEtapasOriginais(data);
+      }
+      setLoading(false);
+    } catch (error: any) {
+      console.error("Erro ao carregar etapas:", error);
+    }
+  };
+
+  const atualizarEtapa = (etapaId: string, campo: string, valor: any) => {
+    setEtapas(etapas.map(etapa => 
+      etapa.id === etapaId 
+        ? { ...etapa, [campo]: valor }
+        : etapa
+    ));
   };
 
   const registrarAuditoria = async (camposAlterados: string[]) => {
@@ -132,15 +182,15 @@ export default function EditarPedido() {
         .eq("id", user.id)
         .single();
 
-      await supabase.from("pedidos_auditoria").insert({
-        pedido_id: id,
+      await supabase.from("pedidos_auditoria").insert([{
+        pedido_id: id!,
         usuario_id: user.id,
         usuario_nome: profile?.nome || user.email,
         acao: "Edição de produção",
-        campos_alterados: camposAlterados,
-        dados_antes: dadosOriginais,
-        dados_depois: formData,
-      });
+        campos_alterados: camposAlterados as any,
+        dados_antes: { pedido: dadosOriginais, etapas: etapasOriginais } as any,
+        dados_depois: { pedido: formData, etapas } as any,
+      }]);
     } catch (error) {
       console.error("Erro ao registrar auditoria:", error);
     }
@@ -237,10 +287,35 @@ export default function EditarPedido() {
 
       if (error) throw error;
 
+      // Atualizar etapas alteradas
+      const etapasAlteradas = etapas.filter((etapa, index) => {
+        const original = etapasOriginais[index];
+        return !original || 
+          etapa.data_inicio_prevista !== original.data_inicio_prevista ||
+          etapa.data_termino_prevista !== original.data_termino_prevista ||
+          etapa.observacoes !== original.observacoes;
+      });
+
+      for (const etapa of etapasAlteradas) {
+        const { error: etapaError } = await supabase
+          .from("etapas_producao")
+          .update({
+            data_inicio_prevista: etapa.data_inicio_prevista,
+            data_termino_prevista: etapa.data_termino_prevista,
+            observacoes: etapa.observacoes,
+          })
+          .eq("id", etapa.id);
+
+        if (etapaError) {
+          console.error("Erro ao atualizar etapa:", etapaError);
+        }
+      }
+
       // Registrar auditoria
-      if (camposAlterados.length > 0 || arquivos.length > 0 || arquivosParaRemover.length > 0) {
+      if (camposAlterados.length > 0 || arquivos.length > 0 || arquivosParaRemover.length > 0 || etapasAlteradas.length > 0) {
         if (arquivos.length > 0) camposAlterados.push("arquivos_adicionados");
         if (arquivosParaRemover.length > 0) camposAlterados.push("arquivos_removidos");
+        if (etapasAlteradas.length > 0) camposAlterados.push("etapas_alteradas");
         await registrarAuditoria(camposAlterados);
       }
 
@@ -428,6 +503,65 @@ export default function EditarPedido() {
                 </div>
               </div>
             </div>
+
+            {/* Etapas de Produção - Datas Previstas */}
+            {etapas.length > 0 && (
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold">Etapas de Produção - Datas Previstas</h3>
+                <div className="space-y-3">
+                  {etapas.map((etapa) => (
+                    <Card key={etapa.id}>
+                      <CardContent className="pt-4">
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                          <div>
+                            <Label className="font-semibold">
+                              {ETAPAS_NOMES[etapa.tipo_etapa] || etapa.tipo_etapa}
+                            </Label>
+                          </div>
+                          <div>
+                            <Label htmlFor={`etapa-inicio-${etapa.id}`}>
+                              Data Início Prevista
+                            </Label>
+                            <Input
+                              id={`etapa-inicio-${etapa.id}`}
+                              type="date"
+                              value={etapa.data_inicio_prevista || ""}
+                              onChange={(e) =>
+                                atualizarEtapa(etapa.id, "data_inicio_prevista", e.target.value)
+                              }
+                            />
+                          </div>
+                          <div>
+                            <Label htmlFor={`etapa-termino-${etapa.id}`}>
+                              Data Término Prevista
+                            </Label>
+                            <Input
+                              id={`etapa-termino-${etapa.id}`}
+                              type="date"
+                              value={etapa.data_termino_prevista || ""}
+                              onChange={(e) =>
+                                atualizarEtapa(etapa.id, "data_termino_prevista", e.target.value)
+                              }
+                            />
+                          </div>
+                        </div>
+                        <div className="mt-3">
+                          <Label htmlFor={`etapa-obs-${etapa.id}`}>Observações</Label>
+                          <Textarea
+                            id={`etapa-obs-${etapa.id}`}
+                            value={etapa.observacoes || ""}
+                            onChange={(e) =>
+                              atualizarEtapa(etapa.id, "observacoes", e.target.value)
+                            }
+                            rows={2}
+                          />
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+            )}
 
             {/* Grade de Tamanhos */}
             <div className="space-y-4">
