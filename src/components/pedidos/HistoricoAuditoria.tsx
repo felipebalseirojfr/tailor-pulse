@@ -32,6 +32,7 @@ const CAMPO_LABELS: Record<string, string> = {
   observacoes_pedido: "Observações",
   arquivos_adicionados: "Arquivos Adicionados",
   arquivos_removidos: "Arquivos Removidos",
+  etapas_alteradas: "Datas Previstas das Etapas",
 };
 
 export function HistoricoAuditoria({ pedidoId }: HistoricoAuditoriaProps) {
