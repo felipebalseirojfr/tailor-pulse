@@ -429,6 +429,56 @@ export type Database = {
           },
         ]
       }
+      pedidos_auditoria: {
+        Row: {
+          acao: string
+          campos_alterados: Json | null
+          created_at: string | null
+          dados_antes: Json | null
+          dados_depois: Json | null
+          id: string
+          ip_address: string | null
+          pedido_id: string
+          user_agent: string | null
+          usuario_id: string | null
+          usuario_nome: string | null
+        }
+        Insert: {
+          acao: string
+          campos_alterados?: Json | null
+          created_at?: string | null
+          dados_antes?: Json | null
+          dados_depois?: Json | null
+          id?: string
+          ip_address?: string | null
+          pedido_id: string
+          user_agent?: string | null
+          usuario_id?: string | null
+          usuario_nome?: string | null
+        }
+        Update: {
+          acao?: string
+          campos_alterados?: Json | null
+          created_at?: string | null
+          dados_antes?: Json | null
+          dados_depois?: Json | null
+          id?: string
+          ip_address?: string | null
+          pedido_id?: string
+          user_agent?: string | null
+          usuario_id?: string | null
+          usuario_nome?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "pedidos_auditoria_pedido_id_fkey"
+            columns: ["pedido_id"]
+            isOneToOne: false
+            referencedRelation: "pedidos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           cargo: string | null
