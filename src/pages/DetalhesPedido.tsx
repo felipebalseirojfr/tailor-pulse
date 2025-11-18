@@ -21,6 +21,7 @@ import {
   Circle,
   PlayCircle,
   Trash2,
+  Edit,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -34,6 +35,8 @@ import {
 } from "@/components/ui/alert-dialog";
 import { QRCodeDisplay } from "@/components/pedidos/QRCodeDisplay";
 import { HistoricoEscaneamentos } from "@/components/pedidos/HistoricoEscaneamentos";
+import { HistoricoAuditoria } from "@/components/pedidos/HistoricoAuditoria";
+import { useUserRoles } from "@/hooks/useUserRoles";
 
 interface Pedido {
   id: string;
@@ -92,11 +95,14 @@ export default function DetalhesPedido() {
   const { id } = useParams();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { hasAnyRole } = useUserRoles();
   const [pedido, setPedido] = useState<Pedido | null>(null);
   const [etapas, setEtapas] = useState<Etapa[]>([]);
   const [responsaveis, setResponsaveis] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+
+  const podeEditar = hasAnyRole(['admin', 'commercial']);
 
   useEffect(() => {
     fetchPedidoDetails();
