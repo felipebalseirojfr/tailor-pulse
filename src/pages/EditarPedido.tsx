@@ -79,7 +79,7 @@ export default function EditarPedido() {
     observacoes_pedido: "",
   });
 
-  const tamanhos = ["1", "2", "4", "6", "8", "10", "12", "14", "PP", "P", "M", "G", "XGG", "XGG1", "XGG2"];
+  const tamanhos = ["1", "2", "4", "6", "8", "10", "12", "14", "PP", "P", "M", "G", "GG", "XGG", "XGG1", "XGG2"];
 
   useEffect(() => {
     fetchClientes();
