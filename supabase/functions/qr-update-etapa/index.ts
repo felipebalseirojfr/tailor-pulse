@@ -20,8 +20,15 @@ serve(async (req) => {
     const url = new URL(req.url);
     const qrRef = url.searchParams.get('ref');
     
-    if (!qrRef) {
-      console.error('❌ QR ref não fornecida');
+    // Validação robusta de entrada
+    if (!qrRef || typeof qrRef !== 'string') {
+      console.error('❌ QR ref inválido ou ausente');
+      return new Response(null, { status: 400 });
+    }
+    
+    // Validar formato do qrRef (deve começar com PROD-)
+    if (!qrRef.match(/^PROD-[A-Z0-9]{8}$/)) {
+      console.error('⚠️ Formato de QR inválido:', qrRef);
       return new Response(null, { status: 400 });
     }
 
@@ -40,8 +47,14 @@ serve(async (req) => {
       .single();
 
     if (pedidoError || !pedido) {
-      console.error('❌ Pedido não encontrado:', pedidoError);
+      console.error('❌ Tentativa de acesso com QR inválido:', qrRef);
       return new Response(null, { status: 410 }); // Gone
+    }
+    
+    // Validação de segurança: verificar se pedido não está cancelado
+    if (pedido.status_geral === 'cancelado') {
+      console.error('⚠️ Tentativa de scan em pedido cancelado:', qrRef);
+      return new Response(null, { status: 403 }); // Forbidden
     }
 
     // 2. Verificar se é o primeiro scan (checando escaneamentos anteriores)
