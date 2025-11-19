@@ -14,9 +14,33 @@ serve(async (req) => {
   try {
     const { pedidoId, qrCodeImage } = await req.json();
 
-    if (!pedidoId || !qrCodeImage) {
+    // Validação de entrada robusta
+    if (!pedidoId || typeof pedidoId !== 'string') {
       return new Response(
-        JSON.stringify({ error: 'pedidoId e qrCodeImage são obrigatórios' }),
+        JSON.stringify({ error: 'pedidoId inválido ou ausente' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+    
+    if (!qrCodeImage || typeof qrCodeImage !== 'string') {
+      return new Response(
+        JSON.stringify({ error: 'qrCodeImage inválido ou ausente' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+    
+    // Validar formato UUID do pedidoId
+    if (!pedidoId.match(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)) {
+      return new Response(
+        JSON.stringify({ error: 'Formato de pedidoId inválido' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+    
+    // Validar formato base64 da imagem
+    if (!qrCodeImage.match(/^data:image\/png;base64,/)) {
+      return new Response(
+        JSON.stringify({ error: 'Formato de imagem inválido' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
       );
     }
@@ -26,7 +50,22 @@ serve(async (req) => {
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    console.log('Recebendo QR Code para pedido:', pedidoId);
+    // Validação de segurança crítica: verificar se o pedido existe
+    const { data: pedidoExists, error: checkError } = await supabase
+      .from('pedidos')
+      .select('id')
+      .eq('id', pedidoId)
+      .single();
+    
+    if (checkError || !pedidoExists) {
+      console.error('Tentativa de gerar QR para pedido inexistente:', pedidoId);
+      return new Response(
+        JSON.stringify({ error: 'Pedido não encontrado' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
+      );
+    }
+
+    console.log('Recebendo QR Code para pedido válido:', pedidoId);
 
     // Converter base64 para buffer
     const base64Data = qrCodeImage.replace(/^data:image\/\w+;base64,/, '');

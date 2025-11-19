@@ -27,7 +27,31 @@ serve(async (req) => {
 
     const { qr_ref, device_fingerprint, fornecedor_nome, user_agent, ip_address }: ScanRequest = await req.json();
 
-    console.log('📱 Processando escaneamento:', { qr_ref, device_fingerprint, fornecedor_nome });
+    // Validação robusta de entrada
+    if (!qr_ref || typeof qr_ref !== 'string') {
+      return new Response(
+        JSON.stringify({ success: false, message: 'QR code inválido' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+    
+    if (!device_fingerprint || typeof device_fingerprint !== 'string') {
+      return new Response(
+        JSON.stringify({ success: false, message: 'Device fingerprint inválido' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+    
+    // Validar formato do qr_ref (deve começar com PROD-)
+    if (!qr_ref.match(/^PROD-[A-Z0-9]{8}$/)) {
+      console.error('⚠️ Formato de QR inválido:', qr_ref);
+      return new Response(
+        JSON.stringify({ success: false, message: 'Formato de QR code inválido' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 400 }
+      );
+    }
+
+    console.log('📱 Processando escaneamento validado:', { qr_ref, device_fingerprint, fornecedor_nome });
 
     // 1. Buscar o pedido pelo QR Code
     const { data: pedido, error: pedidoError } = await supabase
@@ -37,13 +61,24 @@ serve(async (req) => {
       .single();
 
     if (pedidoError || !pedido) {
-      console.error('❌ Pedido não encontrado:', pedidoError);
+      console.error('❌ Tentativa de scan com QR inválido:', qr_ref);
       return new Response(
         JSON.stringify({ 
           success: false, 
           message: '❌ QR Code inválido ou produção não encontrada.' 
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 404 }
+      );
+    }
+    
+    // Validação de segurança: verificar se pedido não está cancelado
+    if (pedido.status_geral === 'cancelado') {
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          message: '❌ Este pedido foi cancelado.' 
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 403 }
       );
     }
 
