@@ -147,12 +147,18 @@ export default function Pedidos() {
           clientes(nome),
           profiles(nome),
           etapas_producao(id, tipo_etapa, status, ordem, data_inicio, data_termino, data_inicio_prevista, data_termino_prevista, observacoes)
-        `)
-        .order("prazo_final", { ascending: true });
+        `);
 
       if (error) throw error;
 
-      setPedidos(data || []);
+      // Ordenar alfabeticamente por nome do cliente
+      const sortedData = (data || []).sort((a, b) => {
+        const nomeA = a.clientes?.nome || '';
+        const nomeB = b.clientes?.nome || '';
+        return nomeA.localeCompare(nomeB, 'pt-BR', { sensitivity: 'base' });
+      });
+
+      setPedidos(sortedData);
     } catch (error) {
       console.error("Erro ao buscar pedidos:", error);
       toast.error("Erro ao carregar pedidos");
