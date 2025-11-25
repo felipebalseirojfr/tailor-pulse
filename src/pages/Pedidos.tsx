@@ -151,11 +151,11 @@ export default function Pedidos() {
 
       if (error) throw error;
 
-      // Ordenar alfabeticamente por nome do cliente
+      // Ordenar alfabeticamente por modelo do produto
       const sortedData = (data || []).sort((a, b) => {
-        const nomeA = a.clientes?.nome || '';
-        const nomeB = b.clientes?.nome || '';
-        return nomeA.localeCompare(nomeB, 'pt-BR', { sensitivity: 'base' });
+        const modeloA = a.produto_modelo || '';
+        const modeloB = b.produto_modelo || '';
+        return modeloA.localeCompare(modeloB, 'pt-BR', { sensitivity: 'base' });
       });
 
       setPedidos(sortedData);
