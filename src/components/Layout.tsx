@@ -7,7 +7,6 @@ import {
   Package,
   Users,
   Calendar as CalendarIcon,
-  PackageCheck,
   LogOut,
   Menu,
   X,
@@ -76,7 +75,6 @@ export default function Layout({ children }: LayoutProps) {
   const navigation = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Pedidos", href: "/pedidos", icon: Package },
-    { name: "Fechamento/Emissão NF", href: "/pcp/fechamentos", icon: PackageCheck },
     { name: "Clientes", href: "/clientes", icon: Users },
     { name: "Calendário", href: "/calendario", icon: CalendarIcon },
   ];
