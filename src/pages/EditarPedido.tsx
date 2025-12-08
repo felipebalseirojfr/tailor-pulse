@@ -16,6 +16,7 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Upload, X, FileText, ImageIcon, Save, Loader2 } from "lucide-react";
+import EtapasEditorManager, { EtapaEditavel } from "@/components/pedidos/EtapasEditorManager";
 
 interface Cliente {
   id: string;
@@ -29,27 +30,6 @@ interface ArquivoExistente {
   tamanho: number;
 }
 
-interface Etapa {
-  id: string;
-  tipo_etapa: string;
-  ordem: number;
-  data_inicio_prevista: string | null;
-  data_termino_prevista: string | null;
-  observacoes: string | null;
-}
-
-const ETAPAS_NOMES: Record<string, string> = {
-  pilotagem: "Pilotagem",
-  liberacao_corte: "Liberação de Corte",
-  corte: "Corte",
-  lavanderia: "Lavanderia",
-  costura: "Costura",
-  caseado: "Caseado",
-  estamparia_bordado: "Estamparia/Bordado",
-  acabamento: "Acabamento",
-  entrega: "Entrega",
-};
-
 export default function EditarPedido() {
   const { id } = useParams();
   const [loading, setLoading] = useState(true);
@@ -58,11 +38,11 @@ export default function EditarPedido() {
   const [arquivos, setArquivos] = useState<File[]>([]);
   const [arquivosExistentes, setArquivosExistentes] = useState<ArquivoExistente[]>([]);
   const [arquivosParaRemover, setArquivosParaRemover] = useState<string[]>([]);
-  const [etapas, setEtapas] = useState<Etapa[]>([]);
+  const [etapas, setEtapas] = useState<EtapaEditavel[]>([]);
   const navigate = useNavigate();
   const { toast } = useToast();
   const [dadosOriginais, setDadosOriginais] = useState<any>(null);
-  const [etapasOriginais, setEtapasOriginais] = useState<Etapa[]>([]);
+  const [etapasOriginais, setEtapasOriginais] = useState<EtapaEditavel[]>([]);
 
   const [formData, setFormData] = useState({
     cliente_id: "",
@@ -154,21 +134,21 @@ export default function EditarPedido() {
 
       if (error) throw error;
       if (data) {
-        setEtapas(data);
-        setEtapasOriginais(data);
+        const etapasFormatadas: EtapaEditavel[] = data.map(e => ({
+          id: e.id,
+          tipo_etapa: e.tipo_etapa,
+          ordem: e.ordem,
+          data_inicio_prevista: e.data_inicio_prevista,
+          data_termino_prevista: e.data_termino_prevista,
+          observacoes: e.observacoes,
+        }));
+        setEtapas(etapasFormatadas);
+        setEtapasOriginais(etapasFormatadas);
       }
       setLoading(false);
     } catch (error: any) {
       console.error("Erro ao carregar etapas:", error);
     }
-  };
-
-  const atualizarEtapa = (etapaId: string, campo: string, valor: any) => {
-    setEtapas(etapas.map(etapa => 
-      etapa.id === etapaId 
-        ? { ...etapa, [campo]: valor }
-        : etapa
-    ));
   };
 
   const registrarAuditoria = async (camposAlterados: string[]) => {
@@ -287,19 +267,48 @@ export default function EditarPedido() {
 
       if (error) throw error;
 
-      // Atualizar etapas alteradas
-      const etapasAlteradas = etapas.filter((etapa, index) => {
-        const original = etapasOriginais[index];
-        return !original || 
-          etapa.data_inicio_prevista !== original.data_inicio_prevista ||
-          etapa.data_termino_prevista !== original.data_termino_prevista ||
-          etapa.observacoes !== original.observacoes;
-      });
+      // Processar etapas - Deletar, Atualizar e Criar
+      const etapasParaDeletar = etapas.filter(e => e.toDelete && !e.isNew);
+      const etapasParaCriar = etapas.filter(e => e.isNew && !e.toDelete);
+      const etapasParaAtualizar = etapas.filter(e => !e.toDelete && !e.isNew);
 
-      for (const etapa of etapasAlteradas) {
+      // Deletar etapas marcadas
+      for (const etapa of etapasParaDeletar) {
+        const { error: deleteError } = await supabase
+          .from("etapas_producao")
+          .delete()
+          .eq("id", etapa.id);
+
+        if (deleteError) {
+          console.error("Erro ao deletar etapa:", deleteError);
+        }
+      }
+
+      // Criar novas etapas
+      for (const etapa of etapasParaCriar) {
+        const { error: createError } = await supabase
+          .from("etapas_producao")
+          .insert({
+            pedido_id: id,
+            tipo_etapa: etapa.tipo_etapa as any,
+            ordem: etapa.ordem,
+            data_inicio_prevista: etapa.data_inicio_prevista,
+            data_termino_prevista: etapa.data_termino_prevista,
+            observacoes: etapa.observacoes,
+            status: 'pendente',
+          });
+
+        if (createError) {
+          console.error("Erro ao criar etapa:", createError);
+        }
+      }
+
+      // Atualizar etapas existentes
+      for (const etapa of etapasParaAtualizar) {
         const { error: etapaError } = await supabase
           .from("etapas_producao")
           .update({
+            ordem: etapa.ordem,
             data_inicio_prevista: etapa.data_inicio_prevista,
             data_termino_prevista: etapa.data_termino_prevista,
             observacoes: etapa.observacoes,
@@ -312,10 +321,20 @@ export default function EditarPedido() {
       }
 
       // Registrar auditoria
-      if (camposAlterados.length > 0 || arquivos.length > 0 || arquivosParaRemover.length > 0 || etapasAlteradas.length > 0) {
+      const etapasModificadas = etapasParaDeletar.length > 0 || etapasParaCriar.length > 0 || 
+        etapasParaAtualizar.some((etapa) => {
+          const original = etapasOriginais.find(e => e.id === etapa.id);
+          return !original || 
+            etapa.ordem !== original.ordem ||
+            etapa.data_inicio_prevista !== original.data_inicio_prevista ||
+            etapa.data_termino_prevista !== original.data_termino_prevista ||
+            etapa.observacoes !== original.observacoes;
+        });
+
+      if (camposAlterados.length > 0 || arquivos.length > 0 || arquivosParaRemover.length > 0 || etapasModificadas) {
         if (arquivos.length > 0) camposAlterados.push("arquivos_adicionados");
         if (arquivosParaRemover.length > 0) camposAlterados.push("arquivos_removidos");
-        if (etapasAlteradas.length > 0) camposAlterados.push("etapas_alteradas");
+        if (etapasModificadas) camposAlterados.push("etapas_alteradas");
         await registrarAuditoria(camposAlterados);
       }
 
@@ -504,64 +523,14 @@ export default function EditarPedido() {
               </div>
             </div>
 
-            {/* Etapas de Produção - Datas Previstas */}
-            {etapas.length > 0 && (
-              <div className="space-y-4">
-                <h3 className="text-lg font-semibold">Etapas de Produção - Datas Previstas</h3>
-                <div className="space-y-3">
-                  {etapas.map((etapa) => (
-                    <Card key={etapa.id}>
-                      <CardContent className="pt-4">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                          <div>
-                            <Label className="font-semibold">
-                              {ETAPAS_NOMES[etapa.tipo_etapa] || etapa.tipo_etapa}
-                            </Label>
-                          </div>
-                          <div>
-                            <Label htmlFor={`etapa-inicio-${etapa.id}`}>
-                              Data Início Prevista
-                            </Label>
-                            <Input
-                              id={`etapa-inicio-${etapa.id}`}
-                              type="date"
-                              value={etapa.data_inicio_prevista || ""}
-                              onChange={(e) =>
-                                atualizarEtapa(etapa.id, "data_inicio_prevista", e.target.value)
-                              }
-                            />
-                          </div>
-                          <div>
-                            <Label htmlFor={`etapa-termino-${etapa.id}`}>
-                              Data Término Prevista
-                            </Label>
-                            <Input
-                              id={`etapa-termino-${etapa.id}`}
-                              type="date"
-                              value={etapa.data_termino_prevista || ""}
-                              onChange={(e) =>
-                                atualizarEtapa(etapa.id, "data_termino_prevista", e.target.value)
-                              }
-                            />
-                          </div>
-                        </div>
-                        <div className="mt-3">
-                          <Label htmlFor={`etapa-obs-${etapa.id}`}>Observações</Label>
-                          <Textarea
-                            id={`etapa-obs-${etapa.id}`}
-                            value={etapa.observacoes || ""}
-                            onChange={(e) =>
-                              atualizarEtapa(etapa.id, "observacoes", e.target.value)
-                            }
-                            rows={2}
-                          />
-                        </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Etapas de Produção - Editor Completo */}
+            <div className="space-y-4">
+              <h3 className="text-lg font-semibold">Etapas de Produção</h3>
+              <EtapasEditorManager
+                etapas={etapas}
+                onChange={setEtapas}
+              />
+            </div>
 
             {/* Grade de Tamanhos */}
             <div className="space-y-4">
