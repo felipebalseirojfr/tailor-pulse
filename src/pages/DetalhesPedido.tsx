@@ -25,6 +25,7 @@ import {
   Download,
   FileText,
   Image as ImageIcon,
+  Settings2,
   File,
 } from "lucide-react";
 import {
@@ -599,8 +600,19 @@ export default function DetalhesPedido() {
 
       {/* Etapas de Produção */}
       <Card>
-        <CardHeader>
+        <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>Etapas de Produção</CardTitle>
+          {podeEditar && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate(`/pedidos/${id}/editar`)}
+              className="gap-2"
+            >
+              <Settings2 className="h-4 w-4" />
+              Editar Etapas
+            </Button>
+          )}
         </CardHeader>
         <CardContent>
           <div className="space-y-6">
