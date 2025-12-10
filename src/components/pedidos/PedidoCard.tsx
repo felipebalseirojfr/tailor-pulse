@@ -123,37 +123,37 @@ export function PedidoCard({ pedido, onViewDetails, onAdvanceStage, isTV = false
 
   return (
     <Card 
-      className={`bg-card border-l-4 ${getBorderColor()} transition-all hover:shadow-xl hover:scale-[1.02] cursor-pointer animate-fade-in ${isTV ? 'rounded-2xl' : 'rounded-xl'}`}
+      className={`bg-card border-l-4 ${getBorderColor()} transition-all hover:shadow-xl hover:scale-[1.02] cursor-pointer animate-fade-in ${isTV ? 'rounded-xl' : 'rounded-xl'}`}
       onClick={onViewDetails}
     >
-      <CardHeader className={`pb-4 ${isTV ? 'px-6 pt-6' : 'px-5 pt-5'}`}>
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 min-w-0 space-y-1">
-            <h3 className={`font-bold text-foreground leading-tight ${isTV ? 'text-2xl' : 'text-base'}`}>
+      <CardHeader className={`${isTV ? 'pb-2 px-4 pt-4' : 'pb-4 px-5 pt-5'}`}>
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex-1 min-w-0 space-y-0.5">
+            <h3 className={`font-bold text-foreground leading-tight ${isTV ? 'text-lg' : 'text-base'}`}>
               {pedido.produto_modelo}
             </h3>
-            <p className={`text-muted-foreground font-medium ${isTV ? 'text-lg' : 'text-sm'}`}>
+            <p className={`text-muted-foreground font-medium ${isTV ? 'text-sm' : 'text-sm'}`}>
               {pedido.clientes?.nome}
             </p>
             <div className="flex items-center gap-2 flex-wrap">
-              <span className={`font-mono text-muted-foreground ${isTV ? 'text-sm' : 'text-xs'}`}>
+              <span className={`font-mono text-muted-foreground ${isTV ? 'text-xs' : 'text-xs'}`}>
                 #{pedido.id.slice(0, 8)}
               </span>
               <span className="text-muted-foreground">•</span>
-              <span className={`text-muted-foreground ${isTV ? 'text-sm' : 'text-xs'}`}>
+              <span className={`text-muted-foreground ${isTV ? 'text-xs' : 'text-xs'}`}>
                 {pedido.tipo_peca}
               </span>
             </div>
           </div>
-          <div className="flex flex-col items-end gap-2 flex-shrink-0">
-            <Badge className={`${statusConfig.color} border ${isTV ? 'text-sm px-3 py-1' : 'text-xs'}`}>
-              <span className={`inline-block w-2 h-2 rounded-full ${statusConfig.dot} mr-2`} />
+          <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+            <Badge className={`${statusConfig.color} border ${isTV ? 'text-xs px-2 py-0.5' : 'text-xs'}`}>
+              <span className={`inline-block w-1.5 h-1.5 rounded-full ${statusConfig.dot} mr-1.5`} />
               {statusConfig.label}
             </Badge>
             {temEtapaEmAtraso && (
               <div className="flex items-center gap-1 text-destructive">
-                <AlertCircle className={`${isTV ? 'h-4 w-4' : 'h-3 w-3'}`} />
-                <span className={`font-medium ${isTV ? 'text-sm' : 'text-xs'}`}>
+                <AlertCircle className={`${isTV ? 'h-3 w-3' : 'h-3 w-3'}`} />
+                <span className={`font-medium ${isTV ? 'text-xs' : 'text-xs'}`}>
                   Etapas atrasadas
                 </span>
               </div>
@@ -162,9 +162,9 @@ export function PedidoCard({ pedido, onViewDetails, onAdvanceStage, isTV = false
         </div>
       </CardHeader>
       
-      <CardContent className={`space-y-4 ${isTV ? 'px-6 pb-6' : 'px-5 pb-5'}`}>
+      <CardContent className={`${isTV ? 'space-y-3 px-4 pb-4' : 'space-y-4 px-5 pb-5'}`}>
         {/* Timeline de Etapas */}
-        <div className="py-2">
+        <div className={`${isTV ? 'py-1' : 'py-2'}`}>
           <TimelineEtapas 
             etapas={pedido.etapas_producao || []} 
             statusGeral={pedido.status_geral}
@@ -173,18 +173,18 @@ export function PedidoCard({ pedido, onViewDetails, onAdvanceStage, isTV = false
         </div>
 
         {/* Rodapé com informações essenciais */}
-        <div className="pt-4 border-t border-border/50">
-          <div className="flex items-start justify-between gap-4">
-            <div className="flex flex-col gap-2.5 flex-1 min-w-0">
+        <div className={`${isTV ? 'pt-3' : 'pt-4'} border-t border-border/50`}>
+          <div className="flex items-start justify-between gap-3">
+            <div className={`flex flex-col ${isTV ? 'gap-2' : 'gap-2.5'} flex-1 min-w-0`}>
               <div className="flex items-center gap-2">
-                <div className="flex items-center justify-center w-5 h-5 rounded-full bg-muted/50">
-                  <Clock className={`${isTV ? 'h-3.5 w-3.5' : 'h-3 w-3'} text-muted-foreground`} />
+                <div className={`flex items-center justify-center ${isTV ? 'w-4 h-4' : 'w-5 h-5'} rounded-full bg-muted/50`}>
+                  <Clock className={`${isTV ? 'h-2.5 w-2.5' : 'h-3 w-3'} text-muted-foreground`} />
                 </div>
                 <div className="flex flex-col">
-                  <span className={`text-muted-foreground ${isTV ? 'text-xs' : 'text-[10px]'} uppercase tracking-wide font-medium`}>
+                  <span className={`text-muted-foreground ${isTV ? 'text-[10px]' : 'text-[10px]'} uppercase tracking-wide font-medium`}>
                     Previsto:
                   </span>
-                  <span className={`text-foreground font-semibold ${isTV ? 'text-base' : 'text-sm'}`}>
+                  <span className={`text-foreground font-semibold ${isTV ? 'text-sm' : 'text-sm'}`}>
                     {format(new Date(pedido.prazo_final), "dd/MM/yyyy", { locale: ptBR })}
                   </span>
                 </div>
@@ -192,14 +192,14 @@ export function PedidoCard({ pedido, onViewDetails, onAdvanceStage, isTV = false
               
               {etapaAtual && (
                 <div className="flex items-center gap-2">
-                  <div className="flex items-center justify-center w-5 h-5 rounded-full bg-primary/10">
-                    <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                  <div className={`flex items-center justify-center ${isTV ? 'w-4 h-4' : 'w-5 h-5'} rounded-full bg-primary/10`}>
+                    <div className={`${isTV ? 'w-1.5 h-1.5' : 'w-2 h-2'} rounded-full bg-primary animate-pulse`} />
                   </div>
                   <div className="flex flex-col">
-                    <span className={`text-muted-foreground ${isTV ? 'text-xs' : 'text-[10px]'} uppercase tracking-wide font-medium`}>
+                    <span className={`text-muted-foreground ${isTV ? 'text-[10px]' : 'text-[10px]'} uppercase tracking-wide font-medium`}>
                       Etapa:
                     </span>
-                    <span className={`text-foreground font-semibold ${isTV ? 'text-base' : 'text-sm'} truncate`}>
+                    <span className={`text-foreground font-semibold ${isTV ? 'text-sm' : 'text-sm'} truncate`}>
                       {getEtapaLabel(etapaAtual.tipo_etapa)}
                     </span>
                   </div>
