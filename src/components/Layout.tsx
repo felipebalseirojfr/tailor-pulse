@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import logoJfr from "@/assets/logo-jfr.jpeg";
 
 interface LayoutProps {
   children: ReactNode;
@@ -58,7 +59,7 @@ export default function Layout({ children }: LayoutProps) {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
       </div>
     );
@@ -83,9 +84,18 @@ export default function Layout({ children }: LayoutProps) {
     <div className="flex min-h-screen bg-background">
       {/* Sidebar Desktop */}
       <aside className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
-        <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-border bg-background px-6 pb-4">
-          <div className="flex h-16 shrink-0 items-center">
-            <h1 className="text-xl font-bold text-foreground">Controle de Produções JFR</h1>
+        <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-sidebar-border bg-sidebar px-6 pb-4">
+          {/* Logo Section */}
+          <div className="flex h-20 shrink-0 items-center gap-3 border-b border-sidebar-border pb-4 pt-4">
+            <img 
+              src={logoJfr} 
+              alt="JFR Logo" 
+              className="h-12 w-auto object-contain"
+            />
+            <div className="flex flex-col">
+              <span className="text-sm font-semibold text-sidebar-foreground">Controle de</span>
+              <span className="text-sm font-semibold text-sidebar-foreground">Produções</span>
+            </div>
           </div>
           <nav className="flex flex-1 flex-col">
             <ul role="list" className="flex flex-1 flex-col gap-y-7">
@@ -97,13 +107,13 @@ export default function Layout({ children }: LayoutProps) {
                       <li key={item.name}>
                         <Link
                           to={item.href}
-                          className={`group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 transition-colors ${
+                          className={`group flex gap-x-3 rounded-lg p-3 text-sm font-medium leading-6 transition-all duration-200 ${
                             isActive
-                              ? "bg-background text-foreground border border-primary"
-                              : "text-foreground hover:bg-muted hover:text-foreground"
+                              ? "bg-sidebar-accent text-primary border-l-2 border-primary"
+                              : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                           }`}
                         >
-                          <item.icon className="h-5 w-5 shrink-0" />
+                          <item.icon className={`h-5 w-5 shrink-0 ${isActive ? 'text-primary' : ''}`} />
                           {item.name}
                         </Link>
                       </li>
@@ -115,7 +125,7 @@ export default function Layout({ children }: LayoutProps) {
                 <Button
                   onClick={handleLogout}
                   variant="ghost"
-                  className="w-full justify-start text-foreground hover:text-foreground"
+                  className="w-full justify-start text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent"
                 >
                   <LogOut className="mr-2 h-5 w-5" />
                   Sair
@@ -133,6 +143,7 @@ export default function Layout({ children }: LayoutProps) {
             variant="ghost"
             size="icon"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            className="text-foreground"
           >
             {mobileMenuOpen ? (
               <X className="h-6 w-6" />
@@ -140,7 +151,14 @@ export default function Layout({ children }: LayoutProps) {
               <Menu className="h-6 w-6" />
             )}
           </Button>
-          <h1 className="text-lg font-bold text-primary">Controle de Produções JFR</h1>
+          <div className="flex items-center gap-3">
+            <img 
+              src={logoJfr} 
+              alt="JFR Logo" 
+              className="h-8 w-auto object-contain"
+            />
+            <span className="text-lg font-bold text-primary">JFR Produções</span>
+          </div>
         </div>
 
         {mobileMenuOpen && (
@@ -149,7 +167,15 @@ export default function Layout({ children }: LayoutProps) {
               className="fixed inset-0 bg-background/80 backdrop-blur-sm"
               onClick={() => setMobileMenuOpen(false)}
             />
-            <div className="fixed inset-y-0 left-0 w-full max-w-xs bg-background p-6">
+            <div className="fixed inset-y-0 left-0 w-full max-w-xs bg-sidebar p-6 border-r border-sidebar-border">
+              <div className="flex items-center gap-3 mb-6">
+                <img 
+                  src={logoJfr} 
+                  alt="JFR Logo" 
+                  className="h-10 w-auto object-contain"
+                />
+                <span className="text-lg font-bold text-sidebar-foreground">JFR Produções</span>
+              </div>
               <nav className="mt-16">
                 <ul role="list" className="space-y-1">
                   {navigation.map((item) => {
@@ -159,13 +185,13 @@ export default function Layout({ children }: LayoutProps) {
                         <Link
                           to={item.href}
                           onClick={() => setMobileMenuOpen(false)}
-                          className={`group flex gap-x-3 rounded-md p-2 text-sm font-semibold leading-6 transition-colors ${
+                          className={`group flex gap-x-3 rounded-lg p-3 text-sm font-medium leading-6 transition-all duration-200 ${
                             isActive
-                              ? "bg-background text-foreground border border-primary"
-                              : "text-foreground hover:bg-muted hover:text-foreground"
+                              ? "bg-sidebar-accent text-primary border-l-2 border-primary"
+                              : "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                           }`}
                         >
-                          <item.icon className="h-5 w-5 shrink-0" />
+                          <item.icon className={`h-5 w-5 shrink-0 ${isActive ? 'text-primary' : ''}`} />
                           {item.name}
                         </Link>
                       </li>
@@ -175,7 +201,7 @@ export default function Layout({ children }: LayoutProps) {
                     <Button
                       onClick={handleLogout}
                       variant="ghost"
-                      className="w-full justify-start text-foreground hover:text-foreground"
+                      className="w-full justify-start text-sidebar-foreground hover:text-foreground hover:bg-sidebar-accent"
                     >
                       <LogOut className="mr-2 h-5 w-5" />
                       Sair
