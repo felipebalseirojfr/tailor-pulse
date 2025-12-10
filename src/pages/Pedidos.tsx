@@ -83,6 +83,9 @@ export default function Pedidos() {
   const [modoTV, setModoTV] = useState(false);
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
   const [tvStatusFilter, setTvStatusFilter] = useState("em_producao");
+  const [tvSearchTerm, setTvSearchTerm] = useState("");
+  const [tvReferenciaFilter, setTvReferenciaFilter] = useState("");
+  const [tvOpFilter, setTvOpFilter] = useState("");
 
   const handlePedidoDeleted = (pedidoId: string) => {
     setPedidos(prev => prev.filter(p => p.id !== pedidoId));
@@ -461,28 +464,14 @@ export default function Pedidos() {
               {format(new Date(), "HH:mm", { locale: ptBR })}
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Select value={tvStatusFilter} onValueChange={setTvStatusFilter}>
-              <SelectTrigger className="w-[200px]">
-                <Filter className="mr-2 h-4 w-4" />
-                <SelectValue placeholder="Filtrar status" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="todos">Todos</SelectItem>
-                <SelectItem value="em_producao">Em Produção</SelectItem>
-                <SelectItem value="aguardando_inicio">Aguardando Início</SelectItem>
-                <SelectItem value="atrasado">Atrasados</SelectItem>
-              </SelectContent>
-            </Select>
-            <Button
-              variant="outline"
-              size="lg"
-              onClick={() => setModoTV(false)}
-            >
-              <X className="mr-2 h-5 w-5" />
-              Sair do Modo TV
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            size="lg"
+            onClick={() => setModoTV(false)}
+          >
+            <X className="mr-2 h-5 w-5" />
+            Sair do Modo TV
+          </Button>
         </div>
       )}
 
@@ -695,7 +684,26 @@ export default function Pedidos() {
               const hoje = new Date().toISOString().split("T")[0];
               let tvFiltered = filteredPedidos;
               
-              // Aplicar filtro do modo TV
+              // Aplicar filtro por busca de nome
+              if (tvSearchTerm) {
+                tvFiltered = tvFiltered.filter((p) =>
+                  p.produto_modelo.toLowerCase().includes(tvSearchTerm.toLowerCase())
+                );
+              }
+              
+              // Aplicar filtro por referência
+              if (tvReferenciaFilter) {
+                tvFiltered = tvFiltered.filter((p) => p.tipo_peca === tvReferenciaFilter);
+              }
+              
+              // Aplicar filtro por OP
+              if (tvOpFilter) {
+                tvFiltered = tvFiltered.filter((p) =>
+                  p.id.toLowerCase().includes(tvOpFilter.toLowerCase())
+                );
+              }
+              
+              // Aplicar filtro de status do modo TV
               if (tvStatusFilter === "em_producao") {
                 tvFiltered = tvFiltered.filter((p) => p.status_geral === "em_producao");
               } else if (tvStatusFilter === "aguardando_inicio") {
@@ -711,34 +719,127 @@ export default function Pedidos() {
                 (a.produto_modelo || '').localeCompare(b.produto_modelo || '', 'pt-BR', { sensitivity: 'base' })
               );
 
+              const totalBeforeFilter = filteredPedidos.filter((p) => p.status_geral !== "concluido").length;
+              const hasActiveFilters = tvSearchTerm || tvReferenciaFilter || tvOpFilter || tvStatusFilter !== "todos";
+              
+              // Obter referências únicas para o select
+              const referenciasUnicas = Array.from(new Set(filteredPedidos.map((p) => p.tipo_peca).filter(Boolean)));
+
               return (
-                <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                  {tvFiltered.map((pedido) => (
-                    <PedidoCard
-                      key={pedido.id}
-                      pedido={pedido}
-                      onViewDetails={() => {}}
-                      onAdvanceStage={() => {
-                        const etapas = pedido.etapas_producao?.sort((a, b) => a.ordem - b.ordem);
-                        const etapaAtual = etapas?.find((et) => et.status === "em_andamento");
+                <>
+                  {/* Barra de Filtros do Modo TV */}
+                  <Card className="mb-6 bg-card/80 backdrop-blur-sm border-muted">
+                    <CardContent className="py-4">
+                      <div className="flex flex-wrap items-center gap-4">
+                        <div className="flex items-center gap-2">
+                          <Filter className="h-5 w-5 text-muted-foreground" />
+                          <span className="font-medium text-muted-foreground">Filtros:</span>
+                        </div>
                         
-                        if (etapaAtual) {
-                          const proximaEtapa = etapas?.find((et) => et.ordem === etapaAtual.ordem + 1);
-                          handleAtualizarEtapa(
-                            pedido.id,
-                            proximaEtapa ? proximaEtapa.tipo_etapa : "concluido"
-                          );
-                        } else {
-                          const primeiraEtapa = etapas?.[0];
-                          if (primeiraEtapa) {
-                            handleAtualizarEtapa(pedido.id, primeiraEtapa.tipo_etapa);
+                        {/* Busca por nome */}
+                        <div className="relative flex-1 min-w-[200px] max-w-[300px]">
+                          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                          <Input
+                            placeholder="Buscar por nome..."
+                            value={tvSearchTerm}
+                            onChange={(e) => setTvSearchTerm(e.target.value)}
+                            className="pl-9 h-10"
+                          />
+                        </div>
+                        
+                        {/* Filtro por referência */}
+                        <Select value={tvReferenciaFilter} onValueChange={setTvReferenciaFilter}>
+                          <SelectTrigger className="w-[180px] h-10">
+                            <SelectValue placeholder="Referência" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="todas">Todas Referências</SelectItem>
+                            {referenciasUnicas.map((ref) => (
+                              <SelectItem key={ref} value={ref}>
+                                {ref}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                        
+                        {/* Busca por OP */}
+                        <div className="relative min-w-[150px] max-w-[180px]">
+                          <Input
+                            placeholder="Buscar OP..."
+                            value={tvOpFilter}
+                            onChange={(e) => setTvOpFilter(e.target.value)}
+                            className="h-10"
+                          />
+                        </div>
+                        
+                        {/* Filtro por status */}
+                        <Select value={tvStatusFilter} onValueChange={setTvStatusFilter}>
+                          <SelectTrigger className="w-[180px] h-10">
+                            <SelectValue placeholder="Status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="todos">Todos Status</SelectItem>
+                            <SelectItem value="em_producao">Em Produção</SelectItem>
+                            <SelectItem value="aguardando_inicio">Aguardando Início</SelectItem>
+                            <SelectItem value="atrasado">Atrasados</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        
+                        {/* Botão limpar filtros */}
+                        {hasActiveFilters && (
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => {
+                              setTvSearchTerm("");
+                              setTvReferenciaFilter("");
+                              setTvOpFilter("");
+                              setTvStatusFilter("todos");
+                            }}
+                            className="h-10"
+                          >
+                            <X className="mr-1 h-4 w-4" />
+                            Limpar
+                          </Button>
+                        )}
+                        
+                        {/* Contador */}
+                        <div className="ml-auto text-sm text-muted-foreground">
+                          Exibindo <span className="font-semibold text-foreground">{tvFiltered.length}</span> de {totalBeforeFilter} produções
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                  
+                  {/* Grid de Cards */}
+                  <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                    {tvFiltered.map((pedido) => (
+                      <PedidoCard
+                        key={pedido.id}
+                        pedido={pedido}
+                        onViewDetails={() => {}}
+                        onAdvanceStage={() => {
+                          const etapas = pedido.etapas_producao?.sort((a, b) => a.ordem - b.ordem);
+                          const etapaAtual = etapas?.find((et) => et.status === "em_andamento");
+                          
+                          if (etapaAtual) {
+                            const proximaEtapa = etapas?.find((et) => et.ordem === etapaAtual.ordem + 1);
+                            handleAtualizarEtapa(
+                              pedido.id,
+                              proximaEtapa ? proximaEtapa.tipo_etapa : "concluido"
+                            );
+                          } else {
+                            const primeiraEtapa = etapas?.[0];
+                            if (primeiraEtapa) {
+                              handleAtualizarEtapa(pedido.id, primeiraEtapa.tipo_etapa);
+                            }
                           }
-                        }
-                      }}
-                      isTV={modoTV}
-                    />
-                  ))}
-                </div>
+                        }}
+                        isTV={modoTV}
+                      />
+                    ))}
+                  </div>
+                </>
               );
             })()
           ) : (
