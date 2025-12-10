@@ -42,9 +42,9 @@ const StatCard = ({
 
   return (
     <Link to={filterUrl}>
-      <Card className="cursor-pointer transition-all duration-300 hover:shadow-executive-hover hover:scale-[1.02] group bg-card border border-border shadow-executive overflow-hidden">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3 gap-2">
-          <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex-1">
+      <Card className="cursor-pointer transition-all duration-300 hover:shadow-executive-hover hover:scale-[1.02] group bg-card border border-border shadow-executive">
+        <CardHeader className="flex flex-row items-start justify-between space-y-0 pb-3 gap-3">
+          <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground min-w-0">
             {title}
           </CardTitle>
           <div className={`h-10 w-10 rounded-xl ${colors.bg} flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-110 border ${colors.border}`}>
