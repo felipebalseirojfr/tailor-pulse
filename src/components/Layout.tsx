@@ -13,7 +13,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
-import logoJfr from "@/assets/logo-jfr.jpeg";
+import logoJfr from "@/assets/logo-jfr.png";
 
 interface LayoutProps {
   children: ReactNode;
