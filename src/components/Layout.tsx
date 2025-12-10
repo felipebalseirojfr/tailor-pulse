@@ -86,11 +86,11 @@ export default function Layout({ children }: LayoutProps) {
       <aside className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
         <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-sidebar-border bg-sidebar px-6 pb-4">
           {/* Logo Section */}
-          <div className="flex h-20 shrink-0 items-center gap-3 border-b border-sidebar-border pb-4 pt-4">
+          <div className="flex h-24 shrink-0 items-center gap-3 border-b border-sidebar-border pb-4 pt-4">
             <img 
               src={logoJfr} 
               alt="JFR Logo" 
-              className="h-12 w-auto object-contain"
+              className="h-20 w-auto object-contain"
             />
             <div className="flex flex-col">
               <span className="text-sm font-semibold text-sidebar-foreground">Controle de</span>
@@ -155,7 +155,7 @@ export default function Layout({ children }: LayoutProps) {
             <img 
               src={logoJfr} 
               alt="JFR Logo" 
-              className="h-8 w-auto object-contain"
+              className="h-12 w-auto object-contain"
             />
             <span className="text-lg font-bold text-primary">JFR Produções</span>
           </div>
@@ -172,7 +172,7 @@ export default function Layout({ children }: LayoutProps) {
                 <img 
                   src={logoJfr} 
                   alt="JFR Logo" 
-                  className="h-10 w-auto object-contain"
+                  className="h-16 w-auto object-contain"
                 />
                 <span className="text-lg font-bold text-sidebar-foreground">JFR Produções</span>
               </div>
