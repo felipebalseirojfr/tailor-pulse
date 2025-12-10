@@ -82,6 +82,7 @@ export default function Pedidos() {
   const [filtrosAbertos, setFiltrosAbertos] = useState(false);
   const [modoTV, setModoTV] = useState(false);
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
+  const [tvStatusFilter, setTvStatusFilter] = useState("em_producao");
 
   const handlePedidoDeleted = (pedidoId: string) => {
     setPedidos(prev => prev.filter(p => p.id !== pedidoId));
@@ -460,14 +461,28 @@ export default function Pedidos() {
               {format(new Date(), "HH:mm", { locale: ptBR })}
             </div>
           </div>
-          <Button
-            variant="outline"
-            size="lg"
-            onClick={() => setModoTV(false)}
-          >
-            <X className="mr-2 h-5 w-5" />
-            Sair do Modo TV
-          </Button>
+          <div className="flex items-center gap-3">
+            <Select value={tvStatusFilter} onValueChange={setTvStatusFilter}>
+              <SelectTrigger className="w-[200px]">
+                <Filter className="mr-2 h-4 w-4" />
+                <SelectValue placeholder="Filtrar status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="todos">Todos</SelectItem>
+                <SelectItem value="em_producao">Em Produção</SelectItem>
+                <SelectItem value="aguardando_inicio">Aguardando Início</SelectItem>
+                <SelectItem value="atrasado">Atrasados</SelectItem>
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              size="lg"
+              onClick={() => setModoTV(false)}
+            >
+              <X className="mr-2 h-5 w-5" />
+              Sair do Modo TV
+            </Button>
+          </div>
         </div>
       )}
 
@@ -676,33 +691,56 @@ export default function Pedidos() {
             })()
           ) : modoTV && activeTab === "controle" ? (
             /* Vista de Cards individual para Modo TV */
-            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-              {filteredPedidos.map((pedido) => (
-                <PedidoCard
-                  key={pedido.id}
-                  pedido={pedido}
-                  onViewDetails={() => {}}
-                  onAdvanceStage={() => {
-                    const etapas = pedido.etapas_producao?.sort((a, b) => a.ordem - b.ordem);
-                    const etapaAtual = etapas?.find((et) => et.status === "em_andamento");
-                    
-                    if (etapaAtual) {
-                      const proximaEtapa = etapas?.find((et) => et.ordem === etapaAtual.ordem + 1);
-                      handleAtualizarEtapa(
-                        pedido.id,
-                        proximaEtapa ? proximaEtapa.tipo_etapa : "concluido"
-                      );
-                    } else {
-                      const primeiraEtapa = etapas?.[0];
-                      if (primeiraEtapa) {
-                        handleAtualizarEtapa(pedido.id, primeiraEtapa.tipo_etapa);
-                      }
-                    }
-                  }}
-                  isTV={modoTV}
-                />
-              ))}
-            </div>
+            (() => {
+              const hoje = new Date().toISOString().split("T")[0];
+              let tvFiltered = filteredPedidos;
+              
+              // Aplicar filtro do modo TV
+              if (tvStatusFilter === "em_producao") {
+                tvFiltered = tvFiltered.filter((p) => p.status_geral === "em_producao");
+              } else if (tvStatusFilter === "aguardando_inicio") {
+                tvFiltered = tvFiltered.filter((p) => p.status_geral === "aguardando_inicio");
+              } else if (tvStatusFilter === "atrasado") {
+                tvFiltered = tvFiltered.filter(
+                  (p) => p.prazo_final < hoje && p.status_geral !== "concluido"
+                );
+              }
+              
+              // Ordenar alfabeticamente por modelo
+              tvFiltered = tvFiltered.sort((a, b) => 
+                (a.produto_modelo || '').localeCompare(b.produto_modelo || '', 'pt-BR', { sensitivity: 'base' })
+              );
+
+              return (
+                <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                  {tvFiltered.map((pedido) => (
+                    <PedidoCard
+                      key={pedido.id}
+                      pedido={pedido}
+                      onViewDetails={() => {}}
+                      onAdvanceStage={() => {
+                        const etapas = pedido.etapas_producao?.sort((a, b) => a.ordem - b.ordem);
+                        const etapaAtual = etapas?.find((et) => et.status === "em_andamento");
+                        
+                        if (etapaAtual) {
+                          const proximaEtapa = etapas?.find((et) => et.ordem === etapaAtual.ordem + 1);
+                          handleAtualizarEtapa(
+                            pedido.id,
+                            proximaEtapa ? proximaEtapa.tipo_etapa : "concluido"
+                          );
+                        } else {
+                          const primeiraEtapa = etapas?.[0];
+                          if (primeiraEtapa) {
+                            handleAtualizarEtapa(pedido.id, primeiraEtapa.tipo_etapa);
+                          }
+                        }
+                      }}
+                      isTV={modoTV}
+                    />
+                  ))}
+                </div>
+              );
+            })()
           ) : (
             /* Vista de Tabela */
             <Card className="bg-card/60 backdrop-blur-sm border-muted">
