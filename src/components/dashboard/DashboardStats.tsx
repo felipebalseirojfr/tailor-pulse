@@ -47,7 +47,7 @@ const StatCard = ({
           <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted-foreground min-w-0">
             {title}
           </CardTitle>
-          <div className={`h-10 w-10 rounded-xl ${colors.bg} flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-110 border ${colors.border}`}>
+          <div className={`h-10 w-10 rounded-none ${colors.bg} flex items-center justify-center flex-shrink-0 transition-all duration-300 group-hover:scale-110 border ${colors.border}`}>
             <Icon className={`h-5 w-5 ${colors.text}`} />
           </div>
         </CardHeader>
