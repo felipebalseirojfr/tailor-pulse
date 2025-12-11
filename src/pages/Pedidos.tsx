@@ -837,7 +837,7 @@ export default function Pedidos() {
                       <PedidoCard
                         key={pedido.id}
                         pedido={pedido}
-                        onViewDetails={() => {}}
+                        onViewDetails={() => handleRowClick(pedido)}
                         onAdvanceStage={() => {
                           const etapas = pedido.etapas_producao?.sort((a, b) => a.ordem - b.ordem);
                           const etapaAtual = etapas?.find((et) => et.status === "em_andamento");
