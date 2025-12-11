@@ -263,7 +263,7 @@ const Fechamentos = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               {filteredFechamentos.map((fechamento) => {
                 const statusConfig = getStatusConfig(fechamento.status, fechamento.status_nf);
                 const isFaturado = fechamento.pedidos.status_geral === "faturado";
@@ -271,7 +271,7 @@ const Fechamentos = () => {
                 return (
                   <Card
                     key={fechamento.id}
-                    className={`cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-[1.02] border-2 ${statusConfig.bgColor}`}
+                    className="cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-[1.02] border border-border bg-card"
                     onClick={() => navigate(`/pcp/fechamentos/${fechamento.id}`)}
                   >
                     <CardHeader>
@@ -296,7 +296,7 @@ const Fechamentos = () => {
                             </p>
                           </div>
                         </div>
-                        <Badge className={`${statusConfig.color} ${statusConfig.bgColor} border text-xs`}>
+                        <Badge variant="outline" className={`${statusConfig.color} text-xs`}>
                           {statusConfig.label}
                         </Badge>
                       </div>
