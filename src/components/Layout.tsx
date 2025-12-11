@@ -10,22 +10,35 @@ import {
   LogOut,
   Menu,
   X,
+  UserCog,
+  Shield,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
+import { useUserRoles } from "@/hooks/useUserRoles";
+import { Badge } from "@/components/ui/badge";
 import logoJfr from "@/assets/logo-jfr.png";
 
 interface LayoutProps {
   children: ReactNode;
 }
 
+interface NavItem {
+  name: string;
+  href: string;
+  icon: React.ComponentType<{ className?: string }>;
+  roles?: string[];
+}
+
 export default function Layout({ children }: LayoutProps) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userName, setUserName] = useState<string>("");
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
+  const { roles, hasRole, hasAnyRole } = useUserRoles();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -33,6 +46,9 @@ export default function Layout({ children }: LayoutProps) {
       setLoading(false);
       if (!session && location.pathname !== "/auth") {
         navigate("/auth");
+      }
+      if (session?.user) {
+        fetchUserName(session.user.id);
       }
     });
 
@@ -43,10 +59,24 @@ export default function Layout({ children }: LayoutProps) {
       if (!session && location.pathname !== "/auth") {
         navigate("/auth");
       }
+      if (session?.user) {
+        fetchUserName(session.user.id);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, [navigate, location.pathname]);
+
+  const fetchUserName = async (userId: string) => {
+    const { data } = await supabase
+      .from("profiles")
+      .select("nome")
+      .eq("id", userId)
+      .single();
+    if (data) {
+      setUserName(data.nome);
+    }
+  };
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -73,12 +103,30 @@ export default function Layout({ children }: LayoutProps) {
     return <>{children}</>;
   }
 
-  const navigation = [
+  const allNavigation: NavItem[] = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Pedidos", href: "/pedidos", icon: Package },
-    { name: "Clientes", href: "/clientes", icon: Users },
+    { name: "Clientes", href: "/clientes", icon: Users, roles: ["admin", "commercial"] },
     { name: "Calendário", href: "/calendario", icon: CalendarIcon },
+    { name: "Usuários", href: "/usuarios", icon: UserCog, roles: ["admin"] },
   ];
+
+  // Filter navigation based on user roles
+  const navigation = allNavigation.filter((item) => {
+    if (!item.roles) return true;
+    return hasAnyRole(item.roles);
+  });
+
+  const getRoleBadge = () => {
+    if (hasRole("admin")) return { label: "Admin", variant: "destructive" as const };
+    if (hasRole("commercial")) return { label: "Comercial", variant: "default" as const };
+    if (hasRole("production")) return { label: "Produção", variant: "secondary" as const };
+    if (hasRole("pcp_closer")) return { label: "PCP", variant: "outline" as const };
+    if (hasRole("backoffice_fiscal")) return { label: "Fiscal", variant: "outline" as const };
+    return { label: "Viewer", variant: "outline" as const };
+  };
+
+  const roleBadge = getRoleBadge();
 
   return (
     <div className="flex min-h-screen bg-background">
@@ -97,6 +145,22 @@ export default function Layout({ children }: LayoutProps) {
               <span className="text-sm font-semibold text-sidebar-foreground">Produções</span>
             </div>
           </div>
+
+          {/* User Info */}
+          {userName && (
+            <div className="flex items-center gap-2 px-2 py-2 rounded-lg bg-sidebar-accent/50">
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20">
+                <Shield className="h-4 w-4 text-primary" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-sidebar-foreground truncate">{userName}</p>
+                <Badge variant={roleBadge.variant} className="text-xs h-5">
+                  {roleBadge.label}
+                </Badge>
+              </div>
+            </div>
+          )}
+
           <nav className="flex flex-1 flex-col">
             <ul role="list" className="flex flex-1 flex-col gap-y-7">
               <li>
@@ -168,7 +232,7 @@ export default function Layout({ children }: LayoutProps) {
               onClick={() => setMobileMenuOpen(false)}
             />
             <div className="fixed inset-y-0 left-0 w-full max-w-xs bg-sidebar p-6 border-r border-sidebar-border">
-              <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center gap-3 mb-4">
                 <img 
                   src={logoJfr} 
                   alt="JFR Logo" 
@@ -176,7 +240,23 @@ export default function Layout({ children }: LayoutProps) {
                 />
                 <span className="text-lg font-bold text-sidebar-foreground">JFR Produções</span>
               </div>
-              <nav className="mt-16">
+
+              {/* User Info Mobile */}
+              {userName && (
+                <div className="flex items-center gap-2 px-2 py-2 rounded-lg bg-sidebar-accent/50 mb-4">
+                  <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20">
+                    <Shield className="h-4 w-4 text-primary" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-sidebar-foreground truncate">{userName}</p>
+                    <Badge variant={roleBadge.variant} className="text-xs h-5">
+                      {roleBadge.label}
+                    </Badge>
+                  </div>
+                </div>
+              )}
+
+              <nav className="mt-12">
                 <ul role="list" className="space-y-1">
                   {navigation.map((item) => {
                     const isActive = location.pathname === item.href;

@@ -15,6 +15,7 @@ import Calendario from "./pages/Calendario";
 import ScanQR from "./pages/ScanQR";
 import Fechamentos from "./pages/Fechamentos";
 import DetalhesFechamento from "./pages/DetalhesFechamento";
+import Usuarios from "./pages/Usuarios";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -37,6 +38,7 @@ const App = () => (
           <Route path="/calendario" element={<Layout><Calendario /></Layout>} />
           <Route path="/pcp/fechamentos" element={<Layout><Fechamentos /></Layout>} />
           <Route path="/pcp/fechamentos/:id" element={<Layout><DetalhesFechamento /></Layout>} />
+          <Route path="/usuarios" element={<Layout><Usuarios /></Layout>} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

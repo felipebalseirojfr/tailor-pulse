@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.qr-update-etapa]
 verify_jwt = false
+
+[functions.criar-usuario]
+verify_jwt = true
