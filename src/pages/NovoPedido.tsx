@@ -43,7 +43,20 @@ export default function NovoPedido() {
     tem_personalizacao: false,
     tipos_personalizacao: [] as string[],
     grade_tamanhos: {} as Record<string, number>,
+    preco_venda: "",
+    composicao_tecido: "",
   });
+
+  const composicoesComuns = [
+    "100% Algodão",
+    "100% Poliéster",
+    "100% Viscose",
+    "60% Algodão / 40% Poliéster",
+    "50% Algodão / 50% Poliéster",
+    "65% Poliéster / 35% Algodão",
+    "67% Poliéster / 33% Viscose",
+    "95% Algodão / 5% Elastano",
+  ];
 
   const [etapas, setEtapas] = useState<Etapa[]>([]);
 
@@ -125,6 +138,8 @@ export default function NovoPedido() {
           grade_tamanhos: formData.grade_tamanhos,
           arquivos: arquivosUpload,
           status_geral: 'aguardando_inicio',
+          preco_venda: formData.preco_venda ? parseFloat(formData.preco_venda) : null,
+          composicao_tecido: formData.composicao_tecido || null,
         },
       ]).select();
 
@@ -389,6 +404,43 @@ export default function NovoPedido() {
                   placeholder="Ex: 100"
                   required
                 />
+              </div>
+            </div>
+
+            <div className="grid gap-4 md:grid-cols-2">
+              <div className="space-y-2">
+                <Label htmlFor="preco_venda">Preço de Venda (R$)</Label>
+                <Input
+                  id="preco_venda"
+                  name="preco_venda"
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.preco_venda}
+                  onChange={handleChange}
+                  placeholder="Ex: 59.90"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="composicao_tecido">Composição do Tecido (NCM)</Label>
+                <Select
+                  value={formData.composicao_tecido}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, composicao_tecido: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a composição" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {composicoesComuns.map((comp) => (
+                      <SelectItem key={comp} value={comp}>
+                        {comp}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 

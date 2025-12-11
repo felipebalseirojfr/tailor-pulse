@@ -429,6 +429,32 @@ export function PedidoDetailsSheet({
 
               <Separator />
 
+              {/* Preço e Composição */}
+              {(pedido.preco_venda || pedido.composicao_tecido) && (
+                <>
+                  <div className="space-y-3">
+                    <h3 className="font-semibold">Informações Comerciais</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                      {pedido.preco_venda && (
+                        <div>
+                          <p className="text-sm text-muted-foreground">Preço de Venda</p>
+                          <p className="font-medium text-lg">
+                            {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(pedido.preco_venda)}
+                          </p>
+                        </div>
+                      )}
+                      {pedido.composicao_tecido && (
+                        <div>
+                          <p className="text-sm text-muted-foreground">Composição (NCM)</p>
+                          <p className="font-medium">{pedido.composicao_tecido}</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <Separator />
+                </>
+              )}
+
               {/* Materiais */}
               {(pedido.tecido || pedido.aviamentos) && (
                 <>

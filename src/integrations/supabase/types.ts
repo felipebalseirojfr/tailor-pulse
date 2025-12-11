@@ -333,12 +333,14 @@ export type Database = {
           aviamentos: string[] | null
           cliente_id: string
           codigo_pedido: string | null
+          composicao_tecido: string | null
           created_at: string | null
           data_inicio: string
           grade_tamanhos: Json | null
           id: string
           observacoes_pedido: string | null
           prazo_final: string
+          preco_venda: number | null
           prioridade: Database["public"]["Enums"]["prioridade_pedido"] | null
           produto_modelo: string
           progresso_percentual: number | null
@@ -361,12 +363,14 @@ export type Database = {
           aviamentos?: string[] | null
           cliente_id: string
           codigo_pedido?: string | null
+          composicao_tecido?: string | null
           created_at?: string | null
           data_inicio: string
           grade_tamanhos?: Json | null
           id?: string
           observacoes_pedido?: string | null
           prazo_final: string
+          preco_venda?: number | null
           prioridade?: Database["public"]["Enums"]["prioridade_pedido"] | null
           produto_modelo: string
           progresso_percentual?: number | null
@@ -389,12 +393,14 @@ export type Database = {
           aviamentos?: string[] | null
           cliente_id?: string
           codigo_pedido?: string | null
+          composicao_tecido?: string | null
           created_at?: string | null
           data_inicio?: string
           grade_tamanhos?: Json | null
           id?: string
           observacoes_pedido?: string | null
           prazo_final?: string
+          preco_venda?: number | null
           prioridade?: Database["public"]["Enums"]["prioridade_pedido"] | null
           produto_modelo?: string
           progresso_percentual?: number | null
