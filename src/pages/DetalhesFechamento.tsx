@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { ArrowLeft, Upload, Save, Send, Loader2, AlertTriangle, Receipt, FileCheck, CheckCircle2, ExternalLink } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ArrowLeft, Upload, Save, Send, Loader2, AlertTriangle, Receipt, FileCheck, CheckCircle2, ExternalLink, Truck, Info } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -52,6 +53,8 @@ interface Fechamento {
   } | null;
 }
 
+type PhaseType = "fechamento" | "emissao_nf" | "entrega";
+
 const DetalhesFechamento = () => {
   const { id } = useParams();
   const navigate = useNavigate();
@@ -61,7 +64,6 @@ const DetalhesFechamento = () => {
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [observacoes, setObservacoes] = useState("");
-  const [autoSaveTimer, setAutoSaveTimer] = useState<NodeJS.Timeout | null>(null);
   
   // Campos de NF
   const [numeroNf, setNumeroNf] = useState("");
@@ -76,14 +78,13 @@ const DetalhesFechamento = () => {
     }
   }, [id]);
 
-  // Auto-save a cada 10 segundos
+  // Auto-save a cada 10 segundos para fase de fechamento
   useEffect(() => {
     const timer = setInterval(() => {
       if (fechamento?.status === "em_aberto") {
         handleSaveRascunho(true);
       }
     }, 10000);
-    setAutoSaveTimer(timer);
     return () => clearInterval(timer);
   }, [itens, observacoes, fechamento]);
 
@@ -129,6 +130,16 @@ const DetalhesFechamento = () => {
     }
   };
 
+  // Determinar fase atual
+  const getCurrentPhase = (): PhaseType => {
+    if (!fechamento) return "fechamento";
+    if (fechamento.status_nf === "emitida") return "entrega";
+    if (fechamento.status === "em_conferencia" || fechamento.status === "fechado") return "emissao_nf";
+    return "fechamento";
+  };
+
+  const currentPhase = getCurrentPhase();
+
   const handleItemChange = (tamanho: string, value: string) => {
     const numValue = parseInt(value) || 0;
     setItens((prev) =>
@@ -144,13 +155,8 @@ const DetalhesFechamento = () => {
     return "valid";
   };
 
-  const getTotalPlanejado = () => {
-    return itens.reduce((sum, item) => sum + item.saldo_a_fechar, 0);
-  };
-
-  const getTotalFechado = () => {
-    return itens.reduce((sum, item) => sum + item.unidades, 0);
-  };
+  const getTotalPlanejado = () => itens.reduce((sum, item) => sum + item.saldo_a_fechar, 0);
+  const getTotalFechado = () => itens.reduce((sum, item) => sum + item.unidades, 0);
 
   const getPercentageDiff = () => {
     const planejado = getTotalPlanejado();
@@ -173,29 +179,44 @@ const DetalhesFechamento = () => {
     return validation.type === "valid" || validation.type === "loss" || validation.type === "exceed";
   };
 
-  const getStatusConfig = (status: string) => {
-    const configs: Record<string, { color: string; bgColor: string; label: string; icon: string }> = {
-      em_aberto: { 
-        color: "text-red-600", 
-        bgColor: "bg-red-100 border-red-300", 
-        label: "Em Aberto",
-        icon: "🔴"
-      },
-      em_conferencia: { 
-        color: "text-yellow-600", 
-        bgColor: "bg-yellow-100 border-yellow-300", 
-        label: "Em Conferência",
-        icon: "🟡"
-      },
-      fechado: { 
-        color: "text-green-600", 
-        bgColor: "bg-green-100 border-green-300", 
-        label: "Fechado / Pronto para NF",
-        icon: "🟢"
-      }
-    };
-    return configs[status] || configs.em_aberto;
+  // Validação para emitir NF
+  const canEmitirNf = () => {
+    return numeroNf.trim() !== "" && 
+           dataEmissaoNf !== "" && 
+           valorTotalNf.trim() !== "" && 
+           linkArquivoNf.trim() !== "";
   };
+
+  const getPhaseConfig = () => {
+    switch (currentPhase) {
+      case "fechamento":
+        return { 
+          color: "text-red-600", 
+          bgColor: "bg-red-100 border-red-300", 
+          label: "FECHAMENTO",
+          icon: "🔴",
+          description: "Conferência de quantidades produzidas"
+        };
+      case "emissao_nf":
+        return { 
+          color: "text-yellow-600", 
+          bgColor: "bg-yellow-100 border-yellow-300", 
+          label: "EMISSÃO DE NF",
+          icon: "📄",
+          description: "Aguardando emissão da Nota Fiscal"
+        };
+      case "entrega":
+        return { 
+          color: "text-blue-600", 
+          bgColor: "bg-blue-100 border-blue-300", 
+          label: "ENTREGA",
+          icon: "📦",
+          description: "Pronto para entrega ao cliente"
+        };
+    }
+  };
+
+  const phaseConfig = getPhaseConfig();
 
   const handleSaveRascunho = async (isAutoSave = false) => {
     setSaving(true);
@@ -235,11 +256,12 @@ const DetalhesFechamento = () => {
     }
   };
 
-  const handleEnviarParaConferencia = async () => {
+  // Fase 1: Conferido - muda de em_aberto para em_conferencia
+  const handleConferido = async () => {
     const validation = getValidationStatus();
     
     if (validation.type === "empty") {
-      toast.error("Preencha todos os campos antes de enviar para conferência");
+      toast.error("Preencha todos os campos antes de marcar como conferido");
       return;
     }
 
@@ -264,39 +286,20 @@ const DetalhesFechamento = () => {
 
       if (error) throw error;
 
-      toast.success("Fechamento enviado para conferência!");
+      toast.success("Conferência concluída! Aguardando emissão de NF.");
       navigate("/pcp/fechamentos");
     } catch (error: any) {
-      console.error("Erro ao enviar:", error);
-      toast.error("Erro ao enviar para conferência");
+      console.error("Erro ao conferir:", error);
+      toast.error("Erro ao concluir conferência");
     } finally {
       setSaving(false);
     }
   };
 
-  const handleMarcarFechado = async () => {
-    setSaving(true);
-    try {
-      const { error } = await supabase
-        .from("fechamentos")
-        .update({ status: "fechado" })
-        .eq("id", id);
-
-      if (error) throw error;
-
-      toast.success("Fechamento marcado como concluído!");
-      fetchFechamento();
-    } catch (error: any) {
-      console.error("Erro ao marcar como fechado:", error);
-      toast.error("Erro ao marcar como fechado");
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  const handleMarcarNfEmitida = async () => {
-    if (!numeroNf || !dataEmissaoNf || !valorTotalNf) {
-      toast.error("Preencha o número, data de emissão e valor total da NF antes de marcar como emitida");
+  // Fase 2: Emitido - muda status_nf para emitida
+  const handleEmitido = async () => {
+    if (!canEmitirNf()) {
+      toast.error("Preencha todos os campos obrigatórios da NF antes de emitir");
       return;
     }
 
@@ -305,32 +308,29 @@ const DetalhesFechamento = () => {
       const { error } = await supabase
         .from("fechamentos")
         .update({ 
+          status: "fechado",
           status_nf: "emitida",
           numero_nf: numeroNf,
           data_emissao_nf: dataEmissaoNf,
           valor_total_nf: parseFloat(valorTotalNf),
-          link_arquivo_nf: linkArquivoNf || null
+          link_arquivo_nf: linkArquivoNf
         })
         .eq("id", id);
 
       if (error) throw error;
 
-      toast.success("NF marcada como emitida!");
-      fetchFechamento();
+      toast.success("NF emitida com sucesso! Pedido pronto para entrega.");
+      navigate("/pcp/fechamentos");
     } catch (error: any) {
-      console.error("Erro ao marcar NF:", error);
-      toast.error("Erro ao marcar NF como emitida");
+      console.error("Erro ao emitir NF:", error);
+      toast.error("Erro ao emitir NF");
     } finally {
       setSaving(false);
     }
   };
 
-  const handleMarcarPedidoFaturado = async () => {
-    if (fechamento?.status_nf !== "emitida") {
-      toast.error("A NF precisa estar emitida para marcar o pedido como faturado");
-      return;
-    }
-
+  // Fase 3: Marcar pedido como faturado
+  const handleMarcarFaturado = async () => {
     setSaving(true);
     try {
       const { error } = await supabase
@@ -392,9 +392,7 @@ const DetalhesFechamento = () => {
     }
   };
 
-  const getTotalGeral = () => {
-    return itens.reduce((sum, item) => sum + item.unidades, 0);
-  };
+  const getTotalGeral = () => itens.reduce((sum, item) => sum + item.unidades, 0);
 
   const calcularPrecoTotal = () => {
     if (!fechamento?.pedidos.preco_venda) return null;
@@ -418,9 +416,6 @@ const DetalhesFechamento = () => {
   }
 
   const isReadOnly = fechamento.pedidos.status_geral === "faturado";
-  const canEditNf = fechamento.status === "fechado" && fechamento.status_nf !== "emitida";
-  const canMarkNfEmitida = fechamento.status === "fechado" && fechamento.status_nf !== "emitida" && numeroNf && dataEmissaoNf && valorTotalNf;
-  const canMarkFaturado = fechamento.status_nf === "emitida" && fechamento.pedidos.status_geral !== "faturado";
 
   return (
     <div className="container mx-auto p-4 max-w-7xl pb-24">
@@ -429,12 +424,12 @@ const DetalhesFechamento = () => {
         Voltar
       </Button>
 
-      {/* Cabeçalho */}
-      <Card className={`mb-6 border-2 ${getStatusConfig(fechamento.status).bgColor}`}>
+      {/* Cabeçalho com fase atual */}
+      <Card className={`mb-6 border-2 ${phaseConfig.bgColor}`}>
         <CardHeader>
           <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
             <div className="flex items-start gap-3">
-              <span className="text-3xl">{getStatusConfig(fechamento.status).icon}</span>
+              <span className="text-3xl">{phaseConfig.icon}</span>
               <div>
                 <CardTitle className="text-2xl mb-2 flex items-center gap-2">
                   {fechamento.pedidos.produto_modelo}
@@ -456,20 +451,27 @@ const DetalhesFechamento = () => {
               </div>
             </div>
             <div className="flex flex-col gap-2">
-              <Badge className={`${getStatusConfig(fechamento.status).color} ${getStatusConfig(fechamento.status).bgColor} border`}>
-                {getStatusConfig(fechamento.status).label}
+              <Badge className={`${phaseConfig.color} ${phaseConfig.bgColor} border text-sm px-3 py-1`}>
+                {phaseConfig.label}
               </Badge>
-              <Badge className={`${fechamento.status_nf === "emitida" ? "bg-green-100 text-green-600" : "bg-orange-100 text-orange-600"} border`}>
-                <Receipt className="h-3 w-3 mr-1" />
-                {fechamento.status_nf === "emitida" ? "NF Emitida" : "NF Pendente"}
-              </Badge>
+              <p className="text-xs text-muted-foreground">{phaseConfig.description}</p>
             </div>
           </div>
         </CardHeader>
       </Card>
 
-      {/* Alertas de validação */}
-      {fechamento.status === "em_aberto" && (
+      {/* Alerta de fase */}
+      <Alert className={`mb-6 ${phaseConfig.bgColor}`}>
+        <Info className="h-4 w-4" />
+        <AlertDescription>
+          {currentPhase === "fechamento" && "Preencha as quantidades produzidas e clique em CONFERIDO para avançar para emissão de NF."}
+          {currentPhase === "emissao_nf" && "Preencha TODOS os campos da Nota Fiscal (Número, Data, Valor e Link XML) e clique em EMITIDO."}
+          {currentPhase === "entrega" && "Pedido pronto para entrega. Todas as informações estão completas."}
+        </AlertDescription>
+      </Alert>
+
+      {/* Alertas de validação - apenas na fase de fechamento */}
+      {currentPhase === "fechamento" && (
         <Card className={`mb-6 border-2 ${
           getValidationStatus().type === "exceed" ? "bg-red-50 border-red-300" :
           getValidationStatus().type === "loss" ? "bg-yellow-50 border-yellow-300" :
@@ -477,7 +479,7 @@ const DetalhesFechamento = () => {
           "bg-gray-50 border-gray-300"
         }`}>
           <CardContent className="p-4">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-2">
                 <AlertTriangle className={`h-5 w-5 ${
                   getValidationStatus().type === "exceed" ? "text-red-600" :
@@ -523,11 +525,11 @@ const DetalhesFechamento = () => {
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="bg-muted/50 rounded-lg p-4">
+                <div className="bg-muted/50 rounded-md p-4">
                   <Label className="text-xs text-muted-foreground">Composição do Tecido</Label>
                   <p className="font-semibold mt-1">{fechamento.pedidos.composicao_tecido || "Não informado"}</p>
                 </div>
-                <div className="bg-muted/50 rounded-lg p-4">
+                <div className="bg-muted/50 rounded-md p-4">
                   <Label className="text-xs text-muted-foreground">Preço Unitário</Label>
                   <p className="font-semibold mt-1">
                     {fechamento.pedidos.preco_venda 
@@ -535,11 +537,11 @@ const DetalhesFechamento = () => {
                       : "Não informado"}
                   </p>
                 </div>
-                <div className="bg-muted/50 rounded-lg p-4">
+                <div className="bg-muted/50 rounded-md p-4">
                   <Label className="text-xs text-muted-foreground">Quantidade Total</Label>
                   <p className="font-semibold mt-1">{getTotalGeral()} unidades</p>
                 </div>
-                <div className="bg-primary/10 rounded-lg p-4">
+                <div className="bg-primary/10 rounded-md p-4">
                   <Label className="text-xs text-muted-foreground">Preço Total Calculado</Label>
                   <p className="font-bold text-primary mt-1">
                     {calcularPrecoTotal() 
@@ -551,8 +553,8 @@ const DetalhesFechamento = () => {
             </CardContent>
           </Card>
 
-          {/* Anexar foto */}
-          {fechamento.status === "em_aberto" && (
+          {/* Anexar foto - apenas na fase de fechamento */}
+          {currentPhase === "fechamento" && (
             <Card>
               <CardHeader>
                 <CardTitle className="text-lg">Anexar Foto do Caderno</CardTitle>
@@ -569,10 +571,26 @@ const DetalhesFechamento = () => {
                     <img
                       src={fechamento.foto_caderno_url}
                       alt="Foto do caderno"
-                      className="w-full h-48 object-cover rounded-lg"
+                      className="w-full h-48 object-cover rounded-md"
                     />
                   )}
                 </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Foto anexada - para outras fases */}
+          {currentPhase !== "fechamento" && fechamento.foto_caderno_url && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">Foto do Caderno</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <img
+                  src={fechamento.foto_caderno_url}
+                  alt="Foto do caderno"
+                  className="w-full h-48 object-cover rounded-md"
+                />
               </CardContent>
             </Card>
           )}
@@ -581,7 +599,11 @@ const DetalhesFechamento = () => {
           <Card>
             <CardHeader>
               <CardTitle className="text-lg">Quantidades por Tamanho</CardTitle>
-              <p className="text-sm text-muted-foreground">Preencha a quantidade produzida para cada tamanho</p>
+              <p className="text-sm text-muted-foreground">
+                {currentPhase === "fechamento" 
+                  ? "Preencha a quantidade produzida para cada tamanho"
+                  : "Quantidades conferidas"}
+              </p>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
@@ -594,7 +616,7 @@ const DetalhesFechamento = () => {
                     const atual = item?.unidades || 0;
                     
                     return (
-                      <div key={tamanho} className={`p-4 rounded-lg border-2 ${
+                      <div key={tamanho} className={`p-4 rounded-md border-2 ${
                         validation === "empty" ? "bg-gray-50 border-gray-300" :
                         validation === "exceed" ? "bg-red-50 border-red-300" :
                         "bg-green-50 border-green-300"
@@ -608,7 +630,7 @@ const DetalhesFechamento = () => {
                           min="0"
                           value={atual === 0 ? "" : atual}
                           onChange={(e) => handleItemChange(tamanho, e.target.value)}
-                          disabled={fechamento.status !== "em_aberto" || isReadOnly}
+                          disabled={currentPhase !== "fechamento" || isReadOnly}
                           placeholder="0"
                           className="text-center text-lg font-semibold h-12"
                         />
@@ -628,98 +650,112 @@ const DetalhesFechamento = () => {
             </CardContent>
           </Card>
 
-          {/* Nota Fiscal */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-lg flex items-center gap-2">
-                <Receipt className="h-5 w-5" />
-                Nota Fiscal
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">
-                {fechamento.status !== "fechado" 
-                  ? "Os campos de NF estarão disponíveis após o fechamento ser concluído"
-                  : "Preencha os dados da nota fiscal"}
-              </p>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="numero_nf">Número da NF</Label>
-                  <Input
-                    id="numero_nf"
-                    value={numeroNf}
-                    onChange={(e) => setNumeroNf(e.target.value)}
-                    disabled={!canEditNf || isReadOnly}
-                    placeholder="Ex: 001234"
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="data_emissao_nf">Data de Emissão</Label>
-                  <Input
-                    id="data_emissao_nf"
-                    type="date"
-                    value={dataEmissaoNf}
-                    onChange={(e) => setDataEmissaoNf(e.target.value)}
-                    disabled={!canEditNf || isReadOnly}
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="valor_total_nf">Valor Total da NF (R$)</Label>
-                  <Input
-                    id="valor_total_nf"
-                    type="number"
-                    step="0.01"
-                    value={valorTotalNf}
-                    onChange={(e) => setValorTotalNf(e.target.value)}
-                    disabled={!canEditNf || isReadOnly}
-                    placeholder="0.00"
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="link_arquivo_nf">Link do Arquivo (XML/PDF)</Label>
-                  <div className="flex gap-2 mt-1">
-                    <Input
-                      id="link_arquivo_nf"
-                      value={linkArquivoNf}
-                      onChange={(e) => setLinkArquivoNf(e.target.value)}
-                      disabled={!canEditNf || isReadOnly}
-                      placeholder="https://..."
-                    />
-                    {linkArquivoNf && (
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => window.open(linkArquivoNf, "_blank")}
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Status da NF */}
-              <div className="mt-4 p-4 rounded-lg bg-muted/50">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <Label className="text-sm">Status da NF</Label>
-                    <p className={`font-semibold ${fechamento.status_nf === "emitida" ? "text-green-600" : "text-orange-600"}`}>
-                      {fechamento.status_nf === "emitida" ? "✅ EMITIDA" : "⏳ PENDENTE"}
-                    </p>
-                  </div>
-                  {canMarkNfEmitida && (
-                    <Button onClick={handleMarcarNfEmitida} disabled={saving} className="bg-green-600 hover:bg-green-700">
-                      <CheckCircle2 className="h-4 w-4 mr-2" />
-                      Marcar NF como Emitida
-                    </Button>
+          {/* Nota Fiscal - visível nas fases de emissão e entrega */}
+          {(currentPhase === "emissao_nf" || currentPhase === "entrega") && (
+            <Card className={currentPhase === "emissao_nf" ? "border-2 border-yellow-300" : ""}>
+              <CardHeader>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Receipt className="h-5 w-5" />
+                  Nota Fiscal
+                  {currentPhase === "emissao_nf" && (
+                    <Badge variant="outline" className="ml-2 text-yellow-600 border-yellow-300">
+                      Campos obrigatórios
+                    </Badge>
                   )}
+                </CardTitle>
+                <p className="text-sm text-muted-foreground">
+                  {currentPhase === "emissao_nf" 
+                    ? "Preencha TODOS os campos abaixo para emitir a NF"
+                    : "Dados da Nota Fiscal emitida"}
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="numero_nf" className="flex items-center gap-1">
+                      Número da NF
+                      {currentPhase === "emissao_nf" && <span className="text-red-500">*</span>}
+                    </Label>
+                    <Input
+                      id="numero_nf"
+                      value={numeroNf}
+                      onChange={(e) => setNumeroNf(e.target.value)}
+                      disabled={currentPhase === "entrega" || isReadOnly}
+                      placeholder="Ex: 001234"
+                      className={`mt-1 ${currentPhase === "emissao_nf" && !numeroNf ? "border-red-300" : ""}`}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="data_emissao_nf" className="flex items-center gap-1">
+                      Data de Emissão
+                      {currentPhase === "emissao_nf" && <span className="text-red-500">*</span>}
+                    </Label>
+                    <Input
+                      id="data_emissao_nf"
+                      type="date"
+                      value={dataEmissaoNf}
+                      onChange={(e) => setDataEmissaoNf(e.target.value)}
+                      disabled={currentPhase === "entrega" || isReadOnly}
+                      className={`mt-1 ${currentPhase === "emissao_nf" && !dataEmissaoNf ? "border-red-300" : ""}`}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="valor_total_nf" className="flex items-center gap-1">
+                      Valor Total da NF (R$)
+                      {currentPhase === "emissao_nf" && <span className="text-red-500">*</span>}
+                    </Label>
+                    <Input
+                      id="valor_total_nf"
+                      type="number"
+                      step="0.01"
+                      value={valorTotalNf}
+                      onChange={(e) => setValorTotalNf(e.target.value)}
+                      disabled={currentPhase === "entrega" || isReadOnly}
+                      placeholder="0.00"
+                      className={`mt-1 ${currentPhase === "emissao_nf" && !valorTotalNf ? "border-red-300" : ""}`}
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="link_arquivo_nf" className="flex items-center gap-1">
+                      Link do Arquivo XML
+                      {currentPhase === "emissao_nf" && <span className="text-red-500">*</span>}
+                    </Label>
+                    <div className="flex gap-2 mt-1">
+                      <Input
+                        id="link_arquivo_nf"
+                        value={linkArquivoNf}
+                        onChange={(e) => setLinkArquivoNf(e.target.value)}
+                        disabled={currentPhase === "entrega" || isReadOnly}
+                        placeholder="https://..."
+                        className={`${currentPhase === "emissao_nf" && !linkArquivoNf ? "border-red-300" : ""}`}
+                      />
+                      {linkArquivoNf && (
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => window.open(linkArquivoNf, "_blank")}
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </CardContent>
-          </Card>
+
+                {/* Status da NF */}
+                <div className="mt-4 p-4 rounded-md bg-muted/50">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <Label className="text-sm">Status da NF</Label>
+                      <p className={`font-semibold ${fechamento.status_nf === "emitida" ? "text-green-600" : "text-orange-600"}`}>
+                        {fechamento.status_nf === "emitida" ? "✅ EMITIDA" : "⏳ PENDENTE"}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Observações */}
           <Card>
@@ -730,7 +766,7 @@ const DetalhesFechamento = () => {
               <Textarea
                 value={observacoes}
                 onChange={(e) => setObservacoes(e.target.value)}
-                disabled={fechamento.status !== "em_aberto" || isReadOnly}
+                disabled={currentPhase !== "fechamento" || isReadOnly}
                 placeholder="Adicione observações sobre o fechamento..."
                 rows={4}
               />
@@ -776,20 +812,23 @@ const DetalhesFechamento = () => {
                   })}
               </div>
 
-              {/* Ações do Fechamento */}
+              {/* Ações baseadas na fase */}
               <div className="pt-4 border-t space-y-3">
-                {fechamento.status === "em_conferencia" && (
-                  <Button onClick={handleMarcarFechado} disabled={saving} className="w-full">
-                    <FileCheck className="h-4 w-4 mr-2" />
-                    Marcar como Fechado
-                  </Button>
-                )}
-
-                {canMarkFaturado && (
-                  <Button onClick={handleMarcarPedidoFaturado} disabled={saving} className="w-full bg-blue-600 hover:bg-blue-700">
+                {/* Fase Entrega - Marcar como faturado */}
+                {currentPhase === "entrega" && fechamento.pedidos.status_geral !== "faturado" && (
+                  <Button onClick={handleMarcarFaturado} disabled={saving} className="w-full bg-blue-600 hover:bg-blue-700">
                     <CheckCircle2 className="h-4 w-4 mr-2" />
                     Marcar Pedido como Faturado
                   </Button>
+                )}
+
+                {/* Indicador de validação para emissão de NF */}
+                {currentPhase === "emissao_nf" && (
+                  <div className={`p-3 rounded-md text-sm ${canEmitirNf() ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
+                    {canEmitirNf() 
+                      ? "✅ Todos os campos preenchidos" 
+                      : "⚠️ Preencha todos os campos da NF"}
+                  </div>
                 )}
               </div>
             </CardContent>
@@ -797,37 +836,74 @@ const DetalhesFechamento = () => {
         </div>
       </div>
 
-      {/* Botões fixos no rodapé mobile */}
-      {fechamento.status === "em_aberto" && !isReadOnly && (
+      {/* Botões fixos no rodapé mobile - Fase Fechamento */}
+      {currentPhase === "fechamento" && !isReadOnly && (
         <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 flex gap-2 md:hidden">
           <Button onClick={() => handleSaveRascunho()} disabled={saving} variant="outline" className="flex-1">
             <Save className="h-4 w-4 mr-2" />
             Salvar
           </Button>
           <Button
-            onClick={handleEnviarParaConferencia}
-            disabled={!canSendToConferencia()}
-            className="flex-1"
+            onClick={handleConferido}
+            disabled={!canSendToConferencia() || saving}
+            className="flex-1 bg-green-600 hover:bg-green-700"
           >
-            <Send className="h-4 w-4 mr-2" />
-            Enviar
+            <CheckCircle2 className="h-4 w-4 mr-2" />
+            CONFERIDO
           </Button>
         </div>
       )}
 
-      {/* Botões para desktop */}
-      {fechamento.status === "em_aberto" && !isReadOnly && (
+      {/* Botões fixos no rodapé mobile - Fase Emissão NF */}
+      {currentPhase === "emissao_nf" && !isReadOnly && (
+        <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 flex gap-2 md:hidden">
+          <Button onClick={() => handleSaveRascunho()} disabled={saving} variant="outline" className="flex-1">
+            <Save className="h-4 w-4 mr-2" />
+            Salvar
+          </Button>
+          <Button
+            onClick={handleEmitido}
+            disabled={!canEmitirNf() || saving}
+            className="flex-1 bg-green-600 hover:bg-green-700"
+          >
+            <Receipt className="h-4 w-4 mr-2" />
+            EMITIDO
+          </Button>
+        </div>
+      )}
+
+      {/* Botões para desktop - Fase Fechamento */}
+      {currentPhase === "fechamento" && !isReadOnly && (
         <div className="hidden md:flex gap-4 mt-6 justify-end">
           <Button onClick={() => handleSaveRascunho()} disabled={saving} variant="outline">
             <Save className="h-4 w-4 mr-2" />
             Salvar Rascunho
           </Button>
           <Button
-            onClick={handleEnviarParaConferencia}
-            disabled={!canSendToConferencia()}
+            onClick={handleConferido}
+            disabled={!canSendToConferencia() || saving}
+            className="bg-green-600 hover:bg-green-700"
           >
-            <Send className="h-4 w-4 mr-2" />
-            Enviar para Conferência
+            <CheckCircle2 className="h-4 w-4 mr-2" />
+            CONFERIDO
+          </Button>
+        </div>
+      )}
+
+      {/* Botões para desktop - Fase Emissão NF */}
+      {currentPhase === "emissao_nf" && !isReadOnly && (
+        <div className="hidden md:flex gap-4 mt-6 justify-end">
+          <Button onClick={() => handleSaveRascunho()} disabled={saving} variant="outline">
+            <Save className="h-4 w-4 mr-2" />
+            Salvar
+          </Button>
+          <Button
+            onClick={handleEmitido}
+            disabled={!canEmitirNf() || saving}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            <Receipt className="h-4 w-4 mr-2" />
+            EMITIDO
           </Button>
         </div>
       )}
