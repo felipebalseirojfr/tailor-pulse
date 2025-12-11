@@ -140,13 +140,58 @@ const DetalhesFechamento = () => {
 
   const currentPhase = getCurrentPhase();
 
-  const handleItemChange = (tamanho: string, value: string) => {
+  // Lista completa de tamanhos disponíveis
+  const TODOS_TAMANHOS = ["1", "2", "4", "6", "8", "10", "12", "14", "PP", "P", "M", "G", "GG", "XGG", "XGG1", "XGG2", "XGG3"];
+
+  // Verificar se a grade do pedido está vazia ou zerada
+  const gradeVaziaOuZerada = () => {
+    const grade = fechamento?.pedidos.grade_tamanhos as Record<string, number> | null;
+    if (!grade) return true;
+    const tamanhos = Object.keys(grade);
+    if (tamanhos.length === 0) return true;
+    return tamanhos.every(t => (grade[t] || 0) === 0);
+  };
+
+  const handleItemChange = async (tamanho: string, value: string) => {
     const numValue = parseInt(value) || 0;
-    setItens((prev) =>
-      prev.map((item) =>
-        item.tamanho === tamanho ? { ...item, unidades: numValue, caixas: numValue > 0 ? 1 : 0 } : item
-      )
-    );
+    
+    // Verificar se já existe o item para este tamanho
+    const itemExistente = itens.find(i => i.tamanho === tamanho);
+    
+    if (itemExistente) {
+      // Atualizar item existente
+      setItens((prev) =>
+        prev.map((item) =>
+          item.tamanho === tamanho ? { ...item, unidades: numValue, caixas: numValue > 0 ? 1 : 0 } : item
+        )
+      );
+    } else if (numValue > 0 && fechamento) {
+      // Criar novo item no banco
+      try {
+        const { data, error } = await supabase
+          .from("fechamento_itens")
+          .insert({
+            fechamento_id: fechamento.id,
+            sku: fechamento.pedidos.codigo_pedido || "SEM-SKU",
+            modelo: fechamento.pedidos.produto_modelo,
+            cor: "Padrão",
+            tamanho: tamanho,
+            saldo_a_fechar: 0,
+            caixas: 1,
+            unidades: numValue
+          })
+          .select()
+          .single();
+
+        if (error) throw error;
+        
+        // Adicionar o novo item ao estado
+        setItens(prev => [...prev, data as FechamentoItem]);
+      } catch (error) {
+        console.error("Erro ao criar item:", error);
+        toast.error("Erro ao adicionar tamanho");
+      }
+    }
   };
 
   const validateItem = (item: FechamentoItem) => {
@@ -166,6 +211,14 @@ const DetalhesFechamento = () => {
   };
 
   const getValidationStatus = () => {
+    // Se a grade está vazia, apenas verificar se há pelo menos um tamanho preenchido
+    if (gradeVaziaOuZerada()) {
+      const totalFechado = getTotalFechado();
+      if (totalFechado === 0) return { type: "empty", message: "Preencha ao menos um tamanho" };
+      return { type: "valid", message: "✅ Quantidades preenchidas" };
+    }
+    
+    // Comportamento original para grade preenchida
     const percentage = parseFloat(getPercentageDiff());
     const hasEmpty = itens.some(item => item.unidades === 0);
     if (hasEmpty) return { type: "empty", message: "Preencha todos os tamanhos" };
@@ -601,52 +654,90 @@ const DetalhesFechamento = () => {
               <CardTitle className="text-lg">Quantidades por Tamanho</CardTitle>
               <p className="text-sm text-muted-foreground">
                 {currentPhase === "fechamento" 
-                  ? "Preencha a quantidade produzida para cada tamanho"
+                  ? gradeVaziaOuZerada() 
+                    ? "Este pedido não possui grade definida. Preencha as quantidades contadas para cada tamanho."
+                    : "Preencha a quantidade produzida para cada tamanho"
                   : "Quantidades conferidas"}
               </p>
             </CardHeader>
             <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {Object.keys((fechamento.pedidos.grade_tamanhos as Record<string, number>) || {})
-                  .filter(tamanho => ((fechamento.pedidos.grade_tamanhos as Record<string, number>)[tamanho] || 0) > 0)
-                  .map((tamanho) => {
-                    const item = itens.find(i => i.tamanho === tamanho);
-                    const validation = item ? validateItem(item) : "empty";
-                    const planejado = (fechamento.pedidos.grade_tamanhos as Record<string, number>)[tamanho];
-                    const atual = item?.unidades || 0;
-                    
-                    return (
-                      <div key={tamanho} className={`p-4 rounded-md border-2 ${
-                        validation === "empty" ? "bg-gray-50 border-gray-300" :
-                        validation === "exceed" ? "bg-red-50 border-red-300" :
-                        "bg-green-50 border-green-300"
-                      }`}>
-                        <Label className="text-lg font-bold mb-2 block">{tamanho}</Label>
-                        <div className="text-sm text-muted-foreground mb-2">
-                          Planejado: <span className="font-semibold">{planejado}</span>
+              {gradeVaziaOuZerada() ? (
+                /* Grade vazia - mostrar todos os tamanhos disponíveis */
+                <>
+                  <Alert className="mb-4">
+                    <Info className="h-4 w-4" />
+                    <AlertDescription>
+                      A grade de tamanhos do pedido está vazia. Preencha as quantidades que foram contadas fisicamente.
+                    </AlertDescription>
+                  </Alert>
+                  <div className="grid grid-cols-3 md:grid-cols-6 gap-3">
+                    {TODOS_TAMANHOS.map((tamanho) => {
+                      const item = itens.find(i => i.tamanho === tamanho);
+                      const atual = item?.unidades || 0;
+                      
+                      return (
+                        <div key={tamanho} className={`p-3 rounded-md border-2 ${
+                          atual > 0 ? "bg-green-50 border-green-300" : "bg-muted/50 border-border"
+                        }`}>
+                          <Label className="text-sm font-bold mb-1 block text-center">{tamanho}</Label>
+                          <Input
+                            type="number"
+                            min="0"
+                            value={atual === 0 ? "" : atual}
+                            onChange={(e) => handleItemChange(tamanho, e.target.value)}
+                            disabled={currentPhase !== "fechamento" || isReadOnly}
+                            placeholder="0"
+                            className="text-center text-lg font-semibold h-10"
+                          />
                         </div>
-                        <Input
-                          type="number"
-                          min="0"
-                          value={atual === 0 ? "" : atual}
-                          onChange={(e) => handleItemChange(tamanho, e.target.value)}
-                          disabled={currentPhase !== "fechamento" || isReadOnly}
-                          placeholder="0"
-                          className="text-center text-lg font-semibold h-12"
-                        />
-                        {atual > 0 && (
-                          <div className={`text-xs mt-2 text-center font-medium ${
-                            atual > planejado ? "text-red-600" :
-                            atual < planejado ? "text-yellow-600" :
-                            "text-green-600"
-                          }`}>
-                            {((atual / planejado) * 100).toFixed(0)}% do planejado
+                      );
+                    })}
+                  </div>
+                </>
+              ) : (
+                /* Grade preenchida - comportamento original */
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                  {Object.keys((fechamento.pedidos.grade_tamanhos as Record<string, number>) || {})
+                    .filter(tamanho => ((fechamento.pedidos.grade_tamanhos as Record<string, number>)[tamanho] || 0) > 0)
+                    .map((tamanho) => {
+                      const item = itens.find(i => i.tamanho === tamanho);
+                      const validation = item ? validateItem(item) : "empty";
+                      const planejado = (fechamento.pedidos.grade_tamanhos as Record<string, number>)[tamanho];
+                      const atual = item?.unidades || 0;
+                      
+                      return (
+                        <div key={tamanho} className={`p-4 rounded-md border-2 ${
+                          validation === "empty" ? "bg-muted/50 border-border" :
+                          validation === "exceed" ? "bg-red-50 border-red-300" :
+                          "bg-green-50 border-green-300"
+                        }`}>
+                          <Label className="text-lg font-bold mb-2 block">{tamanho}</Label>
+                          <div className="text-sm text-muted-foreground mb-2">
+                            Planejado: <span className="font-semibold">{planejado}</span>
                           </div>
-                        )}
-                      </div>
-                    );
-                  })}
-              </div>
+                          <Input
+                            type="number"
+                            min="0"
+                            value={atual === 0 ? "" : atual}
+                            onChange={(e) => handleItemChange(tamanho, e.target.value)}
+                            disabled={currentPhase !== "fechamento" || isReadOnly}
+                            placeholder="0"
+                            className="text-center text-lg font-semibold h-12"
+                          />
+                          {atual > 0 && (
+                            <div className={`text-xs mt-2 text-center font-medium ${
+                              atual > planejado ? "text-red-600" :
+                              atual < planejado ? "text-yellow-600" :
+                              "text-green-600"
+                            }`}>
+                              {((atual / planejado) * 100).toFixed(0)}% do planejado
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                </div>
+              )}
             </CardContent>
           </Card>
 
@@ -790,26 +881,41 @@ const DetalhesFechamento = () => {
 
               <div className="pt-4 border-t">
                 <h4 className="font-medium mb-2">Por Tamanho</h4>
-                {Object.keys((fechamento.pedidos.grade_tamanhos as Record<string, number>) || {})
-                  .filter(tamanho => ((fechamento.pedidos.grade_tamanhos as Record<string, number>)[tamanho] || 0) > 0)
-                  .map((tamanho) => {
-                    const item = itens.find(i => i.tamanho === tamanho);
-                    const atual = item?.unidades || 0;
-                    const planejado = (fechamento.pedidos.grade_tamanhos as Record<string, number>)[tamanho];
-                    return (
-                      <div key={tamanho} className="flex justify-between text-sm mb-1">
-                        <span>{tamanho}:</span>
-                        <span className={`font-medium ${
-                          atual === 0 ? "text-gray-500" :
-                          atual > planejado ? "text-red-600" :
-                          atual < planejado ? "text-yellow-600" :
-                          "text-green-600"
-                        }`}>
-                          {atual} / {planejado}
-                        </span>
+                {gradeVaziaOuZerada() ? (
+                  /* Mostrar apenas tamanhos com quantidade preenchida */
+                  itens.filter(item => item.unidades > 0).length > 0 ? (
+                    itens.filter(item => item.unidades > 0).map((item) => (
+                      <div key={item.tamanho} className="flex justify-between text-sm mb-1">
+                        <span>{item.tamanho}:</span>
+                        <span className="font-medium text-green-600">{item.unidades}</span>
                       </div>
-                    );
-                  })}
+                    ))
+                  ) : (
+                    <p className="text-sm text-muted-foreground">Nenhum tamanho preenchido</p>
+                  )
+                ) : (
+                  /* Comportamento original */
+                  Object.keys((fechamento.pedidos.grade_tamanhos as Record<string, number>) || {})
+                    .filter(tamanho => ((fechamento.pedidos.grade_tamanhos as Record<string, number>)[tamanho] || 0) > 0)
+                    .map((tamanho) => {
+                      const item = itens.find(i => i.tamanho === tamanho);
+                      const atual = item?.unidades || 0;
+                      const planejado = (fechamento.pedidos.grade_tamanhos as Record<string, number>)[tamanho];
+                      return (
+                        <div key={tamanho} className="flex justify-between text-sm mb-1">
+                          <span>{tamanho}:</span>
+                          <span className={`font-medium ${
+                            atual === 0 ? "text-muted-foreground" :
+                            atual > planejado ? "text-red-600" :
+                            atual < planejado ? "text-yellow-600" :
+                            "text-green-600"
+                          }`}>
+                            {atual} / {planejado}
+                          </span>
+                        </div>
+                      );
+                    })
+                )}
               </div>
 
               {/* Ações baseadas na fase */}
