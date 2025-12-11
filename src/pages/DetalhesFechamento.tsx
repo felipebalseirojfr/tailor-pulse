@@ -200,7 +200,13 @@ const DetalhesFechamento = () => {
     return "valid";
   };
 
-  const getTotalPlanejado = () => itens.reduce((sum, item) => sum + item.saldo_a_fechar, 0);
+  const getTotalPlanejado = () => {
+    // Se a grade está vazia, usa quantidade_total do pedido
+    if (gradeVaziaOuZerada()) {
+      return fechamento?.pedidos.quantidade_total || 0;
+    }
+    return itens.reduce((sum, item) => sum + item.saldo_a_fechar, 0);
+  };
   const getTotalFechado = () => itens.reduce((sum, item) => sum + item.unidades, 0);
 
   const getPercentageDiff = () => {
@@ -210,12 +216,21 @@ const DetalhesFechamento = () => {
     return ((fechado / planejado) * 100).toFixed(1);
   };
 
+  // Verificar se quantidade contada bate com esperada (para grade vazia)
+  const quantidadesBatem = () => {
+    const totalFechado = getTotalFechado();
+    const totalEsperado = fechamento?.pedidos.quantidade_total || 0;
+    return totalFechado === totalEsperado;
+  };
+
   const getValidationStatus = () => {
-    // Se a grade está vazia, apenas verificar se há pelo menos um tamanho preenchido
+    // Se a grade está vazia, comparar com quantidade_total do pedido
     if (gradeVaziaOuZerada()) {
       const totalFechado = getTotalFechado();
+      const totalEsperado = fechamento?.pedidos.quantidade_total || 0;
       if (totalFechado === 0) return { type: "empty", message: "Preencha ao menos um tamanho" };
-      return { type: "valid", message: "✅ Quantidades preenchidas" };
+      if (totalFechado === totalEsperado) return { type: "valid", message: `✅ Quantidade confere: ${totalFechado}/${totalEsperado}` };
+      return { type: "divergent", message: `❌ Divergência: contado ${totalFechado} / esperado ${totalEsperado}` };
     }
     
     // Comportamento original para grade preenchida
@@ -526,7 +541,7 @@ const DetalhesFechamento = () => {
       {/* Alertas de validação - apenas na fase de fechamento */}
       {currentPhase === "fechamento" && (
         <Card className={`mb-6 border-2 ${
-          getValidationStatus().type === "exceed" ? "bg-red-50 border-red-300" :
+          getValidationStatus().type === "exceed" || getValidationStatus().type === "divergent" ? "bg-red-50 border-red-300" :
           getValidationStatus().type === "loss" ? "bg-yellow-50 border-yellow-300" :
           getValidationStatus().type === "valid" ? "bg-green-50 border-green-300" :
           "bg-gray-50 border-gray-300"
@@ -535,13 +550,13 @@ const DetalhesFechamento = () => {
             <div className="flex items-center justify-between flex-wrap gap-2">
               <div className="flex items-center gap-2">
                 <AlertTriangle className={`h-5 w-5 ${
-                  getValidationStatus().type === "exceed" ? "text-red-600" :
+                  getValidationStatus().type === "exceed" || getValidationStatus().type === "divergent" ? "text-red-600" :
                   getValidationStatus().type === "loss" ? "text-yellow-600" :
                   getValidationStatus().type === "valid" ? "text-green-600" :
                   "text-gray-600"
                 }`} />
                 <span className={`font-medium ${
-                  getValidationStatus().type === "exceed" ? "text-red-700" :
+                  getValidationStatus().type === "exceed" || getValidationStatus().type === "divergent" ? "text-red-700" :
                   getValidationStatus().type === "loss" ? "text-yellow-700" :
                   getValidationStatus().type === "valid" ? "text-green-700" :
                   "text-gray-700"
@@ -550,10 +565,10 @@ const DetalhesFechamento = () => {
                 </span>
               </div>
               <div className="text-sm">
-                <span className="font-medium">Planejado:</span> {getTotalPlanejado()} | 
-                <span className="font-medium ml-2">Fechado:</span> {getTotalFechado()} | 
+                <span className="font-medium">Esperado:</span> {getTotalPlanejado()} | 
+                <span className="font-medium ml-2">Contado:</span> {getTotalFechado()} | 
                 <span className={`font-bold ml-2 ${
-                  parseFloat(getPercentageDiff()) > 110 ? "text-red-600" :
+                  getValidationStatus().type === "divergent" || parseFloat(getPercentageDiff()) > 110 ? "text-red-600" :
                   parseFloat(getPercentageDiff()) < 90 ? "text-yellow-600" :
                   "text-green-600"
                 }`}>
@@ -674,10 +689,15 @@ const DetalhesFechamento = () => {
                     {TODOS_TAMANHOS.map((tamanho) => {
                       const item = itens.find(i => i.tamanho === tamanho);
                       const atual = item?.unidades || 0;
+                      const bate = quantidadesBatem();
                       
                       return (
                         <div key={tamanho} className={`p-3 rounded-md border-2 ${
-                          atual > 0 ? "bg-green-50 border-green-300" : "bg-muted/50 border-border"
+                          atual > 0 
+                            ? bate 
+                              ? "bg-green-50 border-green-400" 
+                              : "bg-red-50 border-red-400"
+                            : "bg-muted/50 border-border"
                         }`}>
                           <Label className="text-sm font-bold mb-1 block text-center">{tamanho}</Label>
                           <Input
@@ -687,7 +707,13 @@ const DetalhesFechamento = () => {
                             onChange={(e) => handleItemChange(tamanho, e.target.value)}
                             disabled={currentPhase !== "fechamento" || isReadOnly}
                             placeholder="0"
-                            className="text-center text-lg font-semibold h-10"
+                            className={`text-center text-lg font-semibold h-10 ${
+                              atual > 0 
+                                ? bate 
+                                  ? "border-green-400 focus:ring-green-400" 
+                                  : "border-red-400 focus:ring-red-400"
+                                : ""
+                            }`}
                           />
                         </div>
                       );
