@@ -117,6 +117,13 @@ All colors MUST be HSL.
 @layer base {
   * {
     @apply border-border;
+    cursor: url('/needle-cursor.svg') 4 20, auto;
+  }
+
+  /* Cursor pointer para elementos clicáveis */
+  button, a, [role="button"], .cursor-pointer, 
+  input[type="checkbox"], input[type="radio"], select, label {
+    cursor: url('/needle-cursor-pointer.svg') 4 20, pointer;
   }
 
   body {
@@ -130,5 +137,25 @@ All colors MUST be HSL.
   .dashboard-container {
     background: linear-gradient(180deg, hsl(210 40% 8%) 0%, hsl(210 45% 5%) 100%);
     min-height: 100vh;
+  }
+}
+
+@layer components {
+  /* Classe para hover com scale fluido */
+  .hover-grow {
+    @apply transition-all duration-200 ease-out;
+  }
+  
+  .hover-grow:hover {
+    transform: scale(1.02);
+  }
+  
+  /* Variação maior para cards menores */
+  .hover-grow-lg {
+    @apply transition-all duration-200 ease-out;
+  }
+  
+  .hover-grow-lg:hover {
+    transform: scale(1.03);
   }
 }
