@@ -286,7 +286,7 @@ const DetalhesFechamento = () => {
 
   const canSendToConferencia = () => {
     const validation = getValidationStatus();
-    return validation.type === "valid" || validation.type === "loss" || validation.type === "exceed";
+    return validation.type === "valid" || validation.type === "loss" || validation.type === "exceed" || validation.type === "divergent";
   };
 
   // Validação para emitir NF
@@ -373,6 +373,14 @@ const DetalhesFechamento = () => {
     if (validation.type === "empty") {
       toast.error("Preencha todos os campos antes de marcar como conferido");
       return;
+    }
+
+    // Confirmação quando há divergência
+    if (validation.type === "divergent") {
+      const confirma = window.confirm(
+        `ATENÇÃO: ${validation.message}\n\nDeseja prosseguir mesmo com divergência nas quantidades?`
+      );
+      if (!confirma) return;
     }
 
     setSaving(true);
