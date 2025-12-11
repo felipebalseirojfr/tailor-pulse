@@ -152,44 +152,86 @@ const DetalhesFechamento = () => {
     return tamanhos.every(t => (grade[t] || 0) === 0);
   };
 
+  // Agregar itens duplicados por tamanho
+  const getItensAgregados = (): Record<string, number> => {
+    const agregado: Record<string, number> = {};
+    itens.forEach(item => {
+      if (item.unidades > 0) {
+        agregado[item.tamanho] = (agregado[item.tamanho] || 0) + item.unidades;
+      }
+    });
+    return agregado;
+  };
+
   const handleItemChange = async (tamanho: string, value: string) => {
     const numValue = parseInt(value) || 0;
     
-    // Verificar se já existe o item para este tamanho
-    const itemExistente = itens.find(i => i.tamanho === tamanho);
+    // Buscar TODOS os itens deste tamanho (pode haver duplicados)
+    const itensDoTamanho = itens.filter(i => i.tamanho === tamanho);
     
-    if (itemExistente) {
-      // Atualizar item existente
+    if (itensDoTamanho.length > 0) {
+      // Atualizar apenas o primeiro item e zerar os outros (consolidar)
+      const primeiroItem = itensDoTamanho[0];
       setItens((prev) =>
-        prev.map((item) =>
-          item.tamanho === tamanho ? { ...item, unidades: numValue, caixas: numValue > 0 ? 1 : 0 } : item
-        )
+        prev.map((item) => {
+          if (item.tamanho === tamanho) {
+            if (item.id === primeiroItem.id) {
+              return { ...item, unidades: numValue, caixas: numValue > 0 ? 1 : 0 };
+            }
+            // Zerar itens duplicados
+            return { ...item, unidades: 0, caixas: 0 };
+          }
+          return item;
+        })
       );
     } else if (numValue > 0 && fechamento) {
-      // Criar novo item no banco
-      try {
-        const { data, error } = await supabase
-          .from("fechamento_itens")
-          .insert({
-            fechamento_id: fechamento.id,
-            sku: fechamento.pedidos.codigo_pedido || "SEM-SKU",
-            modelo: fechamento.pedidos.produto_modelo,
-            cor: "Padrão",
-            tamanho: tamanho,
-            saldo_a_fechar: 0,
-            caixas: 1,
-            unidades: numValue
-          })
-          .select()
-          .single();
+      // Verificar novamente no banco para evitar duplicados por race condition
+      const { data: existente } = await supabase
+        .from("fechamento_itens")
+        .select("*")
+        .eq("fechamento_id", fechamento.id)
+        .eq("tamanho", tamanho)
+        .maybeSingle();
 
-        if (error) throw error;
+      if (existente) {
+        // Item já existe no banco, atualizar ao invés de criar
+        const { error } = await supabase
+          .from("fechamento_itens")
+          .update({ unidades: numValue, caixas: 1 })
+          .eq("id", existente.id);
         
-        // Adicionar o novo item ao estado
-        setItens(prev => [...prev, data as FechamentoItem]);
-      } catch (error) {
-        console.error("Erro ao criar item:", error);
-        toast.error("Erro ao adicionar tamanho");
+        if (error) {
+          console.error("Erro ao atualizar item:", error);
+          toast.error("Erro ao atualizar tamanho");
+          return;
+        }
+        setItens(prev => [...prev, { ...existente, unidades: numValue, caixas: 1 } as FechamentoItem]);
+      } else {
+        // Criar novo item no banco
+        try {
+          const { data, error } = await supabase
+            .from("fechamento_itens")
+            .insert({
+              fechamento_id: fechamento.id,
+              sku: fechamento.pedidos.codigo_pedido || "SEM-SKU",
+              modelo: fechamento.pedidos.produto_modelo,
+              cor: "Padrão",
+              tamanho: tamanho,
+              saldo_a_fechar: 0,
+              caixas: 1,
+              unidades: numValue
+            })
+            .select()
+            .single();
+
+          if (error) throw error;
+          
+          // Adicionar o novo item ao estado
+          setItens(prev => [...prev, data as FechamentoItem]);
+        } catch (error) {
+          console.error("Erro ao criar item:", error);
+          toast.error("Erro ao adicionar tamanho");
+        }
       }
     }
   };
@@ -908,35 +950,45 @@ const DetalhesFechamento = () => {
               <div className="pt-4 border-t">
                 <h4 className="font-medium mb-2">Por Tamanho</h4>
                 {gradeVaziaOuZerada() ? (
-                  /* Mostrar apenas tamanhos com quantidade preenchida */
-                  itens.filter(item => item.unidades > 0).length > 0 ? (
-                    itens.filter(item => item.unidades > 0).map((item) => (
-                      <div key={item.tamanho} className="flex justify-between text-sm mb-1">
-                        <span>{item.tamanho}:</span>
-                        <span className="font-medium text-green-600">{item.unidades}</span>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted-foreground">Nenhum tamanho preenchido</p>
-                  )
+                  /* Mostrar tamanhos agregados (consolidados) */
+                  (() => {
+                    const agregados = getItensAgregados();
+                    const tamanhos = Object.keys(agregados);
+                    const bate = quantidadesBatem();
+                    
+                    return tamanhos.length > 0 ? (
+                      tamanhos.map((tamanho) => (
+                        <div key={tamanho} className="flex justify-between text-sm mb-1">
+                          <span>{tamanho}:</span>
+                          <span className={`font-medium ${bate ? "text-green-600" : "text-red-600"}`}>
+                            {agregados[tamanho]}
+                          </span>
+                        </div>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Nenhum tamanho preenchido</p>
+                    );
+                  })()
                 ) : (
-                  /* Comportamento original */
+                  /* Comportamento original com agregação */
                   Object.keys((fechamento.pedidos.grade_tamanhos as Record<string, number>) || {})
                     .filter(tamanho => ((fechamento.pedidos.grade_tamanhos as Record<string, number>)[tamanho] || 0) > 0)
                     .map((tamanho) => {
-                      const item = itens.find(i => i.tamanho === tamanho);
-                      const atual = item?.unidades || 0;
+                      // Agregar todas as unidades deste tamanho
+                      const totalTamanho = itens
+                        .filter(i => i.tamanho === tamanho)
+                        .reduce((sum, i) => sum + i.unidades, 0);
                       const planejado = (fechamento.pedidos.grade_tamanhos as Record<string, number>)[tamanho];
                       return (
                         <div key={tamanho} className="flex justify-between text-sm mb-1">
                           <span>{tamanho}:</span>
                           <span className={`font-medium ${
-                            atual === 0 ? "text-muted-foreground" :
-                            atual > planejado ? "text-red-600" :
-                            atual < planejado ? "text-yellow-600" :
+                            totalTamanho === 0 ? "text-muted-foreground" :
+                            totalTamanho > planejado ? "text-red-600" :
+                            totalTamanho < planejado ? "text-yellow-600" :
                             "text-green-600"
                           }`}>
-                            {atual} / {planejado}
+                            {totalTamanho} / {planejado}
                           </span>
                         </div>
                       );
