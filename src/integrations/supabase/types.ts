@@ -271,44 +271,59 @@ export type Database = {
         Row: {
           atribuido_para: string | null
           created_at: string | null
+          data_emissao_nf: string | null
           fechado_em: string | null
           fechado_por: string | null
           foto_caderno_url: string | null
           id: string
+          link_arquivo_nf: string | null
           lote_of: string
+          numero_nf: string | null
           observacoes: string | null
           pedido_id: string
           referencia_id: string | null
           status: string
+          status_nf: string | null
           updated_at: string | null
+          valor_total_nf: number | null
         }
         Insert: {
           atribuido_para?: string | null
           created_at?: string | null
+          data_emissao_nf?: string | null
           fechado_em?: string | null
           fechado_por?: string | null
           foto_caderno_url?: string | null
           id?: string
+          link_arquivo_nf?: string | null
           lote_of: string
+          numero_nf?: string | null
           observacoes?: string | null
           pedido_id: string
           referencia_id?: string | null
           status?: string
+          status_nf?: string | null
           updated_at?: string | null
+          valor_total_nf?: number | null
         }
         Update: {
           atribuido_para?: string | null
           created_at?: string | null
+          data_emissao_nf?: string | null
           fechado_em?: string | null
           fechado_por?: string | null
           foto_caderno_url?: string | null
           id?: string
+          link_arquivo_nf?: string | null
           lote_of?: string
+          numero_nf?: string | null
           observacoes?: string | null
           pedido_id?: string
           referencia_id?: string | null
           status?: string
+          status_nf?: string | null
           updated_at?: string | null
+          valor_total_nf?: number | null
         }
         Relationships: [
           {
