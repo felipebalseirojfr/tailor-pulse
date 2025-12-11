@@ -70,10 +70,10 @@ export function EtapasSummaryCards({ pedidos, onEtapaClick, activeEtapa }: Etapa
         return (
           <Card
             key={etapa.key}
-            className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] ${
+            className={`cursor-pointer transition-all duration-200 ease-out hover:scale-[1.05] hover:shadow-lg ${
               isActive 
-                ? "ring-2 ring-primary shadow-lg" 
-                : "hover:shadow-md"
+                ? "ring-2 ring-primary shadow-lg scale-[1.02]" 
+                : ""
             } ${etapa.bgColor} border-transparent`}
             onClick={() => onEtapaClick(isActive ? null : etapa.key)}
           >
@@ -102,10 +102,10 @@ export function EtapasSummaryCards({ pedidos, onEtapaClick, activeEtapa }: Etapa
         return (
           <Card
             key={etapa.key}
-            className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] ${
+            className={`cursor-pointer transition-all duration-200 ease-out hover:scale-[1.05] hover:shadow-lg ${
               isActive 
-                ? "ring-2 ring-primary shadow-lg" 
-                : "hover:shadow-md"
+                ? "ring-2 ring-primary shadow-lg scale-[1.02]" 
+                : ""
             } ${etapa.bgColor} border-transparent`}
             onClick={() => onEtapaClick(isActive ? null : etapa.key)}
           >
@@ -128,10 +128,10 @@ export function EtapasSummaryCards({ pedidos, onEtapaClick, activeEtapa }: Etapa
 
       {/* Card "Todos" */}
       <Card
-        className={`cursor-pointer transition-all duration-200 hover:scale-[1.02] ${
+        className={`cursor-pointer transition-all duration-200 ease-out hover:scale-[1.05] hover:shadow-lg ${
           activeEtapa === null 
-            ? "ring-2 ring-primary shadow-lg" 
-            : "hover:shadow-md"
+            ? "ring-2 ring-primary shadow-lg scale-[1.02]" 
+            : ""
         } bg-muted/50 border-transparent`}
         onClick={() => onEtapaClick(null)}
       >

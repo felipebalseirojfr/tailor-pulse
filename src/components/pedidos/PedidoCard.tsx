@@ -123,7 +123,7 @@ export function PedidoCard({ pedido, onViewDetails, onAdvanceStage, isTV = false
 
   return (
     <Card 
-      className={`bg-card border-l-4 ${getBorderColor()} transition-all hover:shadow-xl hover:scale-[1.02] cursor-pointer animate-fade-in ${isTV ? 'rounded-xl' : 'rounded-xl'}`}
+      className={`bg-card border-l-4 ${getBorderColor()} transition-all duration-200 ease-out hover:shadow-xl hover:scale-[1.03] cursor-pointer animate-fade-in rounded-xl`}
       onClick={onViewDetails}
     >
       <CardHeader className={`${isTV ? 'pb-2 px-4 pt-4' : 'pb-4 px-5 pt-5'}`}>

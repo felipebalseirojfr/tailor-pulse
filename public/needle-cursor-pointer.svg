@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+  <!-- Agulha com ponta para baixo-esquerda - versão pointer -->
+  <path d="M20 4 L18 6 L6 18 L4 20 L5 19 L19 5 Z" fill="#a855f7" stroke="#581c87" stroke-width="1"/>
+  <!-- Furo da agulha -->
+  <ellipse cx="19" cy="5" rx="2" ry="1.5" fill="#0c1929" transform="rotate(-45 19 5)"/>
+  <!-- Brilho -->
+  <path d="M17 7 L7 17" stroke="#d8b4fe" stroke-width="0.5" opacity="0.6"/>
+  <!-- Glow effect -->
+  <circle cx="4" cy="20" r="2" fill="#a855f7" opacity="0.4"/>
+</svg>
