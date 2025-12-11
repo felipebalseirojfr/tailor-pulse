@@ -24,6 +24,7 @@ import {
 } from "@/components/ui/table";
 import { Plus, Search, Package as PackageIcon, ChevronRight, Filter, ChevronDown, AlertCircle, Maximize2, X } from "lucide-react";
 import { PedidosSummaryCards } from "@/components/pedidos/PedidosSummaryCards";
+import { EtapasSummaryCards } from "@/components/pedidos/EtapasSummaryCards";
 import { PedidoDetailsSheet } from "@/components/pedidos/PedidoDetailsSheet";
 import { EtapasVisuais } from "@/components/pedidos/EtapasVisuais";
 import { FiltroAvancado } from "@/components/pedidos/FiltroAvancado";
@@ -86,6 +87,7 @@ export default function Pedidos() {
   const [tvSearchTerm, setTvSearchTerm] = useState("");
   const [tvReferenciaFilter, setTvReferenciaFilter] = useState("");
   const [tvOpFilter, setTvOpFilter] = useState("");
+  const [tvEtapaFilter, setTvEtapaFilter] = useState<string | null>(null);
 
   const handlePedidoDeleted = (pedidoId: string) => {
     setPedidos(prev => prev.filter(p => p.id !== pedidoId));
@@ -720,13 +722,30 @@ export default function Pedidos() {
               );
 
               const totalBeforeFilter = filteredPedidos.filter((p) => p.status_geral !== "concluido").length;
-              const hasActiveFilters = tvSearchTerm || tvReferenciaFilter || tvOpFilter || tvStatusFilter !== "todos";
+              const hasActiveFilters = tvSearchTerm || tvReferenciaFilter || tvOpFilter || tvStatusFilter !== "todos" || tvEtapaFilter;
               
               // Obter referências únicas para o select
               const referenciasUnicas = Array.from(new Set(filteredPedidos.map((p) => p.tipo_peca).filter(Boolean)));
 
+              // Aplicar filtro por etapa de produção
+              if (tvEtapaFilter) {
+                tvFiltered = tvFiltered.filter((p) => {
+                  const etapaAtiva = p.etapas_producao?.find(
+                    (e) => e.status === "em_andamento"
+                  );
+                  return etapaAtiva?.tipo_etapa === tvEtapaFilter;
+                });
+              }
+
               return (
                 <>
+                  {/* Widgets de Etapas de Produção */}
+                  <EtapasSummaryCards
+                    pedidos={filteredPedidos.filter((p) => p.status_geral !== "concluido")}
+                    onEtapaClick={setTvEtapaFilter}
+                    activeEtapa={tvEtapaFilter}
+                  />
+
                   {/* Barra de Filtros do Modo TV */}
                   <Card className="mb-6 bg-card/80 backdrop-blur-sm border-muted">
                     <CardContent className="py-4">
@@ -795,6 +814,7 @@ export default function Pedidos() {
                               setTvReferenciaFilter("");
                               setTvOpFilter("");
                               setTvStatusFilter("todos");
+                              setTvEtapaFilter(null);
                             }}
                             className="h-10"
                           >
