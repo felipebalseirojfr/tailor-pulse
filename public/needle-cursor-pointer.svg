@@ -1,10 +1,10 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 40 40" fill="none">
   <!-- Agulha com ponta para baixo-esquerda - versão pointer -->
-  <path d="M20 4 L18 6 L6 18 L4 20 L5 19 L19 5 Z" fill="#a855f7" stroke="#581c87" stroke-width="1"/>
+  <path d="M33 7 L30 10 L10 30 L7 33 L8 32 L32 8 Z" fill="#a855f7" stroke="#581c87" stroke-width="1.5"/>
   <!-- Furo da agulha -->
-  <ellipse cx="19" cy="5" rx="2" ry="1.5" fill="#0c1929" transform="rotate(-45 19 5)"/>
+  <ellipse cx="32" cy="8" rx="3" ry="2.5" fill="#0c1929" transform="rotate(-45 32 8)"/>
   <!-- Brilho -->
-  <path d="M17 7 L7 17" stroke="#d8b4fe" stroke-width="0.5" opacity="0.6"/>
-  <!-- Glow effect -->
-  <circle cx="4" cy="20" r="2" fill="#a855f7" opacity="0.4"/>
+  <path d="M28 12 L12 28" stroke="#d8b4fe" stroke-width="0.8" opacity="0.6"/>
+  <!-- Glow effect na ponta -->
+  <circle cx="7" cy="33" r="3" fill="#a855f7" opacity="0.4"/>
 </svg>

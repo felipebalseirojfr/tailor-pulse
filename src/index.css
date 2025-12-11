@@ -117,13 +117,13 @@ All colors MUST be HSL.
 @layer base {
   * {
     @apply border-border;
-    cursor: url('/needle-cursor.svg') 4 20, auto;
+    cursor: url('/needle-cursor.svg') 7 33, auto;
   }
 
   /* Cursor pointer para elementos clicáveis */
   button, a, [role="button"], .cursor-pointer, 
   input[type="checkbox"], input[type="radio"], select, label {
-    cursor: url('/needle-cursor-pointer.svg') 4 20, pointer;
+    cursor: url('/needle-cursor-pointer.svg') 7 33, pointer;
   }
 
   body {
