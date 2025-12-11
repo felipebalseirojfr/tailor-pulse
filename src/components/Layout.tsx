@@ -12,6 +12,7 @@ import {
   X,
   UserCog,
   Shield,
+  FileCheck,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -107,6 +108,7 @@ export default function Layout({ children }: LayoutProps) {
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Pedidos", href: "/pedidos", icon: Package },
     { name: "Clientes", href: "/clientes", icon: Users, roles: ["admin", "commercial"] },
+    { name: "Fechamento", href: "/pcp/fechamentos", icon: FileCheck, roles: ["admin", "pcp_closer", "backoffice_fiscal"] },
     { name: "Calendário", href: "/calendario", icon: CalendarIcon },
     { name: "Usuários", href: "/usuarios", icon: UserCog, roles: ["admin"] },
   ];
