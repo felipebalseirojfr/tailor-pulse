@@ -57,7 +57,20 @@ export default function EditarPedido() {
     tipos_personalizacao: [] as string[],
     grade_tamanhos: {} as Record<string, number>,
     observacoes_pedido: "",
+    preco_venda: "",
+    composicao_tecido: "",
   });
+
+  const composicoesComuns = [
+    "100% Algodão",
+    "100% Poliéster",
+    "100% Viscose",
+    "60% Algodão / 40% Poliéster",
+    "50% Algodão / 50% Poliéster",
+    "65% Poliéster / 35% Algodão",
+    "67% Poliéster / 33% Viscose",
+    "95% Algodão / 5% Elastano",
+  ];
 
   const tamanhos = ["1", "2", "4", "6", "8", "10", "12", "14", "PP", "P", "M", "G", "GG", "XGG", "XGG1", "XGG2", "XGG3"];
 
@@ -106,6 +119,8 @@ export default function EditarPedido() {
         tipos_personalizacao: data.tipos_personalizacao || [],
         grade_tamanhos: (data.grade_tamanhos as Record<string, number>) || {},
         observacoes_pedido: data.observacoes_pedido || "",
+        preco_venda: data.preco_venda?.toString() || "",
+        composicao_tecido: data.composicao_tecido || "",
       });
 
       // Carregar arquivos existentes
@@ -261,6 +276,8 @@ export default function EditarPedido() {
           grade_tamanhos: formData.grade_tamanhos,
           arquivos: arquivosFinais,
           observacoes_pedido: formData.observacoes_pedido,
+          preco_venda: formData.preco_venda ? parseFloat(formData.preco_venda) : null,
+          composicao_tecido: formData.composicao_tecido || null,
           updated_at: new Date().toISOString(),
         })
         .eq("id", id);
@@ -461,6 +478,44 @@ export default function EditarPedido() {
                       setFormData({ ...formData, tecido: e.target.value })
                     }
                   />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="preco_venda">Preço de Venda (R$)</Label>
+                  <Input
+                    id="preco_venda"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.preco_venda}
+                    onChange={(e) =>
+                      setFormData({ ...formData, preco_venda: e.target.value })
+                    }
+                    placeholder="Ex: 59.90"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="composicao_tecido">Composição do Tecido (NCM)</Label>
+                  <Select
+                    value={formData.composicao_tecido}
+                    onValueChange={(value) =>
+                      setFormData({ ...formData, composicao_tecido: value })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione a composição" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {composicoesComuns.map((comp) => (
+                        <SelectItem key={comp} value={comp}>
+                          {comp}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
 
