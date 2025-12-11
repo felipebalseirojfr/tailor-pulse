@@ -301,10 +301,10 @@ const DetalhesFechamento = () => {
     switch (currentPhase) {
       case "fechamento":
         return { 
-          color: "text-red-600", 
-          bgColor: "bg-red-100 border-red-300", 
+          color: "text-primary", 
+          bgColor: "bg-muted border-border", 
           label: "FECHAMENTO",
-          icon: "🔴",
+          icon: "📋",
           description: "Conferência de quantidades produzidas"
         };
       case "emissao_nf":
