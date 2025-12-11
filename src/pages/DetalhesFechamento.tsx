@@ -22,6 +22,8 @@ interface FechamentoItem {
   caixas: number;
   unidades: number;
   total_calculado: number;
+  created_at?: string | null;
+  updated_at?: string | null;
 }
 
 interface Fechamento {
@@ -152,15 +154,29 @@ const DetalhesFechamento = () => {
     return tamanhos.every(t => (grade[t] || 0) === 0);
   };
 
-  // Agregar itens duplicados por tamanho
+  // Pegar apenas o registro mais recente de cada tamanho (não somar duplicados)
   const getItensAgregados = (): Record<string, number> => {
     const agregado: Record<string, number> = {};
-    itens.forEach(item => {
-      if (item.unidades > 0) {
-        agregado[item.tamanho] = (agregado[item.tamanho] || 0) + item.unidades;
+    
+    // Ordenar por updated_at DESC para pegar o mais recente primeiro
+    const itensOrdenados = [...itens].sort((a, b) => 
+      new Date(b.updated_at || b.created_at || '').getTime() - 
+      new Date(a.updated_at || a.created_at || '').getTime()
+    );
+    
+    itensOrdenados.forEach(item => {
+      // Se ainda não tem esse tamanho, usar este valor (o mais recente)
+      if (agregado[item.tamanho] === undefined && item.unidades > 0) {
+        agregado[item.tamanho] = item.unidades;
       }
     });
     return agregado;
+  };
+
+  // Obter total usando apenas o registro mais recente de cada tamanho
+  const getTotalUnico = () => {
+    const agregados = getItensAgregados();
+    return Object.values(agregados).reduce((sum, qty) => sum + qty, 0);
   };
 
   const handleItemChange = async (tamanho: string, value: string) => {
@@ -249,7 +265,7 @@ const DetalhesFechamento = () => {
     }
     return itens.reduce((sum, item) => sum + item.saldo_a_fechar, 0);
   };
-  const getTotalFechado = () => itens.reduce((sum, item) => sum + item.unidades, 0);
+  const getTotalFechado = () => getTotalUnico();
 
   const getPercentageDiff = () => {
     const planejado = getTotalPlanejado();
@@ -510,7 +526,7 @@ const DetalhesFechamento = () => {
     }
   };
 
-  const getTotalGeral = () => itens.reduce((sum, item) => sum + item.unidades, 0);
+  const getTotalGeral = () => getTotalUnico();
 
   const calcularPrecoTotal = () => {
     if (!fechamento?.pedidos.preco_venda) return null;
@@ -978,29 +994,29 @@ const DetalhesFechamento = () => {
                     );
                   })()
                 ) : (
-                  /* Comportamento original com agregação */
-                  Object.keys((fechamento.pedidos.grade_tamanhos as Record<string, number>) || {})
-                    .filter(tamanho => ((fechamento.pedidos.grade_tamanhos as Record<string, number>)[tamanho] || 0) > 0)
-                    .map((tamanho) => {
-                      // Agregar todas as unidades deste tamanho
-                      const totalTamanho = itens
-                        .filter(i => i.tamanho === tamanho)
-                        .reduce((sum, i) => sum + i.unidades, 0);
-                      const planejado = (fechamento.pedidos.grade_tamanhos as Record<string, number>)[tamanho];
-                      return (
-                        <div key={tamanho} className="flex justify-between text-sm mb-1">
-                          <span>{tamanho}:</span>
-                          <span className={`font-medium ${
-                            totalTamanho === 0 ? "text-muted-foreground" :
-                            totalTamanho > planejado ? "text-red-600" :
-                            totalTamanho < planejado ? "text-yellow-600" :
-                            "text-green-600"
-                          }`}>
-                            {totalTamanho} / {planejado}
-                          </span>
-                        </div>
-                      );
-                    })
+                  /* Comportamento original - usando apenas registro mais recente de cada tamanho */
+                  (() => {
+                    const agregados = getItensAgregados();
+                    return Object.keys((fechamento.pedidos.grade_tamanhos as Record<string, number>) || {})
+                      .filter(tamanho => ((fechamento.pedidos.grade_tamanhos as Record<string, number>)[tamanho] || 0) > 0)
+                      .map((tamanho) => {
+                        const totalTamanho = agregados[tamanho] || 0;
+                        const planejado = (fechamento.pedidos.grade_tamanhos as Record<string, number>)[tamanho];
+                        return (
+                          <div key={tamanho} className="flex justify-between text-sm mb-1">
+                            <span>{tamanho}:</span>
+                            <span className={`font-medium ${
+                              totalTamanho === 0 ? "text-muted-foreground" :
+                              totalTamanho > planejado ? "text-red-600" :
+                              totalTamanho < planejado ? "text-yellow-600" :
+                              "text-green-600"
+                            }`}>
+                              {totalTamanho} / {planejado}
+                            </span>
+                          </div>
+                        );
+                      });
+                  })()
                 )}
               </div>
 
