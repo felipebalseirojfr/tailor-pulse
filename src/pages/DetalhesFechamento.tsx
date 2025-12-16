@@ -65,6 +65,7 @@ const DetalhesFechamento = () => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
+  const [uploadingXml, setUploadingXml] = useState(false);
   const [observacoes, setObservacoes] = useState("");
   
   // Campos de NF
@@ -899,27 +900,89 @@ const DetalhesFechamento = () => {
                     />
                   </div>
                   <div>
-                    <Label htmlFor="link_arquivo_nf" className="flex items-center gap-1">
-                      Link do Arquivo XML
+                    <Label htmlFor="arquivo_xml_nf" className="flex items-center gap-1">
+                      Arquivo XML da NF
                       {currentPhase === "emissao_nf" && <span className="text-red-500">*</span>}
                     </Label>
-                    <div className="flex gap-2 mt-1">
-                      <Input
-                        id="link_arquivo_nf"
-                        value={linkArquivoNf}
-                        onChange={(e) => setLinkArquivoNf(e.target.value)}
-                        disabled={currentPhase === "entrega" || isReadOnly}
-                        placeholder="https://..."
-                        className={`${currentPhase === "emissao_nf" && !linkArquivoNf ? "border-red-300" : ""}`}
-                      />
-                      {linkArquivoNf && (
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => window.open(linkArquivoNf, "_blank")}
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                        </Button>
+                    <div className="space-y-2 mt-1">
+                      {!linkArquivoNf ? (
+                        <div className="flex items-center gap-2">
+                          <Input
+                            id="arquivo_xml_nf"
+                            type="file"
+                            accept=".xml"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (!file) return;
+
+                              if (!file.name.toLowerCase().endsWith('.xml')) {
+                                toast.error("Por favor, selecione um arquivo XML");
+                                return;
+                              }
+
+                              if (file.size > 5 * 1024 * 1024) {
+                                toast.error("Arquivo muito grande. Máximo 5MB.");
+                                return;
+                              }
+
+                              setUploadingXml(true);
+                              try {
+                                const fileName = `${id}-nf-${Date.now()}.xml`;
+                                const filePath = `fechamentos/xml/${fileName}`;
+
+                                const { error: uploadError } = await supabase.storage
+                                  .from("pedidos-arquivos")
+                                  .upload(filePath, file);
+
+                                if (uploadError) throw uploadError;
+
+                                const { data: urlData } = supabase.storage
+                                  .from("pedidos-arquivos")
+                                  .getPublicUrl(filePath);
+
+                                setLinkArquivoNf(urlData.publicUrl);
+                                
+                                await supabase
+                                  .from("fechamentos")
+                                  .update({ link_arquivo_nf: urlData.publicUrl })
+                                  .eq("id", id);
+
+                                toast.success("Arquivo XML anexado com sucesso!");
+                              } catch (error) {
+                                console.error("Erro ao fazer upload:", error);
+                                toast.error("Erro ao anexar arquivo XML");
+                              } finally {
+                                setUploadingXml(false);
+                              }
+                            }}
+                            disabled={currentPhase === "entrega" || isReadOnly || uploadingXml}
+                            className={`flex-1 ${currentPhase === "emissao_nf" && !linkArquivoNf ? "border-red-300" : ""}`}
+                          />
+                          {uploadingXml && <Loader2 className="h-4 w-4 animate-spin" />}
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 dark:bg-green-950/30 p-3 rounded-md border border-green-200 dark:border-green-800">
+                          <FileCheck className="h-4 w-4 flex-shrink-0" />
+                          <span className="flex-1">Arquivo XML anexado</span>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => window.open(linkArquivoNf, "_blank")}
+                          >
+                            <ExternalLink className="h-3 w-3 mr-1" />
+                            Baixar
+                          </Button>
+                          {currentPhase !== "entrega" && !isReadOnly && (
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setLinkArquivoNf("")}
+                              className="text-muted-foreground hover:text-destructive"
+                            >
+                              Remover
+                            </Button>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
