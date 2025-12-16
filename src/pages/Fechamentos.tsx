@@ -208,7 +208,9 @@ const Fechamentos = () => {
 
       const { error: uploadError } = await supabase.storage
         .from("pedidos-arquivos")
-        .upload(filePath, file);
+        .upload(filePath, file, {
+          contentType: 'application/xml'
+        });
 
       if (uploadError) throw uploadError;
 
