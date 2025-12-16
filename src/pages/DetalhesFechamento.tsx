@@ -346,10 +346,22 @@ const DetalhesFechamento = () => {
       return { type: "divergent", message: `❌ Divergência: contado ${totalFechado} / esperado ${totalEsperado}` };
     }
     
-    // Comportamento original para grade preenchida
+    // Comportamento para grade preenchida - usar itens agregados (ignora duplicados)
+    const agregados = getItensAgregados();
+    const grade = fechamento?.pedidos.grade_tamanhos as Record<string, number> | null;
+    
+    if (grade) {
+      // Verificar se todos os tamanhos da grade têm valor preenchido
+      const tamanhosGrade = Object.keys(grade).filter(t => grade[t] > 0);
+      const tamanhosNaoPreenchidos = tamanhosGrade.filter(t => !agregados[t] || agregados[t] === 0);
+      
+      if (tamanhosNaoPreenchidos.length > 0) {
+        return { type: "empty", message: `Preencha os tamanhos: ${tamanhosNaoPreenchidos.join(", ")}` };
+      }
+    }
+    
+    // Calcular percentual usando totais
     const percentage = parseFloat(getPercentageDiff());
-    const hasEmpty = itens.some(item => item.unidades === 0);
-    if (hasEmpty) return { type: "empty", message: "Preencha todos os tamanhos" };
     if (percentage > 110) return { type: "exceed", message: "⚠️ Quantidade acima do planejado" };
     if (percentage < 90) return { type: "loss", message: "⚠️ Possível perda na produção" };
     return { type: "valid", message: "✅ Quantidades dentro do esperado" };
