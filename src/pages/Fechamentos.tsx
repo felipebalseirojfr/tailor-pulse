@@ -6,7 +6,16 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, FileText, Loader2, Receipt, CheckCircle2, ClipboardCheck, FileCheck, Truck } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Search, FileText, Loader2, Receipt, CheckCircle2, ClipboardCheck, FileCheck, Truck, X, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -47,9 +56,26 @@ const Fechamentos = () => {
   const [searchCliente, setSearchCliente] = useState("");
   const [searchLote, setSearchLote] = useState("");
 
+  // Estados para seleção múltipla
+  const [selectedFechamentos, setSelectedFechamentos] = useState<string[]>([]);
+  const [showNfModal, setShowNfModal] = useState(false);
+  
+  // Estados do formulário de NF em lote
+  const [nfNumero, setNfNumero] = useState("");
+  const [nfData, setNfData] = useState("");
+  const [nfValor, setNfValor] = useState("");
+  const [nfXmlUrl, setNfXmlUrl] = useState("");
+  const [uploadingXml, setUploadingXml] = useState(false);
+  const [emitindoNf, setEmitindoNf] = useState(false);
+
   useEffect(() => {
     fetchFechamentos();
   }, []);
+
+  // Limpar seleção ao mudar de aba
+  useEffect(() => {
+    setSelectedFechamentos([]);
+  }, [activeTab]);
 
   const fetchFechamentos = async () => {
     try {
@@ -74,15 +100,12 @@ const Fechamentos = () => {
 
   // Determinar qual aba o fechamento pertence
   const getTabForFechamento = (f: Fechamento): TabType => {
-    // Aba ENTREGA: NF já emitida
     if (f.status_nf === "emitida") {
       return "entrega";
     }
-    // Aba EMISSÃO DE NF: status em_conferencia ou fechado com NF pendente
     if (f.status === "em_conferencia" || f.status === "fechado") {
       return "emissao_nf";
     }
-    // Aba FECHAMENTO: status em_aberto
     return "fechamento";
   };
 
@@ -111,7 +134,6 @@ const Fechamentos = () => {
   });
 
   const getStatusConfig = (status: string, statusNf: string | null) => {
-    // Para aba ENTREGA
     if (statusNf === "emitida") {
       return { 
         color: "text-blue-600", 
@@ -120,7 +142,6 @@ const Fechamentos = () => {
         icon: "📦"
       };
     }
-    // Para aba EMISSÃO DE NF
     if (status === "em_conferencia" || status === "fechado") {
       return { 
         color: "text-yellow-600", 
@@ -129,13 +150,132 @@ const Fechamentos = () => {
         icon: "📄"
       };
     }
-    // Para aba FECHAMENTO
     return { 
       color: "text-red-600", 
       bgColor: "bg-red-100 border-red-300", 
       label: "Aguardando Conferência",
       icon: "🔴"
     };
+  };
+
+  // Funções de seleção múltipla
+  const toggleSelection = (id: string) => {
+    setSelectedFechamentos(prev => 
+      prev.includes(id) 
+        ? prev.filter(fId => fId !== id) 
+        : [...prev, id]
+    );
+  };
+
+  const clearSelection = () => {
+    setSelectedFechamentos([]);
+  };
+
+  const getSelectedFechamentosData = () => {
+    return fechamentos.filter(f => selectedFechamentos.includes(f.id));
+  };
+
+  const getTotalPecas = () => {
+    return getSelectedFechamentosData().reduce((sum, f) => sum + f.pedidos.quantidade_total, 0);
+  };
+
+  const getValorTotalEstimado = () => {
+    return getSelectedFechamentosData().reduce((sum, f) => {
+      const preco = f.pedidos.preco_venda || 0;
+      return sum + (preco * f.pedidos.quantidade_total);
+    }, 0);
+  };
+
+  // Upload do XML
+  const handleXmlUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.name.endsWith('.xml')) {
+      toast.error("Por favor, selecione um arquivo XML");
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Arquivo muito grande. Máximo 5MB.");
+      return;
+    }
+
+    setUploadingXml(true);
+    try {
+      const fileName = `nf-lote-${Date.now()}.xml`;
+      const filePath = `fechamentos/xml/${fileName}`;
+
+      const { error: uploadError } = await supabase.storage
+        .from("pedidos-arquivos")
+        .upload(filePath, file);
+
+      if (uploadError) throw uploadError;
+
+      const { data: urlData } = supabase.storage
+        .from("pedidos-arquivos")
+        .getPublicUrl(filePath);
+
+      setNfXmlUrl(urlData.publicUrl);
+      toast.success("Arquivo XML anexado!");
+    } catch (error) {
+      console.error("Erro ao fazer upload:", error);
+      toast.error("Erro ao anexar arquivo XML");
+    } finally {
+      setUploadingXml(false);
+    }
+  };
+
+  // Emitir NF em lote
+  const handleEmitirNfLote = async () => {
+    if (!nfNumero || !nfData || !nfValor || !nfXmlUrl) {
+      toast.error("Preencha todos os campos obrigatórios");
+      return;
+    }
+
+    setEmitindoNf(true);
+    try {
+      // Atualizar todos os fechamentos selecionados
+      const { error } = await supabase
+        .from("fechamentos")
+        .update({
+          status: "fechado",
+          status_nf: "emitida",
+          numero_nf: nfNumero,
+          data_emissao_nf: nfData,
+          valor_total_nf: parseFloat(nfValor),
+          link_arquivo_nf: nfXmlUrl,
+          updated_at: new Date().toISOString()
+        })
+        .in("id", selectedFechamentos);
+
+      if (error) throw error;
+
+      toast.success(`NF ${nfNumero} emitida para ${selectedFechamentos.length} referência(s)!`);
+      
+      // Limpar estados
+      setShowNfModal(false);
+      setSelectedFechamentos([]);
+      setNfNumero("");
+      setNfData("");
+      setNfValor("");
+      setNfXmlUrl("");
+      
+      // Recarregar dados
+      await fetchFechamentos();
+    } catch (error) {
+      console.error("Erro ao emitir NF em lote:", error);
+      toast.error("Erro ao emitir NF");
+    } finally {
+      setEmitindoNf(false);
+    }
+  };
+
+  const openNfModal = () => {
+    // Pré-preencher valor estimado
+    setNfValor(getValorTotalEstimado().toFixed(2));
+    setNfData(format(new Date(), "yyyy-MM-dd"));
+    setShowNfModal(true);
   };
 
   if (loading) {
@@ -203,7 +343,7 @@ const Fechamentos = () => {
           )}
           {activeTab === "emissao_nf" && (
             <p className="text-sm text-muted-foreground">
-              <strong>Emissão de Nota Fiscal:</strong> Preencha os dados da NF (número, data, valor e link do XML) e clique em "EMITIDO" para finalizar.
+              <strong>Emissão de Nota Fiscal:</strong> Selecione uma ou mais referências para emitir uma única NF. Use os checkboxes para seleção múltipla.
             </p>
           )}
           {activeTab === "entrega" && (
@@ -267,18 +407,32 @@ const Fechamentos = () => {
               {filteredFechamentos.map((fechamento) => {
                 const statusConfig = getStatusConfig(fechamento.status, fechamento.status_nf);
                 const isFaturado = fechamento.pedidos.status_geral === "faturado";
+                const isSelected = selectedFechamentos.includes(fechamento.id);
                 
                 return (
                   <Card
                     key={fechamento.id}
-                    className="cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-[1.02] border border-border bg-card"
-                    onClick={() => navigate(`/pcp/fechamentos/${fechamento.id}`)}
+                    className={`cursor-pointer hover:shadow-lg transition-all duration-300 hover:scale-[1.02] border bg-card ${
+                      isSelected ? "border-primary ring-2 ring-primary/30" : "border-border"
+                    }`}
                   >
                     <CardHeader>
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex items-start gap-2 flex-1">
+                          {/* Checkbox para seleção múltipla na aba emissao_nf */}
+                          {activeTab === "emissao_nf" && (
+                            <Checkbox
+                              checked={isSelected}
+                              onCheckedChange={() => toggleSelection(fechamento.id)}
+                              onClick={(e) => e.stopPropagation()}
+                              className="mt-1"
+                            />
+                          )}
                           <span className="text-2xl mt-0.5">{statusConfig.icon}</span>
-                          <div className="flex-1">
+                          <div 
+                            className="flex-1"
+                            onClick={() => navigate(`/pcp/fechamentos/${fechamento.id}`)}
+                          >
                             <CardTitle className="text-base mb-1 flex items-center gap-2">
                               {fechamento.pedidos.produto_modelo}
                               {isFaturado && (
@@ -301,7 +455,7 @@ const Fechamentos = () => {
                         </Badge>
                       </div>
                     </CardHeader>
-                    <CardContent>
+                    <CardContent onClick={() => navigate(`/pcp/fechamentos/${fechamento.id}`)}>
                       <div className="space-y-2 text-sm">
                         <div className="bg-background/50 rounded-lg p-3 space-y-2 mb-3">
                           <div className="flex justify-between items-center">
@@ -350,6 +504,161 @@ const Fechamentos = () => {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Barra de ações flutuante para seleção múltipla */}
+      {selectedFechamentos.length > 0 && activeTab === "emissao_nf" && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50">
+          <Card className="shadow-xl border-2 border-primary bg-card">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-4 flex-wrap justify-center">
+                <div className="flex items-center gap-2">
+                  <Badge className="bg-primary text-primary-foreground px-3 py-1">
+                    {selectedFechamentos.length} selecionado(s)
+                  </Badge>
+                  <span className="text-sm text-muted-foreground">
+                    {getTotalPecas()} peças
+                  </span>
+                  <span className="text-sm font-medium">
+                    {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(getValorTotalEstimado())}
+                  </span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={clearSelection}
+                  >
+                    <X className="h-4 w-4 mr-1" />
+                    Limpar
+                  </Button>
+                  <Button
+                    size="sm"
+                    onClick={openNfModal}
+                  >
+                    <Receipt className="h-4 w-4 mr-1" />
+                    Emitir NF em Lote
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Modal de Emissão de NF em Lote */}
+      <Dialog open={showNfModal} onOpenChange={setShowNfModal}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Receipt className="h-5 w-5" />
+              Emitir NF para {selectedFechamentos.length} Referência(s)
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            {/* Resumo das referências */}
+            <div className="bg-muted/50 rounded-md p-3 max-h-40 overflow-y-auto">
+              <p className="text-sm font-medium mb-2">Referências selecionadas:</p>
+              <div className="space-y-1">
+                {getSelectedFechamentosData().map((f) => (
+                  <div key={f.id} className="text-sm flex justify-between">
+                    <span>{f.pedidos.produto_modelo} - {f.pedidos.clientes.nome}</span>
+                    <span className="text-muted-foreground">{f.pedidos.quantidade_total} un</span>
+                  </div>
+                ))}
+              </div>
+              <div className="border-t mt-2 pt-2 flex justify-between font-medium">
+                <span>Total:</span>
+                <span>{getTotalPecas()} peças</span>
+              </div>
+            </div>
+
+            {/* Formulário da NF */}
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="nf_numero">
+                    Número da NF <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="nf_numero"
+                    value={nfNumero}
+                    onChange={(e) => setNfNumero(e.target.value)}
+                    placeholder="000000"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="nf_data">
+                    Data de Emissão <span className="text-destructive">*</span>
+                  </Label>
+                  <Input
+                    id="nf_data"
+                    type="date"
+                    value={nfData}
+                    onChange={(e) => setNfData(e.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="nf_valor">
+                  Valor Total da NF (R$) <span className="text-destructive">*</span>
+                </Label>
+                <Input
+                  id="nf_valor"
+                  type="number"
+                  step="0.01"
+                  value={nfValor}
+                  onChange={(e) => setNfValor(e.target.value)}
+                  placeholder="0,00"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="nf_xml">
+                  Arquivo XML da NF <span className="text-destructive">*</span>
+                </Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="nf_xml"
+                    type="file"
+                    accept=".xml"
+                    onChange={handleXmlUpload}
+                    disabled={uploadingXml}
+                    className="flex-1"
+                  />
+                  {uploadingXml && <Loader2 className="h-4 w-4 animate-spin" />}
+                </div>
+                {nfXmlUrl && (
+                  <div className="flex items-center gap-2 text-sm text-green-600 bg-green-50 p-2 rounded-md">
+                    <FileCheck className="h-4 w-4" />
+                    <span>Arquivo XML anexado</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowNfModal(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleEmitirNfLote} disabled={emitindoNf}>
+              {emitindoNf ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Emitindo...
+                </>
+              ) : (
+                <>
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  Emitir NF
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
