@@ -15,7 +15,8 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { Search, FileText, Loader2, Receipt, CheckCircle2, ClipboardCheck, FileCheck, Truck, X, Upload } from "lucide-react";
+import { Search, FileText, Loader2, Receipt, CheckCircle2, ClipboardCheck, FileCheck, Truck, X, Upload, Download, Package, Eye } from "lucide-react";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -27,6 +28,9 @@ interface Fechamento {
   status: string;
   status_nf: string | null;
   numero_nf: string | null;
+  data_emissao_nf: string | null;
+  valor_total_nf: number | null;
+  link_arquivo_nf: string | null;
   updated_at: string;
   pedidos: {
     codigo_pedido: string;
@@ -67,6 +71,13 @@ const Fechamentos = () => {
   const [nfXmlUrl, setNfXmlUrl] = useState("");
   const [uploadingXml, setUploadingXml] = useState(false);
   const [emitindoNf, setEmitindoNf] = useState(false);
+
+  // Estados para modal de Entrega
+  const [showEntregaModal, setShowEntregaModal] = useState(false);
+  const [selectedEntrega, setSelectedEntrega] = useState<Fechamento | null>(null);
+  const [entregaRelacionados, setEntregaRelacionados] = useState<Fechamento[]>([]);
+  const [entregaItens, setEntregaItens] = useState<any[]>([]);
+  const [loadingEntrega, setLoadingEntrega] = useState(false);
 
   useEffect(() => {
     fetchFechamentos();
@@ -280,6 +291,78 @@ const Fechamentos = () => {
     setShowNfModal(true);
   };
 
+  // Função para abrir modal de entrega
+  const handleOpenEntregaModal = async (fechamento: Fechamento) => {
+    setSelectedEntrega(fechamento);
+    setShowEntregaModal(true);
+    setLoadingEntrega(true);
+
+    try {
+      // Buscar todos fechamentos com o mesmo numero_nf
+      const { data: relFechamentos, error: relError } = await supabase
+        .from("fechamentos")
+        .select(`
+          *,
+          pedidos!inner(codigo_pedido, produto_modelo, quantidade_total, grade_tamanhos, status_geral, preco_venda, composicao_tecido, clientes!inner(nome)),
+          referencias(codigo_referencia)
+        `)
+        .eq("numero_nf", fechamento.numero_nf);
+
+      if (relError) throw relError;
+
+      setEntregaRelacionados(relFechamentos || []);
+
+      // Buscar itens de cada fechamento
+      const fechamentoIds = relFechamentos?.map(f => f.id) || [];
+      if (fechamentoIds.length > 0) {
+        const { data: itens, error: itensError } = await supabase
+          .from("fechamento_itens")
+          .select("*")
+          .in("fechamento_id", fechamentoIds);
+
+        if (itensError) throw itensError;
+        setEntregaItens(itens || []);
+      } else {
+        setEntregaItens([]);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar dados da entrega:", error);
+      toast.error("Erro ao carregar dados da entrega");
+    } finally {
+      setLoadingEntrega(false);
+    }
+  };
+
+  // Calcular totais da entrega
+  const getTotalEntregaPecas = () => {
+    return entregaRelacionados.reduce((sum, f) => sum + f.pedidos.quantidade_total, 0);
+  };
+
+  const getTotalEntregaValor = () => {
+    return entregaRelacionados.reduce((sum, f) => {
+      const preco = f.pedidos.preco_venda || 0;
+      return sum + (preco * f.pedidos.quantidade_total);
+    }, 0);
+  };
+
+  // Renderizar grade de tamanhos
+  const renderGradeTamanhos = (grade: any) => {
+    if (!grade || typeof grade !== 'object') return null;
+    
+    const sizes = Object.entries(grade).filter(([_, qty]) => Number(qty) > 0);
+    if (sizes.length === 0) return null;
+
+    return (
+      <div className="flex flex-wrap gap-1 mt-2">
+        {sizes.map(([size, qty]) => (
+          <div key={size} className="text-xs bg-muted px-2 py-1 rounded">
+            <span className="font-medium">{size}:</span> {String(qty)}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -457,7 +540,13 @@ const Fechamentos = () => {
                         </Badge>
                       </div>
                     </CardHeader>
-                    <CardContent onClick={() => navigate(`/pcp/fechamentos/${fechamento.id}`)}>
+                    <CardContent onClick={() => {
+                      if (activeTab === "entrega") {
+                        handleOpenEntregaModal(fechamento);
+                      } else {
+                        navigate(`/pcp/fechamentos/${fechamento.id}`);
+                      }
+                    }}>
                       <div className="space-y-2 text-sm">
                         <div className="bg-background/50 rounded-lg p-3 space-y-2 mb-3">
                           <div className="flex justify-between items-center">
@@ -661,6 +750,176 @@ const Fechamentos = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Modal de Resumo da Entrega */}
+      <Sheet open={showEntregaModal} onOpenChange={setShowEntregaModal}>
+        <SheetContent className="sm:max-w-xl overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <Package className="h-5 w-5" />
+              Resumo da Entrega - NF {selectedEntrega?.numero_nf}
+            </SheetTitle>
+          </SheetHeader>
+
+          {loadingEntrega ? (
+            <div className="flex items-center justify-center py-12">
+              <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            </div>
+          ) : (
+            <div className="mt-6 space-y-6">
+              {/* Informações da NF */}
+              <div className="bg-blue-50 dark:bg-blue-950/30 rounded-lg p-4 space-y-2">
+                <div className="flex items-center gap-2 text-blue-700 dark:text-blue-400 font-medium mb-3">
+                  <Receipt className="h-4 w-4" />
+                  Dados da Nota Fiscal
+                </div>
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <span className="text-muted-foreground">Cliente:</span>
+                    <p className="font-medium">{selectedEntrega?.pedidos.clientes.nome}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Número NF:</span>
+                    <p className="font-medium">{selectedEntrega?.numero_nf}</p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Data Emissão:</span>
+                    <p className="font-medium">
+                      {selectedEntrega?.data_emissao_nf 
+                        ? format(new Date(selectedEntrega.data_emissao_nf), "dd/MM/yyyy")
+                        : "-"}
+                    </p>
+                  </div>
+                  <div>
+                    <span className="text-muted-foreground">Valor Total:</span>
+                    <p className="font-medium text-green-600">
+                      {selectedEntrega?.valor_total_nf 
+                        ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(selectedEntrega.valor_total_nf)
+                        : "-"}
+                    </p>
+                  </div>
+                </div>
+                {selectedEntrega?.link_arquivo_nf && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="mt-3 w-full"
+                    onClick={() => window.open(selectedEntrega.link_arquivo_nf!, "_blank")}
+                  >
+                    <Download className="h-4 w-4 mr-2" />
+                    Baixar XML da NF
+                  </Button>
+                )}
+              </div>
+
+              {/* Referências incluídas na NF */}
+              <div>
+                <h3 className="font-medium mb-3 flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Referências Incluídas ({entregaRelacionados.length})
+                </h3>
+                <div className="space-y-3">
+                  {entregaRelacionados.map((f, index) => (
+                    <Card key={f.id} className="border">
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <p className="font-medium">{index + 1}. {f.pedidos.produto_modelo}</p>
+                            <p className="text-sm text-muted-foreground">{f.pedidos.codigo_pedido}</p>
+                            {f.referencias && (
+                              <p className="text-xs text-muted-foreground">Ref: {f.referencias.codigo_referencia}</p>
+                            )}
+                          </div>
+                          <Badge variant="secondary" className="ml-2">
+                            {f.pedidos.quantidade_total} pçs
+                          </Badge>
+                        </div>
+                        
+                        {/* Grade de tamanhos */}
+                        {f.pedidos.grade_tamanhos && (
+                          <div className="mt-3">
+                            <p className="text-xs text-muted-foreground mb-1">Tamanhos:</p>
+                            {renderGradeTamanhos(f.pedidos.grade_tamanhos)}
+                          </div>
+                        )}
+
+                        {/* Preço unitário e subtotal */}
+                        {f.pedidos.preco_venda && (
+                          <div className="mt-3 pt-2 border-t text-sm flex justify-between">
+                            <span className="text-muted-foreground">
+                              {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(f.pedidos.preco_venda)} × {f.pedidos.quantidade_total}
+                            </span>
+                            <span className="font-medium text-green-600">
+                              {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(f.pedidos.preco_venda * f.pedidos.quantidade_total)}
+                            </span>
+                          </div>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </div>
+
+              {/* Totais */}
+              <Card className="bg-muted/50">
+                <CardContent className="p-4">
+                  <div className="flex justify-between items-center text-lg font-semibold">
+                    <span>Total Geral:</span>
+                    <div className="text-right">
+                      <p>{getTotalEntregaPecas()} peças</p>
+                      {getTotalEntregaValor() > 0 && (
+                        <p className="text-green-600">
+                          {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(getTotalEntregaValor())}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Ações */}
+              <div className="flex gap-2 pt-4">
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => {
+                    setShowEntregaModal(false);
+                    navigate(`/pcp/fechamentos/${selectedEntrega?.id}`);
+                  }}
+                >
+                  <Eye className="h-4 w-4 mr-2" />
+                  Ver Detalhes
+                </Button>
+                <Button 
+                  className="flex-1"
+                  onClick={async () => {
+                    try {
+                      // Marcar todos os relacionados como faturado
+                      const ids = entregaRelacionados.map(f => f.pedido_id);
+                      const { error } = await supabase
+                        .from("pedidos")
+                        .update({ status_geral: "faturado" })
+                        .in("id", ids);
+
+                      if (error) throw error;
+
+                      toast.success("Pedidos marcados como faturados!");
+                      setShowEntregaModal(false);
+                      fetchFechamentos();
+                    } catch (error) {
+                      console.error("Erro ao faturar:", error);
+                      toast.error("Erro ao marcar como faturado");
+                    }
+                  }}
+                >
+                  <CheckCircle2 className="h-4 w-4 mr-2" />
+                  Marcar como Faturado
+                </Button>
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 };
