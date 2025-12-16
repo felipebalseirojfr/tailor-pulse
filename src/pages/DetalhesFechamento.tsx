@@ -68,6 +68,7 @@ const DetalhesFechamento = () => {
   const [itens, setItens] = useState<FechamentoItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [autoSaving, setAutoSaving] = useState(false);
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [uploadingXml, setUploadingXml] = useState(false);
   const [observacoes, setObservacoes] = useState("");
@@ -399,7 +400,13 @@ const DetalhesFechamento = () => {
   const phaseConfig = getPhaseConfig();
 
   const handleSaveRascunho = async (isAutoSave = false) => {
-    setSaving(true);
+    // Auto-save usa estado separado para não bloquear botões de ação
+    if (isAutoSave) {
+      setAutoSaving(true);
+    } else {
+      setSaving(true);
+    }
+    
     try {
       const { error: fechError } = await supabase
         .from("fechamentos")
@@ -432,7 +439,11 @@ const DetalhesFechamento = () => {
         toast.error("Erro ao salvar dados");
       }
     } finally {
-      setSaving(false);
+      if (isAutoSave) {
+        setAutoSaving(false);
+      } else {
+        setSaving(false);
+      }
     }
   };
 
