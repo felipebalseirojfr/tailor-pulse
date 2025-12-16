@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -27,6 +27,7 @@ import {
   Image as ImageIcon,
   Settings2,
   File,
+  Printer,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -42,13 +43,16 @@ import { QRCodeDisplay } from "@/components/pedidos/QRCodeDisplay";
 import { HistoricoEscaneamentos } from "@/components/pedidos/HistoricoEscaneamentos";
 import { HistoricoAuditoria } from "@/components/pedidos/HistoricoAuditoria";
 import { useUserRoles } from "@/hooks/useUserRoles";
+import { ChecklistProducao } from "@/components/pedidos/ChecklistProducao";
 
 interface Pedido {
   id: string;
+  codigo_pedido?: string;
   produto_modelo: string;
   tipo_peca: string;
   tecido: string;
   aviamentos: string[];
+  tipos_personalizacao?: string[];
   quantidade_total: number;
   data_inicio: string;
   prazo_final: string;
@@ -112,6 +116,8 @@ export default function DetalhesPedido() {
   const [responsaveis, setResponsaveis] = useState<Profile[]>([]);
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [showChecklist, setShowChecklist] = useState(false);
+  const checklistRef = useRef<HTMLDivElement>(null);
 
   const podeEditar = hasAnyRole(['admin', 'commercial']);
 
@@ -459,6 +465,14 @@ export default function DetalhesPedido() {
               </Button>
             )}
             <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowChecklist(true)}
+            >
+              <Printer className="mr-2 h-4 w-4" />
+              Imprimir Checklist
+            </Button>
+            <Button
               variant="destructive"
               size="sm"
               onClick={() => setDeleteDialogOpen(true)}
@@ -745,6 +759,27 @@ export default function DetalhesPedido() {
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Excluir Pedido
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Modal do Checklist */}
+      <AlertDialog open={showChecklist} onOpenChange={setShowChecklist}>
+        <AlertDialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="sr-only">Checklist de Produção</AlertDialogTitle>
+          </AlertDialogHeader>
+          <ChecklistProducao ref={checklistRef} pedido={pedido} />
+          <AlertDialogFooter className="print:hidden">
+            <AlertDialogCancel>Fechar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                window.print();
+              }}
+            >
+              <Printer className="mr-2 h-4 w-4" />
+              Imprimir
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
