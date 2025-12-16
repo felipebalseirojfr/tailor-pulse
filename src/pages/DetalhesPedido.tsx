@@ -121,6 +121,121 @@ export default function DetalhesPedido() {
 
   const podeEditar = hasAnyRole(['admin', 'commercial']);
 
+  // Função para desfazer alterações usando o histórico de auditoria
+  const handleUndo = async (logId: string, dadosAntes: any) => {
+    if (!id || !pedido) return;
+
+    try {
+      // Capturar estado atual para o novo registro de auditoria
+      const estadoAtualPedido = { ...pedido };
+      const estadoAtualEtapas = [...etapas];
+
+      // Obter dados do usuário atual
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("nome")
+        .eq("id", user?.id)
+        .maybeSingle();
+
+      const usuarioNome = profileData?.nome || user?.email || "Usuário desconhecido";
+
+      // Restaurar dados do pedido (se houver)
+      if (dadosAntes.pedido) {
+        const pedidoUpdate: any = {};
+        const camposPermitidos = [
+          'quantidade_total', 'observacoes_pedido', 'preco_venda', 
+          'composicao_tecido', 'tecido', 'aviamentos', 'produto_modelo',
+          'tipo_peca', 'data_inicio', 'prazo_final', 'grade_tamanhos',
+          'tipos_personalizacao', 'prioridade'
+        ];
+
+        for (const campo of camposPermitidos) {
+          if (dadosAntes.pedido[campo] !== undefined) {
+            pedidoUpdate[campo] = dadosAntes.pedido[campo];
+          }
+        }
+
+        if (Object.keys(pedidoUpdate).length > 0) {
+          const { error: pedidoError } = await supabase
+            .from("pedidos")
+            .update(pedidoUpdate)
+            .eq("id", id);
+
+          if (pedidoError) throw pedidoError;
+        }
+      }
+
+      // Restaurar etapas (se houver)
+      if (dadosAntes.etapas && Array.isArray(dadosAntes.etapas)) {
+        for (const etapaAntes of dadosAntes.etapas) {
+          if (etapaAntes.id) {
+            const { error: etapaError } = await supabase
+              .from("etapas_producao")
+              .update({
+                status: etapaAntes.status,
+                data_inicio: etapaAntes.data_inicio,
+                data_termino: etapaAntes.data_termino,
+                data_inicio_prevista: etapaAntes.data_inicio_prevista,
+                data_termino_prevista: etapaAntes.data_termino_prevista,
+                observacoes: etapaAntes.observacoes,
+                responsavel_id: etapaAntes.responsavel_id,
+              })
+              .eq("id", etapaAntes.id);
+
+            if (etapaError) {
+              console.error("Erro ao restaurar etapa:", etapaError);
+            }
+          }
+        }
+      }
+
+      // Criar registro de auditoria da reversão
+      const { error: auditoriaError } = await supabase
+        .from("pedidos_auditoria")
+        .insert({
+          pedido_id: id,
+          usuario_id: user?.id,
+          usuario_nome: usuarioNome,
+          acao: "Reversão manual",
+          campos_alterados: ["reversão_completa"],
+          dados_antes: {
+            pedido: estadoAtualPedido,
+            etapas: estadoAtualEtapas.map(e => ({
+              id: e.id,
+              tipo_etapa: e.tipo_etapa,
+              status: e.status,
+              data_inicio: e.data_inicio,
+              data_termino: e.data_termino,
+              observacoes: e.observacoes,
+              responsavel_id: e.responsavel_id,
+            }))
+          },
+          dados_depois: dadosAntes,
+        });
+
+      if (auditoriaError) {
+        console.error("Erro ao registrar auditoria:", auditoriaError);
+      }
+
+      toast({
+        title: "Alteração desfeita",
+        description: "O pedido foi restaurado para o estado anterior.",
+      });
+
+      // Recarregar dados
+      fetchPedidoDetails();
+    } catch (error: any) {
+      console.error("Erro ao desfazer alteração:", error);
+      toast({
+        title: "Erro ao desfazer",
+        description: error.message || "Não foi possível desfazer a alteração.",
+        variant: "destructive",
+      });
+      throw error;
+    }
+  };
+
   useEffect(() => {
     fetchPedidoDetails();
     fetchResponsaveis();
@@ -569,7 +684,7 @@ export default function DetalhesPedido() {
               <HistoricoEscaneamentos pedidoId={pedido.id} />
             </>
           )}
-          <HistoricoAuditoria pedidoId={pedido.id} />
+          <HistoricoAuditoria pedidoId={pedido.id} onUndo={handleUndo} />
         </div>
       </div>
 
