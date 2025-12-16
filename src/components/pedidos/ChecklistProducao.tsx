@@ -43,11 +43,18 @@ export const ChecklistProducao = forwardRef<HTMLDivElement, ChecklistProducaoPro
     const temBordado = personalizacoes.some(p => 
       p.toLowerCase().includes("bordado")
     );
+    const temLavanderia = personalizacoes.some(p => 
+      p.toLowerCase().includes("lavanderia")
+    );
 
     // Gerar itens da Etapa 3 baseado nos aviamentos
     const itensAviamentos = aviamentos
       .filter(av => AVIAMENTOS_LABELS[av])
       .map(av => AVIAMENTOS_LABELS[av]);
+
+    // Calcular numeração dinâmica das etapas
+    let etapaNum = 1;
+    const getNextEtapa = () => etapaNum++;
 
     return (
       <div ref={ref} className="checklist-print bg-white text-black p-8 max-w-2xl mx-auto">
@@ -71,10 +78,10 @@ export const ChecklistProducao = forwardRef<HTMLDivElement, ChecklistProducaoPro
           </div>
         </div>
 
-        {/* Etapa 1 */}
+        {/* Etapa 1 - Liberação de Corte */}
         <div className="mb-6">
           <h2 className="text-lg font-bold border-b border-gray-400 pb-1 mb-3">
-            ▸ ETAPA 1 – LIBERAÇÃO DE CORTE
+            ▸ ETAPA {getNextEtapa()} – LIBERAÇÃO DE CORTE
           </h2>
           <div className="space-y-2 pl-4">
             <ChecklistItem label="Ficha de corte" />
@@ -83,10 +90,10 @@ export const ChecklistProducao = forwardRef<HTMLDivElement, ChecklistProducaoPro
           </div>
         </div>
 
-        {/* Etapa 2 */}
+        {/* Etapa 2 - Pós-Corte */}
         <div className="mb-6">
           <h2 className="text-lg font-bold border-b border-gray-400 pb-1 mb-3">
-            ▸ ETAPA 2 – PÓS-CORTE
+            ▸ ETAPA {getNextEtapa()} – PÓS-CORTE
           </h2>
           <div className="space-y-2 pl-4">
             <ChecklistItem label="Contagem correta" />
@@ -99,11 +106,11 @@ export const ChecklistProducao = forwardRef<HTMLDivElement, ChecklistProducaoPro
           </div>
         </div>
 
-        {/* Etapa 3 */}
+        {/* Etapa 3 - Pré-Oficina de Costura (condicional) */}
         {itensAviamentos.length > 0 && (
           <div className="mb-6">
             <h2 className="text-lg font-bold border-b border-gray-400 pb-1 mb-3">
-              ▸ ETAPA 3 – PRÉ-OFICINA DE COSTURA
+              ▸ ETAPA {getNextEtapa()} – PRÉ-OFICINA DE COSTURA
             </h2>
             <div className="space-y-2 pl-4">
               {itensAviamentos.map((item, index) => (
@@ -113,10 +120,36 @@ export const ChecklistProducao = forwardRef<HTMLDivElement, ChecklistProducaoPro
           </div>
         )}
 
-        {/* Etapa 4 */}
+        {/* Etapa - Pré-Lavanderia (condicional) */}
+        {temLavanderia && (
+          <div className="mb-6">
+            <h2 className="text-lg font-bold border-b border-gray-400 pb-1 mb-3">
+              ▸ ETAPA {getNextEtapa()} – PRÉ-LAVANDERIA
+            </h2>
+            <div className="space-y-2 pl-4">
+              <ChecklistItem label="Piloto com lavagem lacrada" />
+              <ChecklistItem label="Quantidade contada" />
+            </div>
+          </div>
+        )}
+
+        {/* Etapa - Pós-Lavanderia (condicional) */}
+        {temLavanderia && (
+          <div className="mb-6">
+            <h2 className="text-lg font-bold border-b border-gray-400 pb-1 mb-3">
+              ▸ ETAPA {getNextEtapa()} – PÓS-LAVANDERIA
+            </h2>
+            <div className="space-y-2 pl-4">
+              <ChecklistItem label="Cores batem com a piloto?" />
+              <ChecklistItem label="Contagem correta?" />
+            </div>
+          </div>
+        )}
+
+        {/* Etapa - Acabamento */}
         <div className="mb-6">
           <h2 className="text-lg font-bold border-b border-gray-400 pb-1 mb-3">
-            ▸ ETAPA 4 – ACABAMENTO
+            ▸ ETAPA {getNextEtapa()} – ACABAMENTO
           </h2>
           <div className="space-y-2 pl-4">
             <ChecklistItem label="Contagem correta" />
