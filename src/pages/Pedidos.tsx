@@ -684,7 +684,9 @@ export default function Pedidos() {
             /* Vista de Cards individual para Modo TV */
             (() => {
               const hoje = new Date().toISOString().split("T")[0];
-              let tvFiltered = filteredPedidos;
+              // IMPORTANTE: Usar todos os pedidos não concluídos como base (não filteredPedidos)
+              const pedidosEmProducao = pedidos.filter((p) => p.status_geral !== "concluido");
+              let tvFiltered = [...pedidosEmProducao];
               
               // Aplicar filtro por busca de nome
               if (tvSearchTerm) {
@@ -716,17 +718,6 @@ export default function Pedidos() {
                 );
               }
               
-              // Ordenar alfabeticamente por modelo
-              tvFiltered = tvFiltered.sort((a, b) => 
-                (a.produto_modelo || '').localeCompare(b.produto_modelo || '', 'pt-BR', { sensitivity: 'base' })
-              );
-
-              const totalBeforeFilter = filteredPedidos.filter((p) => p.status_geral !== "concluido").length;
-              const hasActiveFilters = tvSearchTerm || tvReferenciaFilter || tvOpFilter || tvStatusFilter !== "todos" || tvEtapaFilter;
-              
-              // Obter referências únicas para o select
-              const referenciasUnicas = Array.from(new Set(filteredPedidos.map((p) => p.tipo_peca).filter(Boolean)));
-
               // Aplicar filtro por etapa de produção
               if (tvEtapaFilter) {
                 tvFiltered = tvFiltered.filter((p) => {
@@ -736,12 +727,23 @@ export default function Pedidos() {
                   return etapaAtiva?.tipo_etapa === tvEtapaFilter;
                 });
               }
+              
+              // Ordenar alfabeticamente por modelo
+              tvFiltered = tvFiltered.sort((a, b) => 
+                (a.produto_modelo || '').localeCompare(b.produto_modelo || '', 'pt-BR', { sensitivity: 'base' })
+              );
+
+              const totalBeforeFilter = pedidosEmProducao.length;
+              const hasActiveFilters = tvSearchTerm || tvReferenciaFilter || tvOpFilter || tvStatusFilter !== "todos" || tvEtapaFilter;
+              
+              // Obter referências únicas para o select (de todos os pedidos em produção)
+              const referenciasUnicas = Array.from(new Set(pedidosEmProducao.map((p) => p.tipo_peca).filter(Boolean)));
 
               return (
                 <>
                   {/* Widgets de Etapas de Produção */}
                   <EtapasSummaryCards
-                    pedidos={filteredPedidos.filter((p) => p.status_geral !== "concluido")}
+                    pedidos={pedidosEmProducao}
                     onEtapaClick={setTvEtapaFilter}
                     activeEtapa={tvEtapaFilter}
                   />
