@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { ArrowLeft, Upload, Save, Send, Loader2, AlertTriangle, Receipt, FileCheck, CheckCircle2, ExternalLink, Truck, Info } from "lucide-react";
+import { ArrowLeft, Upload, Save, Send, Loader2, AlertTriangle, Receipt, FileCheck, CheckCircle2, ExternalLink, Truck, Info, Package, Download } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -55,6 +55,10 @@ interface Fechamento {
   } | null;
 }
 
+interface RelatedFechamento extends Fechamento {
+  itens: FechamentoItem[];
+}
+
 type PhaseType = "fechamento" | "emissao_nf" | "entrega";
 
 const DetalhesFechamento = () => {
@@ -67,6 +71,10 @@ const DetalhesFechamento = () => {
   const [uploadingPhoto, setUploadingPhoto] = useState(false);
   const [uploadingXml, setUploadingXml] = useState(false);
   const [observacoes, setObservacoes] = useState("");
+  
+  // Estados para fase ENTREGA - referências relacionadas
+  const [relatedFechamentos, setRelatedFechamentos] = useState<RelatedFechamento[]>([]);
+  const [loadingRelated, setLoadingRelated] = useState(false);
   
   // Campos de NF
   const [numeroNf, setNumeroNf] = useState("");
@@ -90,6 +98,13 @@ const DetalhesFechamento = () => {
     }, 10000);
     return () => clearInterval(timer);
   }, [itens, observacoes, fechamento]);
+
+  // Buscar fechamentos relacionados quando em fase de entrega
+  useEffect(() => {
+    if (fechamento?.status_nf === "emitida" && fechamento?.numero_nf) {
+      fetchRelatedFechamentos();
+    }
+  }, [fechamento?.status_nf, fechamento?.numero_nf]);
 
   const fetchFechamento = async () => {
     try {
@@ -130,6 +145,44 @@ const DetalhesFechamento = () => {
     } catch (error: any) {
       console.error("Erro ao buscar itens:", error);
       toast.error("Erro ao carregar itens");
+    }
+  };
+
+  // Buscar todos os fechamentos que compartilham a mesma NF
+  const fetchRelatedFechamentos = async () => {
+    if (!fechamento?.numero_nf) return;
+    
+    setLoadingRelated(true);
+    try {
+      // Buscar todos os fechamentos com o mesmo numero_nf
+      const { data: fechamentos, error: fechError } = await supabase
+        .from("fechamentos")
+        .select(`
+          *,
+          pedidos!inner(codigo_pedido, produto_modelo, grade_tamanhos, quantidade_total, preco_venda, composicao_tecido, status_geral, clientes!inner(nome)),
+          referencias(codigo_referencia)
+        `)
+        .eq("numero_nf", fechamento.numero_nf);
+
+      if (fechError) throw fechError;
+
+      // Para cada fechamento, buscar seus itens
+      const fechamentosComItens: RelatedFechamento[] = [];
+      for (const fech of fechamentos || []) {
+        const { data: itens, error: itensError } = await supabase
+          .from("fechamento_itens")
+          .select("*")
+          .eq("fechamento_id", fech.id);
+
+        if (itensError) throw itensError;
+        fechamentosComItens.push({ ...fech, itens: itens || [] });
+      }
+
+      setRelatedFechamentos(fechamentosComItens);
+    } catch (error: any) {
+      console.error("Erro ao buscar fechamentos relacionados:", error);
+    } finally {
+      setLoadingRelated(false);
     }
   };
 
@@ -647,6 +700,219 @@ const DetalhesFechamento = () => {
         </Card>
       )}
 
+      {/* Layout Clean para fase ENTREGA */}
+      {currentPhase === "entrega" ? (
+        <div className="space-y-6">
+          {/* Header da NF */}
+          <Card className="border-2 border-blue-200 bg-blue-50/50 dark:bg-blue-950/20">
+            <CardContent className="p-6">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="flex items-center gap-4">
+                  <div className="h-12 w-12 rounded-md bg-blue-100 dark:bg-blue-900/50 flex items-center justify-center">
+                    <Receipt className="h-6 w-6 text-blue-600" />
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Nota Fiscal</p>
+                    <p className="text-2xl font-bold">NF {fechamento.numero_nf}</p>
+                  </div>
+                </div>
+                <div className="flex flex-wrap gap-4 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Data Emissão</p>
+                    <p className="font-semibold">
+                      {fechamento.data_emissao_nf 
+                        ? format(new Date(fechamento.data_emissao_nf + 'T00:00:00'), "dd/MM/yyyy")
+                        : "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Cliente</p>
+                    <p className="font-semibold">{fechamento.pedidos.clientes.nome}</p>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Referências na Nota */}
+          <Card>
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <Package className="h-5 w-5" />
+                Referências na Nota
+                {loadingRelated && <Loader2 className="h-4 w-4 animate-spin ml-2" />}
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {relatedFechamentos.length === 0 && !loadingRelated ? (
+                // Fallback: mostrar apenas o fechamento atual
+                <div className="p-4 rounded-md border bg-card">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <p className="font-semibold text-lg">{fechamento.pedidos.produto_modelo}</p>
+                      <p className="text-sm text-muted-foreground">{fechamento.pedidos.codigo_pedido}</p>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-lg font-bold">{getTotalGeral()} pçs</p>
+                      {fechamento.pedidos.preco_venda && (
+                        <p className="text-sm text-muted-foreground">
+                          × {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(fechamento.pedidos.preco_venda)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex flex-wrap gap-2 text-xs">
+                    {(() => {
+                      const agregados = getItensAgregados();
+                      return Object.entries(agregados)
+                        .filter(([_, qty]) => qty > 0)
+                        .map(([tam, qty]) => (
+                          <span key={tam} className="px-2 py-1 bg-muted rounded-md">
+                            {tam}: <span className="font-semibold">{qty}</span>
+                          </span>
+                        ));
+                    })()}
+                  </div>
+                  {fechamento.pedidos.preco_venda && (
+                    <div className="mt-3 pt-3 border-t text-right">
+                      <span className="text-sm text-muted-foreground">Subtotal: </span>
+                      <span className="font-semibold">
+                        {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
+                          fechamento.pedidos.preco_venda * getTotalGeral()
+                        )}
+                      </span>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                relatedFechamentos.map((rel) => {
+                  // Agregar itens por tamanho (mais recente primeiro)
+                  const agregados: Record<string, number> = {};
+                  const itensOrdenados = [...rel.itens].sort((a, b) => 
+                    new Date(b.updated_at || b.created_at || '').getTime() - 
+                    new Date(a.updated_at || a.created_at || '').getTime()
+                  );
+                  itensOrdenados.forEach(item => {
+                    if (agregados[item.tamanho] === undefined && item.unidades > 0) {
+                      agregados[item.tamanho] = item.unidades;
+                    }
+                  });
+                  const totalPecas = Object.values(agregados).reduce((sum, qty) => sum + qty, 0);
+                  const precoUnit = rel.pedidos.preco_venda;
+                  const subtotal = precoUnit ? precoUnit * totalPecas : null;
+
+                  return (
+                    <div key={rel.id} className="p-4 rounded-md border bg-card hover:bg-muted/30 transition-colors">
+                      <div className="flex items-start justify-between mb-3">
+                        <div>
+                          <p className="font-semibold text-lg">{rel.pedidos.produto_modelo}</p>
+                          <p className="text-sm text-muted-foreground">{rel.pedidos.codigo_pedido}</p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-lg font-bold">{totalPecas} pçs</p>
+                          {precoUnit && (
+                            <p className="text-sm text-muted-foreground">
+                              × {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(precoUnit)}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                      <div className="flex flex-wrap gap-2 text-xs">
+                        {Object.entries(agregados)
+                          .filter(([_, qty]) => qty > 0)
+                          .map(([tam, qty]) => (
+                            <span key={tam} className="px-2 py-1 bg-muted rounded-md">
+                              {tam}: <span className="font-semibold">{qty}</span>
+                            </span>
+                          ))}
+                      </div>
+                      {subtotal && (
+                        <div className="mt-3 pt-3 border-t text-right">
+                          <span className="text-sm text-muted-foreground">Subtotal: </span>
+                          <span className="font-semibold">
+                            {new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(subtotal)}
+                          </span>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Totais */}
+          <Card className="bg-primary/5 border-primary/20">
+            <CardContent className="p-6">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div className="flex items-center gap-6">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total de Peças</p>
+                    <p className="text-3xl font-bold">
+                      {relatedFechamentos.length > 0 
+                        ? relatedFechamentos.reduce((sum, rel) => {
+                            const agregados: Record<string, number> = {};
+                            const itensOrdenados = [...rel.itens].sort((a, b) => 
+                              new Date(b.updated_at || b.created_at || '').getTime() - 
+                              new Date(a.updated_at || a.created_at || '').getTime()
+                            );
+                            itensOrdenados.forEach(item => {
+                              if (agregados[item.tamanho] === undefined && item.unidades > 0) {
+                                agregados[item.tamanho] = item.unidades;
+                              }
+                            });
+                            return sum + Object.values(agregados).reduce((s, q) => s + q, 0);
+                          }, 0)
+                        : getTotalGeral()
+                      }
+                    </p>
+                  </div>
+                  <div className="h-12 w-px bg-border" />
+                  <div>
+                    <p className="text-sm text-muted-foreground">Valor Total NF</p>
+                    <p className="text-3xl font-bold text-primary">
+                      {fechamento.valor_total_nf 
+                        ? new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(fechamento.valor_total_nf)
+                        : "—"}
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex flex-wrap gap-3">
+                  {fechamento.link_arquivo_nf && (
+                    <Button
+                      variant="outline"
+                      onClick={() => window.open(fechamento.link_arquivo_nf!, "_blank")}
+                    >
+                      <Download className="h-4 w-4 mr-2" />
+                      Baixar XML
+                    </Button>
+                  )}
+                  {fechamento.pedidos.status_geral !== "faturado" ? (
+                    <Button 
+                      onClick={handleMarcarFaturado} 
+                      disabled={saving}
+                      className="bg-blue-600 hover:bg-blue-700"
+                    >
+                      {saving ? (
+                        <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      ) : (
+                        <CheckCircle2 className="h-4 w-4 mr-2" />
+                      )}
+                      Marcar como Faturado
+                    </Button>
+                  ) : (
+                    <Badge className="bg-blue-600 text-white px-4 py-2 text-sm">
+                      <CheckCircle2 className="h-4 w-4 mr-2" />
+                      Faturado
+                    </Badge>
+                  )}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      ) : (
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Coluna principal */}
         <div className="lg:col-span-2 space-y-6">
@@ -834,9 +1100,9 @@ const DetalhesFechamento = () => {
             </CardContent>
           </Card>
 
-          {/* Nota Fiscal - visível nas fases de emissão e entrega */}
-          {(currentPhase === "emissao_nf" || currentPhase === "entrega") && (
-            <Card className={currentPhase === "emissao_nf" ? "border-2 border-yellow-300" : ""}>
+          {/* Nota Fiscal - visível na fase de emissão */}
+          {currentPhase === "emissao_nf" && (
+            <Card className="border-2 border-yellow-300">
               <CardHeader>
                 <CardTitle className="text-lg flex items-center gap-2">
                   <Receipt className="h-5 w-5" />
@@ -848,9 +1114,7 @@ const DetalhesFechamento = () => {
                   )}
                 </CardTitle>
                 <p className="text-sm text-muted-foreground">
-                  {currentPhase === "emissao_nf" 
-                    ? "Preencha TODOS os campos abaixo para emitir a NF"
-                    : "Dados da Nota Fiscal emitida"}
+                  Preencha TODOS os campos abaixo para emitir a NF
                 </p>
               </CardHeader>
               <CardContent>
@@ -864,7 +1128,7 @@ const DetalhesFechamento = () => {
                       id="numero_nf"
                       value={numeroNf}
                       onChange={(e) => setNumeroNf(e.target.value)}
-                      disabled={currentPhase === "entrega" || isReadOnly}
+                      disabled={isReadOnly}
                       placeholder="Ex: 001234"
                       className={`mt-1 ${currentPhase === "emissao_nf" && !numeroNf ? "border-red-300" : ""}`}
                     />
@@ -879,7 +1143,7 @@ const DetalhesFechamento = () => {
                       type="date"
                       value={dataEmissaoNf}
                       onChange={(e) => setDataEmissaoNf(e.target.value)}
-                      disabled={currentPhase === "entrega" || isReadOnly}
+                      disabled={isReadOnly}
                       className={`mt-1 ${currentPhase === "emissao_nf" && !dataEmissaoNf ? "border-red-300" : ""}`}
                     />
                   </div>
@@ -894,7 +1158,7 @@ const DetalhesFechamento = () => {
                       step="0.01"
                       value={valorTotalNf}
                       onChange={(e) => setValorTotalNf(e.target.value)}
-                      disabled={currentPhase === "entrega" || isReadOnly}
+                      disabled={isReadOnly}
                       placeholder="0.00"
                       className={`mt-1 ${currentPhase === "emissao_nf" && !valorTotalNf ? "border-red-300" : ""}`}
                     />
@@ -955,7 +1219,7 @@ const DetalhesFechamento = () => {
                                 setUploadingXml(false);
                               }
                             }}
-                            disabled={currentPhase === "entrega" || isReadOnly || uploadingXml}
+                            disabled={isReadOnly || uploadingXml}
                             className={`flex-1 ${currentPhase === "emissao_nf" && !linkArquivoNf ? "border-red-300" : ""}`}
                           />
                           {uploadingXml && <Loader2 className="h-4 w-4 animate-spin" />}
@@ -972,7 +1236,7 @@ const DetalhesFechamento = () => {
                             <ExternalLink className="h-3 w-3 mr-1" />
                             Baixar
                           </Button>
-                          {currentPhase !== "entrega" && !isReadOnly && (
+                          {!isReadOnly && (
                             <Button
                               variant="ghost"
                               size="sm"
@@ -1085,14 +1349,6 @@ const DetalhesFechamento = () => {
 
               {/* Ações baseadas na fase */}
               <div className="pt-4 border-t space-y-3">
-                {/* Fase Entrega - Marcar como faturado */}
-                {currentPhase === "entrega" && fechamento.pedidos.status_geral !== "faturado" && (
-                  <Button onClick={handleMarcarFaturado} disabled={saving} className="w-full bg-blue-600 hover:bg-blue-700">
-                    <CheckCircle2 className="h-4 w-4 mr-2" />
-                    Marcar Pedido como Faturado
-                  </Button>
-                )}
-
                 {/* Indicador de validação para emissão de NF */}
                 {currentPhase === "emissao_nf" && (
                   <div className={`p-3 rounded-md text-sm ${canEmitirNf() ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"}`}>
@@ -1106,6 +1362,7 @@ const DetalhesFechamento = () => {
           </Card>
         </div>
       </div>
+      )}
 
       {/* Botões fixos no rodapé mobile - Fase Fechamento */}
       {currentPhase === "fechamento" && !isReadOnly && (
