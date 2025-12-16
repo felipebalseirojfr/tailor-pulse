@@ -18,6 +18,73 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Upload, X, FileText, Image as ImageIcon } from "lucide-react";
 import EtapasManager, { Etapa } from "@/components/pedidos/EtapasManager";
+import { ChecklistProducao } from "@/components/pedidos/ChecklistProducao";
+
+// Função para download automático do QR Code
+const downloadQRCode = (qrCodeImage: string, codigoPedido: string) => {
+  const link = document.createElement('a');
+  link.href = qrCodeImage;
+  link.download = `QRCode_${codigoPedido}.png`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
+
+// Função para gerar e baixar o Checklist como imagem
+const downloadChecklist = async (pedidoData: {
+  codigo_pedido: string;
+  produto_modelo: string;
+  tipo_peca: string;
+  quantidade_total: number;
+  aviamentos: string[];
+  tipos_personalizacao: string[];
+}) => {
+  const html2canvas = (await import('html2canvas')).default;
+  const { createRoot } = await import('react-dom/client');
+  
+  // Criar container temporário
+  const container = document.createElement('div');
+  container.style.position = 'absolute';
+  container.style.left = '-9999px';
+  container.style.background = 'white';
+  container.style.width = '600px';
+  document.body.appendChild(container);
+  
+  // Renderizar o checklist
+  const root = createRoot(container);
+  root.render(
+    <ChecklistProducao 
+      pedido={{
+        codigo_pedido: pedidoData.codigo_pedido,
+        produto_modelo: pedidoData.produto_modelo,
+        tipo_peca: pedidoData.tipo_peca,
+        quantidade_total: pedidoData.quantidade_total,
+        aviamentos: pedidoData.aviamentos,
+        tipos_personalizacao: pedidoData.tipos_personalizacao,
+      }} 
+    />
+  );
+  
+  await new Promise(resolve => setTimeout(resolve, 300));
+  
+  // Converter para imagem
+  const canvas = await html2canvas(container, { 
+    scale: 2,
+    backgroundColor: '#ffffff',
+    useCORS: true,
+  });
+  
+  const link = document.createElement('a');
+  link.href = canvas.toDataURL('image/png');
+  link.download = `Checklist_${pedidoData.codigo_pedido || 'pedido'}.png`;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  
+  // Limpar
+  root.unmount();
+  document.body.removeChild(container);
+};
 
 interface Cliente {
   id: string;
@@ -234,13 +301,26 @@ export default function NovoPedido() {
         console.error('Erro ao salvar QR Code:', uploadError);
       }
 
+      // Download automático do QR Code
+      downloadQRCode(qrCodeImage, pedidoData[0].codigo_pedido || pedidoId);
+
+      // Download automático do Checklist
+      await downloadChecklist({
+        codigo_pedido: pedidoData[0].codigo_pedido || pedidoId,
+        produto_modelo: formData.produto_modelo,
+        tipo_peca: formData.tipo_peca,
+        quantidade_total: parseInt(formData.quantidade_total),
+        aviamentos: formData.aviamentos,
+        tipos_personalizacao: formData.tipos_personalizacao,
+      });
+
       const mensagemArquivos = arquivosUpload.length > 0 
         ? ` ${arquivosUpload.length} arquivo(s) anexado(s).`
         : '';
       
       toast({
         title: "Pedido criado!",
-        description: `O pedido foi criado com sucesso e o QR Code foi gerado.${mensagemArquivos}`,
+        description: `O pedido foi criado com sucesso. QR Code e Checklist foram baixados automaticamente.${mensagemArquivos}`,
       });
       navigate("/pedidos");
     } catch (error: any) {
