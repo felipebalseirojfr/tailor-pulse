@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRoles } from "@/hooks/useUserRoles";
+import { useQRScanNotifications } from "@/hooks/useQRScanNotifications";
 import { Badge } from "@/components/ui/badge";
 import logoJfr from "@/assets/logo-jfr.png";
 
@@ -40,6 +41,9 @@ export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const { toast } = useToast();
   const { roles, hasRole, hasAnyRole } = useUserRoles();
+  
+  // Ativar notificações globais de escaneamentos QR
+  useQRScanNotifications();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
