@@ -646,6 +646,16 @@ export default function NovoPedido() {
                   <Label htmlFor="termocolante" className="font-normal cursor-pointer">
                     Termocolante
                   </Label>
+              </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="galao"
+                    checked={formData.aviamentos.includes("Galão")}
+                    onCheckedChange={() => handleAviamentosToggle("Galão")}
+                  />
+                  <Label htmlFor="galao" className="font-normal cursor-pointer">
+                    Galão
+                  </Label>
                 </div>
               </div>
             </div>
