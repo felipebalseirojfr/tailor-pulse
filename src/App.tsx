@@ -16,6 +16,7 @@ import ScanQR from "./pages/ScanQR";
 import Fechamentos from "./pages/Fechamentos";
 import DetalhesFechamento from "./pages/DetalhesFechamento";
 import Usuarios from "./pages/Usuarios";
+import CarteiraPedidos from "./pages/CarteiraPedidos";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -31,6 +32,7 @@ const App = () => (
           <Route path="/scan/:qrRef" element={<ScanQR />} />
           <Route path="/" element={<Layout><Dashboard /></Layout>} />
           <Route path="/pedidos" element={<Layout><Pedidos /></Layout>} />
+          <Route path="/carteira" element={<Layout><CarteiraPedidos /></Layout>} />
           <Route path="/pedidos/novo" element={<Layout><NovoPedido /></Layout>} />
           <Route path="/pedidos/:id" element={<Layout><DetalhesPedido /></Layout>} />
           <Route path="/pedidos/:id/editar" element={<Layout><EditarPedido /></Layout>} />
