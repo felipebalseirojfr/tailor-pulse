@@ -37,7 +37,12 @@ export default function CarteiraPedidos() {
   const pedidosAgrupadosPorMes = useMemo(() => {
     const grupos = new Map<string, typeof pedidosFiltrados>();
     
-    pedidosFiltrados.forEach(pedido => {
+    // Filtrar pedidos concluídos - eles aparecem apenas na visão macro
+    const pedidosEmAndamento = pedidosFiltrados.filter(
+      p => p.status_geral !== "concluido"
+    );
+    
+    pedidosEmAndamento.forEach(pedido => {
       const dataPedido = tipoVisao === "entrega" 
         ? pedido.prazo_final 
         : (pedido.data_faturamento_prevista || pedido.mes_faturamento_previsto);
