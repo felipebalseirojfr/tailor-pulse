@@ -175,6 +175,7 @@ export const CapacidadeConfigModal = ({
               {meses.map((mes) => {
                 const ocupacao = getOcupacaoForMes(mes.value);
                 const hasCapacidade = ocupacao?.capacidade !== null;
+                const nivel = ocupacao?.nivel;
 
                 return (
                   <div
@@ -186,14 +187,14 @@ export const CapacidadeConfigModal = ({
                       {hasCapacidade ? (
                         <div className="text-sm text-muted-foreground">
                           Capacidade: {ocupacao?.capacidade?.toLocaleString()} peças
-                          {ocupacao?.ocupacao !== null && (
+                          {ocupacao && ocupacao.ocupacao !== null && (
                             <span
                               className={`ml-2 ${
-                                ocupacao.nivel === "vermelho"
+                                nivel === "vermelho"
                                   ? "text-red-600"
-                                  : ocupacao.nivel === "laranja"
+                                  : nivel === "laranja"
                                   ? "text-orange-600"
-                                  : ocupacao.nivel === "amarelo"
+                                  : nivel === "amarelo"
                                   ? "text-yellow-600"
                                   : "text-green-600"
                               }`}
