@@ -35,7 +35,7 @@ export const CarteiraTabelaMensal = ({
     }
   };
 
-  const getSemaforoStyles = (nivel: OcupacaoMensal["nivel"]) => {
+  const getSemaforoStyles = (nivel?: OcupacaoMensal["nivel"]) => {
     switch (nivel) {
       case "verde":
         return "bg-green-500";
@@ -50,7 +50,7 @@ export const CarteiraTabelaMensal = ({
     }
   };
 
-  const getNivelLabel = (nivel: OcupacaoMensal["nivel"]) => {
+  const getNivelLabel = (nivel?: OcupacaoMensal["nivel"]) => {
     switch (nivel) {
       case "verde":
         return "OK";
@@ -89,9 +89,10 @@ export const CarteiraTabelaMensal = ({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {ocupacoes.map((o) => {
+              {(ocupacoes ?? []).filter(Boolean).map((o) => {
                 const isSelected = o.mes === mesSelecionado;
                 const pecas = usarPonderado ? o.totalPecasPonderadas : o.totalPecas;
+                const nivel = o.nivel;
 
                 return (
                   <TableRow
@@ -135,11 +136,11 @@ export const CarteiraTabelaMensal = ({
                       {o.ocupacao !== null ? (
                         <span
                           className={`font-medium ${
-                            o.nivel === "vermelho"
+                            nivel === "vermelho"
                               ? "text-red-600"
-                              : o.nivel === "laranja"
+                              : nivel === "laranja"
                               ? "text-orange-600"
-                              : o.nivel === "amarelo"
+                              : nivel === "amarelo"
                               ? "text-yellow-600"
                               : "text-green-600"
                           }`}
@@ -153,11 +154,11 @@ export const CarteiraTabelaMensal = ({
                     <TableCell className="text-center">
                       <div className="flex items-center justify-center gap-2">
                         <div
-                          className={`h-3 w-3 rounded-full ${getSemaforoStyles(o.nivel)}`}
-                          title={getNivelLabel(o.nivel)}
+                          className={`h-3 w-3 rounded-full ${getSemaforoStyles(nivel)}`}
+                          title={getNivelLabel(nivel)}
                         />
                         <span className="text-xs text-muted-foreground hidden sm:inline">
-                          {getNivelLabel(o.nivel)}
+                          {getNivelLabel(nivel)}
                         </span>
                       </div>
                     </TableCell>
