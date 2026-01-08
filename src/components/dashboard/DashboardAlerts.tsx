@@ -2,13 +2,23 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { AlertTriangle, AlertCircle, CheckCircle } from "lucide-react";
 import { PedidoDetalhado } from "@/hooks/useDashboardData";
+import { OcupacaoMensal } from "@/hooks/useCapacidadeOcupacao";
+import { OcupacaoAlertCard } from "./OcupacaoAlertCard";
 import { Link } from "react-router-dom";
 
 interface DashboardAlertsProps {
   pedidos: PedidoDetalhado[];
+  ocupacoes?: OcupacaoMensal[];
+  alertasOcupacao?: OcupacaoMensal[];
+  onRefreshOcupacao?: () => void;
 }
 
-export const DashboardAlerts = ({ pedidos }: DashboardAlertsProps) => {
+export const DashboardAlerts = ({ 
+  pedidos, 
+  ocupacoes = [], 
+  alertasOcupacao = [],
+  onRefreshOcupacao = () => {}
+}: DashboardAlertsProps) => {
   const hoje = new Date();
 
   // Pedidos em risco de atraso (próximos 3 dias)
@@ -63,7 +73,7 @@ export const DashboardAlerts = ({ pedidos }: DashboardAlertsProps) => {
           </CardContent>
         </Card>
       ) : (
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {/* Pedidos Atrasados */}
           {pedidosAtrasados.length > 0 && (
             <Card className="bg-card border border-destructive/30 shadow-executive hover:shadow-executive-hover transition-all duration-300">
@@ -207,6 +217,14 @@ export const DashboardAlerts = ({ pedidos }: DashboardAlertsProps) => {
               </CardContent>
             </Card>
           )}
+
+          {/* Card de Ocupação Produtiva */}
+          <OcupacaoAlertCard
+            ocupacoes={ocupacoes}
+            alertas={alertasOcupacao}
+            loading={false}
+            onRefresh={onRefreshOcupacao}
+          />
         </div>
       )}
     </div>

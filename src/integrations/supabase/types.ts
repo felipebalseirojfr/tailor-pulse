@@ -14,6 +14,80 @@ export type Database = {
   }
   public: {
     Tables: {
+      alertas_ocupacao: {
+        Row: {
+          capacidade_pecas: number
+          created_at: string | null
+          demanda_pecas: number
+          id: string
+          mes: string
+          notificado_em: string | null
+          ocupacao_percentual: number
+          tipo_alerta: string
+          visualizado: boolean | null
+          visualizado_por: string | null
+        }
+        Insert: {
+          capacidade_pecas: number
+          created_at?: string | null
+          demanda_pecas: number
+          id?: string
+          mes: string
+          notificado_em?: string | null
+          ocupacao_percentual: number
+          tipo_alerta: string
+          visualizado?: boolean | null
+          visualizado_por?: string | null
+        }
+        Update: {
+          capacidade_pecas?: number
+          created_at?: string | null
+          demanda_pecas?: number
+          id?: string
+          mes?: string
+          notificado_em?: string | null
+          ocupacao_percentual?: number
+          tipo_alerta?: string
+          visualizado?: boolean | null
+          visualizado_por?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alertas_ocupacao_visualizado_por_fkey"
+            columns: ["visualizado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      capacidade_mensal: {
+        Row: {
+          capacidade_pecas: number
+          created_at: string | null
+          id: string
+          mes: string
+          observacoes: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          capacidade_pecas: number
+          created_at?: string | null
+          id?: string
+          mes: string
+          observacoes?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          capacidade_pecas?: number
+          created_at?: string | null
+          id?: string
+          mes?: string
+          observacoes?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       clientes: {
         Row: {
           contato: string | null
