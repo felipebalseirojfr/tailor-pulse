@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Plus, TrendingUp, Monitor, X, AlertTriangle, Clock, Package, CheckCircle, Timer, Target, TrendingDown } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useDashboardData } from "@/hooks/useDashboardData";
+import { useOcupacaoAlerts } from "@/hooks/useOcupacaoAlerts";
 import { DashboardStats } from "@/components/dashboard/DashboardStats";
 import { DashboardEfficiency } from "@/components/dashboard/DashboardEfficiency";
 import { DashboardPerformance } from "@/components/dashboard/DashboardPerformance";
@@ -12,6 +13,7 @@ import { Card, CardContent } from "@/components/ui/card";
 
 export default function Dashboard() {
   const { stats, pedidos, atividades, loading, refetch } = useDashboardData();
+  const { ocupacoes, alertas: alertasOcupacao, refetch: refetchOcupacao } = useOcupacaoAlerts();
   const [modoTV, setModoTV] = useState(false);
   const [currentTime, setCurrentTime] = useState(new Date());
 
@@ -304,7 +306,12 @@ export default function Dashboard() {
 
         {/* Bloco 4: Alertas e Riscos */}
         <section className="space-y-4">
-          <DashboardAlerts pedidos={pedidos} />
+          <DashboardAlerts 
+            pedidos={pedidos} 
+            ocupacoes={ocupacoes}
+            alertasOcupacao={alertasOcupacao}
+            onRefreshOcupacao={refetchOcupacao}
+          />
         </section>
 
         {/* Pedidos em Andamento */}
