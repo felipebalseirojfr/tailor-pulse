@@ -78,7 +78,7 @@ export const CarteiraListaPedidos = ({
   const handleExportCSV = () => {
     const headers = ["Código", "Cliente", "Status", "Entrega", "Peças", "Valor"];
     const rows = pedidos.map((p) => [
-      p.codigo_pedido || p.id.slice(0, 8),
+      p.tipo_peca || p.codigo_pedido || p.id.slice(0, 8),
       p.cliente_nome,
       p.status_geral,
       formatarData(p.prazo_final),
@@ -191,7 +191,7 @@ export const CarteiraListaPedidos = ({
                       {pedidos.map((pedido) => (
                         <TableRow key={pedido.id}>
                           <TableCell className="font-medium">
-                            {pedido.codigo_pedido || pedido.id.slice(0, 8)}
+                            {pedido.tipo_peca || pedido.codigo_pedido || pedido.id.slice(0, 8)}
                           </TableCell>
                           <TableCell className="max-w-[200px] truncate">
                             {pedido.cliente_nome}
