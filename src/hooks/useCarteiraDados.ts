@@ -57,7 +57,7 @@ export const useCarteiraDados = (
           quantidade_total,
           responsavel_comercial_id,
           clientes(id, nome),
-          referencias(quantidade, peso_producao, valor_total)
+          referencias(quantidade, valor_total)
         `)
         .neq("status_geral", "cancelado")
         .order("prazo_final", { ascending: true });
