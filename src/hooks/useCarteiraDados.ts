@@ -54,6 +54,7 @@ export const useCarteiraDados = (
           prazo_final,
           prioridade,
           valor_total_pedido,
+          quantidade_total,
           responsavel_comercial_id,
           clientes(id, nome),
           referencias(quantidade, peso_producao, valor_total)
@@ -69,13 +70,20 @@ export const useCarteiraDados = (
         let totalPecasPonderadas = 0;
         let receitaItens = 0;
 
-        p.referencias?.forEach((r: any) => {
-          const qtd = r.quantidade || 0;
-          const peso = r.peso_producao || 1;
-          totalPecas += qtd;
-          totalPecasPonderadas += qtd * peso;
-          receitaItens += r.valor_total || 0;
-        });
+        // Usar referências se existirem, senão usar quantidade_total do pedido
+        if (p.referencias && p.referencias.length > 0) {
+          p.referencias.forEach((r: any) => {
+            const qtd = r.quantidade || 0;
+            const peso = r.peso_producao || 1;
+            totalPecas += qtd;
+            totalPecasPonderadas += qtd * peso;
+            receitaItens += r.valor_total || 0;
+          });
+        } else {
+          // Fallback: usar quantidade_total do pedido diretamente
+          totalPecas = p.quantidade_total || 0;
+          totalPecasPonderadas = p.quantidade_total || 0;
+        }
 
         return {
           id: p.id,
