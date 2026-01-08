@@ -25,14 +25,16 @@ interface CarteiraListaPedidosProps {
   pedidos: PedidoCarteira[];
   mesFormatado: string;
   tipoVisao: "entrega" | "faturamento";
+  defaultOpen?: boolean;
 }
 
 export const CarteiraListaPedidos = ({
   pedidos,
   mesFormatado,
   tipoVisao,
+  defaultOpen = false,
 }: CarteiraListaPedidosProps) => {
-  const [isOpen, setIsOpen] = useState(false);
+  const [isOpen, setIsOpen] = useState(defaultOpen);
 
   const getStatusBadge = (status: string) => {
     switch (status) {
