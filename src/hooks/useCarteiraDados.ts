@@ -18,6 +18,7 @@ export interface OcupacaoMensal {
 export interface PedidoCarteira {
   id: string;
   codigo_pedido: string | null;
+  tipo_peca: string | null;
   cliente_nome: string;
   status_geral: string;
   prazo_final: string;
@@ -50,6 +51,7 @@ export const useCarteiraDados = (
         .select(`
           id,
           codigo_pedido,
+          tipo_peca,
           status_geral,
           prazo_final,
           prioridade,
@@ -88,6 +90,7 @@ export const useCarteiraDados = (
         return {
           id: p.id,
           codigo_pedido: p.codigo_pedido,
+          tipo_peca: p.tipo_peca,
           cliente_nome: p.clientes?.nome || "Cliente não identificado",
           status_geral: p.status_geral,
           prazo_final: p.prazo_final,
