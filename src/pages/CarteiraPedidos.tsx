@@ -34,23 +34,29 @@ export default function CarteiraPedidos() {
     return ocupacoesMensais.find(o => o.mes === mesSelecionado);
   }, [ocupacoesMensais, mesSelecionado]);
 
-  const pedidosMesSelecionado = useMemo(() => {
-    return pedidosFiltrados.filter(p => {
+  const pedidosAgrupadosPorMes = useMemo(() => {
+    const grupos = new Map<string, typeof pedidosFiltrados>();
+    
+    pedidosFiltrados.forEach(pedido => {
       const dataPedido = tipoVisao === "entrega" 
-        ? p.prazo_final 
-        : (p.data_faturamento_prevista || p.mes_faturamento_previsto);
+        ? pedido.prazo_final 
+        : (pedido.data_faturamento_prevista || pedido.mes_faturamento_previsto);
       
-      if (!dataPedido) return false;
+      if (!dataPedido) return;
       
-      // Se for formato YYYY-MM, comparar diretamente
-      if (dataPedido.length === 7) {
-        return dataPedido === mesSelecionado;
+      const mes = dataPedido.length === 7 
+        ? dataPedido 
+        : format(new Date(dataPedido), "yyyy-MM");
+      
+      if (!grupos.has(mes)) {
+        grupos.set(mes, []);
       }
-      
-      // Se for data completa, extrair mês
-      return format(new Date(dataPedido), "yyyy-MM") === mesSelecionado;
+      grupos.get(mes)!.push(pedido);
     });
-  }, [pedidosFiltrados, mesSelecionado, tipoVisao]);
+    
+    // Ordenar por mês cronologicamente
+    return new Map([...grupos.entries()].sort((a, b) => a[0].localeCompare(b[0])));
+  }, [pedidosFiltrados, tipoVisao]);
 
   const formatarMes = (mes: string): string => {
     try {
@@ -149,12 +155,18 @@ export default function CarteiraPedidos() {
         usarPonderado={usarPonderado}
       />
 
-      {/* Lista de Pedidos do Mês */}
-      <CarteiraListaPedidos
-        pedidos={pedidosMesSelecionado}
-        mesFormatado={formatarMes(mesSelecionado)}
-        tipoVisao={tipoVisao}
-      />
+      {/* Lista de Pedidos por Mês */}
+      <div className="space-y-4">
+        {Array.from(pedidosAgrupadosPorMes.entries()).map(([mes, pedidos]) => (
+          <CarteiraListaPedidos
+            key={mes}
+            pedidos={pedidos}
+            mesFormatado={formatarMes(mes)}
+            tipoVisao={tipoVisao}
+            defaultOpen={mes === mesSelecionado}
+          />
+        ))}
+      </div>
 
       {/* Modal de Capacidade */}
       <CapacidadeConfigModal
