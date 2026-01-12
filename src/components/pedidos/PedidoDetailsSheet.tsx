@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import {
   Sheet,
@@ -14,10 +14,11 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CheckCircle2, ChevronRight, Edit2, Save, X, ChevronLeft, ExternalLink, Trash2 } from "lucide-react";
+import { CheckCircle2, ChevronRight, Edit2, Save, X, ChevronLeft, ExternalLink, Trash2, Scissors, Printer } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { QRCodeDisplay } from "./QRCodeDisplay";
+import { FichaCorte } from "./FichaCorte";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -48,6 +49,8 @@ export function PedidoDetailsSheet({
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [showFichaCorte, setShowFichaCorte] = useState(false);
+  const fichaCorteRef = useRef<HTMLDivElement>(null);
   const [editData, setEditData] = useState({
     produto_modelo: "",
     tipo_peca: "",
@@ -627,17 +630,26 @@ export function PedidoDetailsSheet({
             </div>
           </div>
 
-          {/* QR Code */}
-          {pedido.qr_code_ref && (
-            <>
-              <Separator />
+          {/* Botão Ficha de Corte + QR Code */}
+          <Separator />
+          <div className="space-y-3">
+            <Button
+              variant="outline"
+              className="w-full"
+              onClick={() => setShowFichaCorte(true)}
+            >
+              <Scissors className="mr-2 h-4 w-4" />
+              Gerar Ficha de Corte
+            </Button>
+            
+            {pedido.qr_code_ref && (
               <QRCodeDisplay
                 qrCodeRef={pedido.qr_code_ref}
                 produtoModelo={pedido.produto_modelo}
                 pedidoId={pedido.id}
               />
-            </>
-          )}
+            )}
+          </div>
 
           {/* Ações */}
           {pedido.status_geral !== "concluido" && (
@@ -701,6 +713,40 @@ export function PedidoDetailsSheet({
               className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               Excluir Pedido
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Dialog da Ficha de Corte */}
+      <AlertDialog open={showFichaCorte} onOpenChange={setShowFichaCorte}>
+        <AlertDialogContent className="max-w-[90vw] max-h-[90vh] overflow-auto print:max-w-none print:max-h-none print:overflow-visible print:shadow-none print:border-none">
+          <AlertDialogHeader className="print:hidden">
+            <AlertDialogTitle>Ficha de Corte</AlertDialogTitle>
+            <AlertDialogDescription>
+              Visualize e imprima a ficha de corte do pedido.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          
+          <div className="overflow-auto">
+            <FichaCorte
+              ref={fichaCorteRef}
+              produtoModelo={pedido.produto_modelo}
+              tipoPeca={pedido.tipo_peca}
+              tecido={pedido.tecido || ""}
+              codigoPedido={pedido.codigo_pedido || pedido.id.slice(0, 8)}
+              gradeTamanhos={pedido.grade_tamanhos || {}}
+              quantidadeTotal={pedido.quantidade_total}
+              observacoes={pedido.observacoes_pedido}
+              clienteNome={pedido.clientes?.nome || ""}
+            />
+          </div>
+          
+          <AlertDialogFooter className="print:hidden">
+            <AlertDialogCancel>Fechar</AlertDialogCancel>
+            <AlertDialogAction onClick={() => window.print()}>
+              <Printer className="mr-2 h-4 w-4" />
+              Imprimir
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
