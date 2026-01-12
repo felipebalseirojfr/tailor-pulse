@@ -152,3 +152,38 @@ All colors MUST be HSL.
     transform: scale(1.03);
   }
 }
+
+/* Estilos de impressão para Ficha de Corte */
+@media print {
+  @page {
+    size: A4 landscape;
+    margin: 10mm;
+  }
+  
+  body {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+  
+  /* Esconder elementos que não devem aparecer na impressão */
+  .print\\:hidden {
+    display: none !important;
+  }
+  
+  /* Garantir que o conteúdo da ficha seja visível */
+  [role="alertdialog"] {
+    position: static !important;
+    transform: none !important;
+    max-width: none !important;
+    max-height: none !important;
+    overflow: visible !important;
+    background: white !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+  
+  /* Esconder overlay do dialog */
+  [data-radix-dialog-overlay] {
+    display: none !important;
+  }
+}
