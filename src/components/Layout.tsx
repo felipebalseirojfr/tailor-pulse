@@ -18,9 +18,9 @@ import {
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
 import { useUserRoles } from "@/hooks/useUserRoles";
-import { useQRScanNotifications } from "@/hooks/useQRScanNotifications";
 import { Badge } from "@/components/ui/badge";
 import logoJfr from "@/assets/logo-jfr.png";
+import { QRNotificationsListener } from "@/components/QRNotificationsListener";
 
 interface LayoutProps {
   children: ReactNode;
@@ -42,9 +42,6 @@ export default function Layout({ children }: LayoutProps) {
   const location = useLocation();
   const { toast } = useToast();
   const { roles, hasRole, hasAnyRole } = useUserRoles();
-  
-  // Ativar notificações globais de escaneamentos QR
-  useQRScanNotifications();
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
@@ -138,6 +135,9 @@ export default function Layout({ children }: LayoutProps) {
 
   return (
     <div className="flex min-h-screen bg-background">
+      {/* Listener de notificações (isolado) */}
+      <QRNotificationsListener />
+
       {/* Sidebar Desktop */}
       <aside className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
         <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-sidebar-border bg-sidebar px-6 pb-4">
