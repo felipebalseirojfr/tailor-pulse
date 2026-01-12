@@ -174,9 +174,10 @@ export default function NovoPedido() {
       }
       const qrCodeRef = pedidoData[0].qr_code_ref;
 
-      // Gerar QR Code no frontend
+      // Gerar QR Code no frontend - URL aponta diretamente para Edge Function (sem login)
       const QRCode = (await import('qrcode.react')).QRCodeSVG;
-      const qrUrl = `${window.location.origin}/scan/${qrCodeRef}`;
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const qrUrl = `${supabaseUrl}/functions/v1/qr-update-etapa?ref=${qrCodeRef}`;
       
       // Criar elemento temporário para gerar o QR Code
       const container = document.createElement('div');
