@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent } from "@/components/ui/card";
@@ -89,13 +89,37 @@ export default function Pedidos() {
   const [tvOpFilter, setTvOpFilter] = useState("");
   const [tvEtapaFilter, setTvEtapaFilter] = useState<string | null>(null);
 
+  // Refs para controle de debounce e channels
+  const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const channelsRef = useRef<ReturnType<typeof supabase.channel>[]>([]);
+  const isMountedRef = useRef(true);
+
   const handlePedidoDeleted = (pedidoId: string) => {
     setPedidos(prev => prev.filter(p => p.id !== pedidoId));
     setFilteredPedidos(prev => prev.filter(p => p.id !== pedidoId));
   };
 
+  // Função de fetch com debounce para evitar múltiplas chamadas
+  const debouncedFetch = useCallback(() => {
+    if (fetchTimeoutRef.current) {
+      clearTimeout(fetchTimeoutRef.current);
+    }
+    fetchTimeoutRef.current = setTimeout(() => {
+      if (isMountedRef.current) {
+        fetchPedidos();
+      }
+    }, 300);
+  }, []);
+
   useEffect(() => {
+    isMountedRef.current = true;
     fetchPedidos();
+
+    // Limpar channels anteriores
+    channelsRef.current.forEach(channel => {
+      supabase.removeChannel(channel);
+    });
+    channelsRef.current = [];
 
     // Configurar listener de mudanças em tempo real para pedidos
     const pedidosChannel = supabase
@@ -111,11 +135,15 @@ export default function Pedidos() {
           console.log('Mudança detectada na lista de pedidos:', payload);
           // Não buscar novamente em DELETEs, pois já tratamos otimisticamente
           if (payload.eventType !== 'DELETE') {
-            fetchPedidos();
+            debouncedFetch();
           }
         }
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        if (status === 'CHANNEL_ERROR') {
+          console.warn('Erro no channel de pedidos:', err);
+        }
+      });
 
     // Listener para etapas (afeta progresso dos pedidos)
     const etapasChannel = supabase
@@ -129,22 +157,36 @@ export default function Pedidos() {
         },
         (payload) => {
           console.log('Mudança detectada nas etapas:', payload);
-          fetchPedidos();
+          debouncedFetch();
         }
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        if (status === 'CHANNEL_ERROR') {
+          console.warn('Erro no channel de etapas:', err);
+        }
+      });
+
+    channelsRef.current = [pedidosChannel, etapasChannel];
 
     return () => {
-      supabase.removeChannel(pedidosChannel);
-      supabase.removeChannel(etapasChannel);
+      isMountedRef.current = false;
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
+      }
+      channelsRef.current.forEach(channel => {
+        supabase.removeChannel(channel);
+      });
+      channelsRef.current = [];
     };
-  }, []);
+  }, [debouncedFetch]);
 
   useEffect(() => {
     filterPedidos();
   }, [pedidos, searchTerm, statusFilter, marcaFilter, referenciaFilter, opFilter, activeTab]);
 
   const fetchPedidos = async () => {
+    if (!isMountedRef.current) return;
+    
     try {
       const { data, error } = await supabase
         .from("pedidos")
@@ -156,6 +198,7 @@ export default function Pedidos() {
         `);
 
       if (error) throw error;
+      if (!isMountedRef.current) return;
 
       // Ordenar alfabeticamente por modelo do produto
       const sortedData = (data || []).sort((a, b) => {
@@ -167,9 +210,13 @@ export default function Pedidos() {
       setPedidos(sortedData);
     } catch (error) {
       console.error("Erro ao buscar pedidos:", error);
-      toast.error("Erro ao carregar pedidos");
+      if (isMountedRef.current) {
+        toast.error("Erro ao carregar pedidos");
+      }
     } finally {
-      setLoading(false);
+      if (isMountedRef.current) {
+        setLoading(false);
+      }
     }
   };
 
