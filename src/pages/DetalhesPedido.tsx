@@ -28,6 +28,7 @@ import {
   Settings2,
   File,
   Printer,
+  Scissors,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -44,6 +45,7 @@ import { HistoricoEscaneamentos } from "@/components/pedidos/HistoricoEscaneamen
 import { HistoricoAuditoria } from "@/components/pedidos/HistoricoAuditoria";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { ChecklistProducao } from "@/components/pedidos/ChecklistProducao";
+import { FichaCorte } from "@/components/pedidos/FichaCorte";
 
 interface Pedido {
   id: string;
@@ -59,6 +61,8 @@ interface Pedido {
   progresso_percentual: number;
   status_geral: string;
   qr_code_ref: string;
+  grade_tamanhos?: Record<string, number>;
+  observacoes_pedido?: string;
   arquivos: Array<{
     nome: string;
     tipo: string;
@@ -117,7 +121,9 @@ export default function DetalhesPedido() {
   const [loading, setLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [showChecklist, setShowChecklist] = useState(false);
+  const [showFichaCorte, setShowFichaCorte] = useState(false);
   const checklistRef = useRef<HTMLDivElement>(null);
+  const fichaCorteRef = useRef<HTMLDivElement>(null);
 
   const podeEditar = hasAnyRole(['admin', 'commercial']);
 
@@ -588,6 +594,14 @@ export default function DetalhesPedido() {
               Imprimir Checklist
             </Button>
             <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setShowFichaCorte(true)}
+            >
+              <Scissors className="mr-2 h-4 w-4" />
+              Gerar Ficha de Corte
+            </Button>
+            <Button
               variant="destructive"
               size="sm"
               onClick={() => setDeleteDialogOpen(true)}
@@ -886,6 +900,37 @@ export default function DetalhesPedido() {
             <AlertDialogTitle className="sr-only">Checklist de Produção</AlertDialogTitle>
           </AlertDialogHeader>
           <ChecklistProducao ref={checklistRef} pedido={pedido} />
+          <AlertDialogFooter className="print:hidden">
+            <AlertDialogCancel>Fechar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => {
+                window.print();
+              }}
+            >
+              <Printer className="mr-2 h-4 w-4" />
+              Imprimir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Modal da Ficha de Corte */}
+      <AlertDialog open={showFichaCorte} onOpenChange={setShowFichaCorte}>
+        <AlertDialogContent className="max-w-[320mm] max-h-[90vh] overflow-auto print:max-w-none print:max-h-none print:overflow-visible">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="sr-only">Ficha de Corte</AlertDialogTitle>
+          </AlertDialogHeader>
+          <FichaCorte
+            ref={fichaCorteRef}
+            produtoModelo={pedido.produto_modelo}
+            tipoPeca={pedido.tipo_peca}
+            tecido={pedido.tecido}
+            codigoPedido={pedido.codigo_pedido || pedido.id.slice(0, 8)}
+            gradeTamanhos={pedido.grade_tamanhos || {}}
+            quantidadeTotal={pedido.quantidade_total}
+            observacoes={pedido.observacoes_pedido}
+            clienteNome={pedido.clientes?.nome || "Cliente não identificado"}
+          />
           <AlertDialogFooter className="print:hidden">
             <AlertDialogCancel>Fechar</AlertDialogCancel>
             <AlertDialogAction
