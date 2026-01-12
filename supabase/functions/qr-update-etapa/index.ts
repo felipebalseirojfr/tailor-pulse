@@ -6,6 +6,14 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+// Headers robustos para forçar renderização HTML em todos os navegadores/apps
+const htmlHeaders = {
+  'content-type': 'text/html; charset=utf-8',
+  'x-content-type-options': 'nosniff',
+  'content-disposition': 'inline',
+  'cache-control': 'no-store, no-cache, must-revalidate, max-age=0',
+};
+
 // Função para gerar página HTML simples de agradecimento
 function gerarHtmlAgradecimento(sucesso: boolean, mensagem?: string) {
   const cor = sucesso ? '#10b981' : '#ef4444';
@@ -79,14 +87,13 @@ function gerarHtmlAgradecimento(sucesso: boolean, mensagem?: string) {
 }
 
 serve(async (req) => {
+  const userAgent = req.headers.get('user-agent') || 'unknown';
+  console.log('📲 Request recebido:', { method: req.method, url: req.url, userAgent });
+
   // Handle CORS preflight requests
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders });
   }
-
-  const htmlHeaders = {
-    'Content-Type': 'text/html; charset=utf-8'
-  };
 
   try {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
@@ -99,18 +106,20 @@ serve(async (req) => {
     // Validação de entrada
     if (!qrRef || typeof qrRef !== 'string') {
       console.error('❌ QR ref inválido ou ausente');
+      console.log('📄 Respondendo HTML erro');
       return new Response(
         gerarHtmlAgradecimento(false, 'QR Code inválido.'),
-        { status: 400, headers: htmlHeaders }
+        { status: 200, headers: htmlHeaders }
       );
     }
     
     // Validar formato do qrRef
     if (!qrRef.match(/^PROD-[A-Z0-9]{8}$/)) {
       console.error('⚠️ Formato de QR inválido:', qrRef);
+      console.log('📄 Respondendo HTML erro');
       return new Response(
         gerarHtmlAgradecimento(false, 'QR Code não reconhecido.'),
-        { status: 400, headers: htmlHeaders }
+        { status: 200, headers: htmlHeaders }
       );
     }
 
@@ -129,17 +138,19 @@ serve(async (req) => {
 
     if (pedidoError || !pedido) {
       console.error('❌ Pedido não encontrado:', qrRef);
+      console.log('📄 Respondendo HTML erro');
       return new Response(
         gerarHtmlAgradecimento(false, 'Pedido não encontrado.'),
-        { status: 410, headers: htmlHeaders }
+        { status: 200, headers: htmlHeaders }
       );
     }
     
     if (pedido.status_geral === 'cancelado') {
       console.error('⚠️ Pedido cancelado:', qrRef);
+      console.log('📄 Respondendo HTML erro');
       return new Response(
         gerarHtmlAgradecimento(false, 'Pedido cancelado.'),
-        { status: 403, headers: htmlHeaders }
+        { status: 200, headers: htmlHeaders }
       );
     }
 
@@ -161,9 +172,10 @@ serve(async (req) => {
 
     if (etapasError || !etapas || etapas.length === 0) {
       console.error('❌ Erro ao buscar etapas:', etapasError);
+      console.log('📄 Respondendo HTML erro');
       return new Response(
         gerarHtmlAgradecimento(false, 'Erro no sistema.'),
-        { status: 500, headers: htmlHeaders }
+        { status: 200, headers: htmlHeaders }
       );
     }
 
@@ -193,11 +205,12 @@ serve(async (req) => {
           device_fingerprint: clientIp,
           etapa_atualizada: primeiraEtapa.tipo_etapa,
           fornecedor_nome: 'Sistema',
-          user_agent: req.headers.get('user-agent') || 'unknown',
+          user_agent: userAgent,
           ip_address: clientIp
         });
 
       console.log('✅ Produção iniciada');
+      console.log('📄 Respondendo HTML sucesso');
 
       return new Response(
         gerarHtmlAgradecimento(true),
@@ -211,6 +224,7 @@ serve(async (req) => {
 
     if (!etapaAtual) {
       console.log('✅ Todas as etapas já concluídas');
+      console.log('📄 Respondendo HTML sucesso');
       return new Response(
         gerarHtmlAgradecimento(true),
         { status: 200, headers: htmlHeaders }
@@ -249,11 +263,12 @@ serve(async (req) => {
         device_fingerprint: clientIp,
         etapa_atualizada: etapaAtual.tipo_etapa,
         fornecedor_nome: 'Fornecedor',
-        user_agent: req.headers.get('user-agent') || 'unknown',
+        user_agent: userAgent,
         ip_address: clientIp
       });
 
     console.log('✅ Etapa avançada:', etapaAtual.tipo_etapa);
+    console.log('📄 Respondendo HTML sucesso');
 
     return new Response(
       gerarHtmlAgradecimento(true),
@@ -262,9 +277,10 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('❌ Erro:', error);
+    console.log('📄 Respondendo HTML erro');
     return new Response(
       gerarHtmlAgradecimento(false, 'Erro inesperado.'),
-      { status: 500, headers: htmlHeaders }
+      { status: 200, headers: htmlHeaders }
     );
   }
 });
