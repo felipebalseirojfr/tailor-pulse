@@ -46,6 +46,7 @@ export default function NovoPedido() {
     grade_tamanhos: {} as Record<string, number>,
     preco_venda: "",
     composicao_tecido: "",
+    observacoes_pedido: "",
   });
 
   const composicoesComuns = [
@@ -141,6 +142,7 @@ export default function NovoPedido() {
           status_geral: 'aguardando_inicio',
           preco_venda: formData.preco_venda ? parseFloat(formData.preco_venda) : null,
           composicao_tecido: formData.composicao_tecido || null,
+          observacoes_pedido: formData.observacoes_pedido || null,
         },
       ]).select();
 
@@ -456,6 +458,23 @@ export default function NovoPedido() {
                   </SelectContent>
                 </Select>
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="observacoes_pedido">Observações</Label>
+              <Textarea
+                id="observacoes_pedido"
+                name="observacoes_pedido"
+                value={formData.observacoes_pedido}
+                onChange={handleChange}
+                placeholder="Adicione informações adicionais sobre o pedido..."
+                maxLength={300}
+                className="resize-none"
+                rows={3}
+              />
+              <p className="text-xs text-muted-foreground text-right">
+                {formData.observacoes_pedido.length}/300 caracteres
+              </p>
             </div>
 
             <div className="space-y-3">
