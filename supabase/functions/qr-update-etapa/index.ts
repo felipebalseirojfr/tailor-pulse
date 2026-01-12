@@ -9,16 +9,21 @@ const corsHeaders = {
 // Função para gerar página HTML simples de agradecimento
 function gerarHtmlAgradecimento(sucesso: boolean, mensagem?: string) {
   const cor = sucesso ? '#10b981' : '#ef4444';
-  const icone = sucesso ? '✓' : '✕';
   const titulo = sucesso ? 'Obrigado!' : 'Erro';
   const texto = sucesso 
     ? 'Etapa atualizada com sucesso.' 
     : (mensagem || 'Ocorreu um erro ao processar.');
+  
+  // SVG do ícone de sucesso ou erro
+  const iconeSvg = sucesso 
+    ? '<svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>'
+    : '<svg width="50" height="50" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>';
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
   <meta charset="UTF-8">
+  <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>${titulo}</title>
   <style>
@@ -46,8 +51,6 @@ function gerarHtmlAgradecimento(sucesso: boolean, mensagem?: string) {
       height: 100px;
       border-radius: 50%;
       background: ${cor};
-      color: white;
-      font-size: 50px;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -67,7 +70,7 @@ function gerarHtmlAgradecimento(sucesso: boolean, mensagem?: string) {
 </head>
 <body>
   <div class="card">
-    <div class="icon">${icone}</div>
+    <div class="icon">${iconeSvg}</div>
     <h1>${titulo}</h1>
     <p class="mensagem">${texto}</p>
   </div>
@@ -82,7 +85,6 @@ serve(async (req) => {
   }
 
   const htmlHeaders = {
-    ...corsHeaders,
     'Content-Type': 'text/html; charset=utf-8'
   };
 
