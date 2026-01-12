@@ -6,27 +6,153 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-// URL base do app (será usada para redirect)
-const getAppBaseUrl = () => {
-  return 'https://pnqkollfbuqlrqvodrpt.lovableproject.com';
-};
+// HTML simples para popup de sucesso
+const successHtml = `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sucesso</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .popup {
+      background: white;
+      border-radius: 20px;
+      padding: 40px 30px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 320px;
+      width: 100%;
+    }
+    .icon {
+      width: 80px;
+      height: 80px;
+      background: #10b981;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
+    .icon svg {
+      width: 45px;
+      height: 45px;
+      fill: white;
+    }
+    h1 {
+      color: #1f2937;
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+    p {
+      color: #6b7280;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+    .close-text {
+      margin-top: 25px;
+      font-size: 13px;
+      color: #9ca3af;
+    }
+  </style>
+</head>
+<body>
+  <div class="popup">
+    <div class="icon">
+      <svg viewBox="0 0 24 24"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+    </div>
+    <h1>Sucesso!</h1>
+    <p>Etapa atualizada com sucesso.</p>
+    <p class="close-text">Você pode fechar esta página.</p>
+  </div>
+</body>
+</html>`;
 
-// Função para criar redirect URL
-const createRedirectUrl = (sucesso: boolean, mensagem?: string) => {
-  const baseUrl = getAppBaseUrl();
-  if (sucesso) {
-    return `${baseUrl}/scan-resultado?status=sucesso`;
-  } else {
-    const msg = encodeURIComponent(mensagem || 'Erro ao processar QR Code.');
-    return `${baseUrl}/scan-resultado?status=erro&msg=${msg}`;
-  }
-};
+// HTML simples para popup de erro
+const errorHtml = (mensagem: string) => `<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Erro</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .popup {
+      background: white;
+      border-radius: 20px;
+      padding: 40px 30px;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      max-width: 320px;
+      width: 100%;
+    }
+    .icon {
+      width: 80px;
+      height: 80px;
+      background: #ef4444;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+    }
+    .icon svg {
+      width: 45px;
+      height: 45px;
+      fill: white;
+    }
+    h1 {
+      color: #1f2937;
+      font-size: 24px;
+      margin-bottom: 10px;
+    }
+    p {
+      color: #6b7280;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+    .close-text {
+      margin-top: 25px;
+      font-size: 13px;
+      color: #9ca3af;
+    }
+  </style>
+</head>
+<body>
+  <div class="popup">
+    <div class="icon">
+      <svg viewBox="0 0 24 24"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+    </div>
+    <h1>Erro</h1>
+    <p>${mensagem}</p>
+    <p class="close-text">Você pode fechar esta página.</p>
+  </div>
+</body>
+</html>`;
 
-// Headers para redirect
-const redirectHeaders = (location: string) => ({
-  'Location': location,
+// Headers para resposta HTML
+const htmlHeaders = {
+  'Content-Type': 'text/html; charset=utf-8',
   'Cache-Control': 'no-store, no-cache, must-revalidate, max-age=0',
-});
+};
 
 serve(async (req) => {
   const userAgent = req.headers.get('user-agent') || 'unknown';
@@ -48,22 +174,18 @@ serve(async (req) => {
     // Validação de entrada
     if (!qrRef || typeof qrRef !== 'string') {
       console.error('❌ QR ref inválido ou ausente');
-      const redirectUrl = createRedirectUrl(false, 'QR Code inválido.');
-      console.log('🔄 Redirect para:', redirectUrl);
-      return new Response(null, { 
-        status: 302, 
-        headers: redirectHeaders(redirectUrl) 
+      return new Response(errorHtml('QR Code inválido.'), { 
+        status: 400, 
+        headers: htmlHeaders 
       });
     }
     
     // Validar formato do qrRef
     if (!qrRef.match(/^PROD-[A-Z0-9]{8}$/)) {
       console.error('⚠️ Formato de QR inválido:', qrRef);
-      const redirectUrl = createRedirectUrl(false, 'QR Code não reconhecido.');
-      console.log('🔄 Redirect para:', redirectUrl);
-      return new Response(null, { 
-        status: 302, 
-        headers: redirectHeaders(redirectUrl) 
+      return new Response(errorHtml('QR Code não reconhecido.'), { 
+        status: 400, 
+        headers: htmlHeaders 
       });
     }
 
@@ -82,21 +204,17 @@ serve(async (req) => {
 
     if (pedidoError || !pedido) {
       console.error('❌ Pedido não encontrado:', qrRef);
-      const redirectUrl = createRedirectUrl(false, 'Pedido não encontrado.');
-      console.log('🔄 Redirect para:', redirectUrl);
-      return new Response(null, { 
-        status: 302, 
-        headers: redirectHeaders(redirectUrl) 
+      return new Response(errorHtml('Pedido não encontrado.'), { 
+        status: 404, 
+        headers: htmlHeaders 
       });
     }
     
     if (pedido.status_geral === 'cancelado') {
       console.error('⚠️ Pedido cancelado:', qrRef);
-      const redirectUrl = createRedirectUrl(false, 'Pedido cancelado.');
-      console.log('🔄 Redirect para:', redirectUrl);
-      return new Response(null, { 
-        status: 302, 
-        headers: redirectHeaders(redirectUrl) 
+      return new Response(errorHtml('Pedido cancelado.'), { 
+        status: 400, 
+        headers: htmlHeaders 
       });
     }
 
@@ -118,11 +236,9 @@ serve(async (req) => {
 
     if (etapasError || !etapas || etapas.length === 0) {
       console.error('❌ Erro ao buscar etapas:', etapasError);
-      const redirectUrl = createRedirectUrl(false, 'Erro no sistema.');
-      console.log('🔄 Redirect para:', redirectUrl);
-      return new Response(null, { 
-        status: 302, 
-        headers: redirectHeaders(redirectUrl) 
+      return new Response(errorHtml('Erro no sistema.'), { 
+        status: 500, 
+        headers: htmlHeaders 
       });
     }
 
@@ -157,11 +273,9 @@ serve(async (req) => {
         });
 
       console.log('✅ Produção iniciada');
-      const redirectUrl = createRedirectUrl(true);
-      console.log('🔄 Redirect para:', redirectUrl);
-      return new Response(null, { 
-        status: 302, 
-        headers: redirectHeaders(redirectUrl) 
+      return new Response(successHtml, { 
+        status: 200, 
+        headers: htmlHeaders 
       });
     }
 
@@ -170,11 +284,9 @@ serve(async (req) => {
 
     if (!etapaAtual) {
       console.log('✅ Todas as etapas já concluídas');
-      const redirectUrl = createRedirectUrl(true);
-      console.log('🔄 Redirect para:', redirectUrl);
-      return new Response(null, { 
-        status: 302, 
-        headers: redirectHeaders(redirectUrl) 
+      return new Response(successHtml, { 
+        status: 200, 
+        headers: htmlHeaders 
       });
     }
 
@@ -215,20 +327,16 @@ serve(async (req) => {
       });
 
     console.log('✅ Etapa avançada:', etapaAtual.tipo_etapa);
-    const redirectUrl = createRedirectUrl(true);
-    console.log('🔄 Redirect para:', redirectUrl);
-    return new Response(null, { 
-      status: 302, 
-      headers: redirectHeaders(redirectUrl) 
+    return new Response(successHtml, { 
+      status: 200, 
+      headers: htmlHeaders 
     });
 
   } catch (error) {
     console.error('❌ Erro:', error);
-    const redirectUrl = createRedirectUrl(false, 'Erro inesperado.');
-    console.log('🔄 Redirect para:', redirectUrl);
-    return new Response(null, { 
-      status: 302, 
-      headers: redirectHeaders(redirectUrl) 
+    return new Response(errorHtml('Erro inesperado.'), { 
+      status: 500, 
+      headers: htmlHeaders 
     });
   }
 });
