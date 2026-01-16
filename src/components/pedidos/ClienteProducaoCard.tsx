@@ -25,6 +25,7 @@ interface Pedido {
   updated_at: string;
   tecido?: string;
   aviamentos?: string[];
+  grade_tamanhos?: Record<string, number> | null;
   clientes: {
     nome: string;
   };
@@ -43,6 +44,19 @@ interface Pedido {
     observacoes?: string;
   }>;
 }
+
+// Função para calcular quantidade total a partir da grade de tamanhos
+const calcularQuantidadeTotal = (pedido: Pedido): number => {
+  if (pedido.grade_tamanhos && typeof pedido.grade_tamanhos === 'object') {
+    const valores = Object.values(pedido.grade_tamanhos).filter(
+      (v): v is number => typeof v === 'number'
+    );
+    if (valores.length > 0) {
+      return valores.reduce((acc, val) => acc + val, 0);
+    }
+  }
+  return pedido.quantidade_total;
+};
 
 interface ClienteProducaoCardProps {
   cliente: string;
@@ -193,7 +207,7 @@ export function ClienteProducaoCard({ cliente, producoes, onViewProducao }: Clie
                       <div className="grid grid-cols-3 gap-4 text-sm">
                         <div>
                           <p className="text-muted-foreground text-xs">Quantidade</p>
-                          <p className="font-medium">{producao.quantidade_total} un</p>
+                          <p className="font-medium">{calcularQuantidadeTotal(producao)} un</p>
                         </div>
                         <div>
                           <p className="text-muted-foreground text-xs">Etapa Atual</p>
