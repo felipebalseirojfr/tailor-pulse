@@ -14,7 +14,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CheckCircle2, ChevronRight, Edit2, Save, X, ChevronLeft, ExternalLink, Trash2, Scissors, Printer } from "lucide-react";
+import { CheckCircle2, ChevronRight, Edit2, Save, X, ChevronLeft, ExternalLink, Trash2, Scissors, Printer, Copy } from "lucide-react";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { QRCodeDisplay } from "./QRCodeDisplay";
@@ -337,7 +337,20 @@ export function PedidoDetailsSheet({
           <div className="flex flex-col gap-3">
             <div className="flex items-center justify-between">
               <SheetTitle>Detalhes do Pedido</SheetTitle>
-              <div className="flex gap-2">
+              <div className="flex items-center gap-2">
+                {/* Badge da OP com funcionalidade de cópia */}
+                <Badge 
+                  variant="outline" 
+                  className="font-mono text-xs cursor-pointer hover:bg-primary/10 transition-colors flex items-center gap-1"
+                  onClick={() => {
+                    const op = pedido.codigo_pedido || pedido.id.slice(0, 8);
+                    navigator.clipboard.writeText(op);
+                    toast.success("OP copiada!", { description: op });
+                  }}
+                >
+                  OP:{pedido.codigo_pedido || pedido.id.slice(0, 8)}
+                  <Copy className="h-3 w-3" />
+                </Badge>
                 <Button 
                   size="sm" 
                   variant="outline" 
