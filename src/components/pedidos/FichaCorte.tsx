@@ -46,6 +46,12 @@ export const FichaCorte = forwardRef<HTMLDivElement, FichaCorteProps>(
       return (indexA === -1 ? 999 : indexA) - (indexB === -1 ? 999 : indexB);
     });
 
+    // Calcular o total real baseado na grade de tamanhos
+    const totalCalculado = tamanhosComQuantidade.reduce(
+      (acc, [_, qtd]) => acc + qtd,
+      0
+    );
+
     return (
       <div
         ref={ref}
@@ -98,7 +104,7 @@ export const FichaCorte = forwardRef<HTMLDivElement, FichaCorteProps>(
             </div>
             <div className="flex">
               <span className="font-bold w-32">Qtd. Total:</span>
-              <span className="flex-1 font-bold text-lg">{quantidadeTotal} peças</span>
+              <span className="flex-1 font-bold text-lg">{totalCalculado} peças</span>
             </div>
             <div className="flex col-span-2">
               <span className="font-bold w-32">Tecido(s):</span>
@@ -147,7 +153,7 @@ export const FichaCorte = forwardRef<HTMLDivElement, FichaCorteProps>(
                       </td>
                     ))}
                     <td className="border-2 border-black bg-gray-100 px-4 py-3 text-center text-xl font-bold">
-                      {quantidadeTotal}
+                      {totalCalculado}
                     </td>
                   </tr>
                 </tbody>
