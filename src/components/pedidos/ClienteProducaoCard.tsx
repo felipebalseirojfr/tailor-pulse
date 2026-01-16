@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, Package, AlertCircle } from "lucide-react";
+import { ChevronRight, Package, AlertCircle, Copy } from "lucide-react";
 import { useState } from "react";
 import {
   Dialog,
@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Progress } from "@/components/ui/progress";
-
+import { toast } from "sonner";
 interface Pedido {
   id: string;
   produto_modelo: string;
@@ -26,6 +26,7 @@ interface Pedido {
   tecido?: string;
   aviamentos?: string[];
   grade_tamanhos?: Record<string, number> | null;
+  codigo_pedido?: string | null;
   clientes: {
     nome: string;
   };
@@ -198,8 +199,18 @@ export function ClienteProducaoCard({ cliente, producoes, onViewProducao }: Clie
                           {isAtrasado && (
                             <Badge variant="destructive" className="text-xs">Atrasado</Badge>
                           )}
-                          <Badge variant="outline" className="font-mono text-xs">
-                            #{producao.id.slice(0, 8)}
+                          <Badge 
+                            variant="outline" 
+                            className="font-mono text-xs cursor-pointer hover:bg-primary/10 transition-colors flex items-center gap-1"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              const op = producao.codigo_pedido || producao.id.slice(0, 8);
+                              navigator.clipboard.writeText(op);
+                              toast.success("OP copiada!", { description: op });
+                            }}
+                          >
+                            OP:{producao.codigo_pedido || producao.id.slice(0, 8)}
+                            <Copy className="h-3 w-3" />
                           </Badge>
                         </div>
                       </div>
