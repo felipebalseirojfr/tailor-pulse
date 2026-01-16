@@ -1,49 +1,100 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { QRCodeSVG } from "qrcode.react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Download, Printer, QrCode } from "lucide-react";
+import { Download, Printer, QrCode, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 
 interface QRCodeDisplayProps {
   qrCodeRef: string;
   produtoModelo: string;
   pedidoId: string;
+  codigoPedido?: string;
 }
 
-export function QRCodeDisplay({ qrCodeRef, produtoModelo, pedidoId }: QRCodeDisplayProps) {
+export function QRCodeDisplay({ qrCodeRef, produtoModelo, pedidoId, codigoPedido }: QRCodeDisplayProps) {
+  const [isDownloading, setIsDownloading] = useState(false);
+  
   // URL pública para atualização automática via QR Code
   const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
   const qrUrl = `${supabaseUrl}/functions/v1/qr-update-etapa?ref=${qrCodeRef}`;
 
   console.log('🔗 QR Code URL para atualização automática:', qrUrl);
 
-  const handleDownload = () => {
-    const svg = document.getElementById('qr-code-svg') as unknown as SVGElement;
-    if (!svg) return;
+  const handleDownload = async () => {
+    setIsDownloading(true);
+    try {
+      const html2canvas = (await import('html2canvas')).default;
+      
+      // Criar container temporário com layout completo
+      const container = document.createElement('div');
+      container.style.position = 'absolute';
+      container.style.left = '-9999px';
+      container.style.background = 'white';
+      container.style.width = '400px';
+      container.style.padding = '32px';
+      container.style.fontFamily = 'system-ui, -apple-system, sans-serif';
+      document.body.appendChild(container);
 
-    const svgData = new XMLSerializer().serializeToString(svg);
-    const canvas = document.createElement('canvas');
-    const ctx = canvas.getContext('2d');
-    const img = new Image();
+      // Obter o SVG do QR Code
+      const svgElement = document.getElementById('qr-code-svg');
+      if (!svgElement) {
+        toast.error('Erro ao gerar imagem do QR Code');
+        setIsDownloading(false);
+        return;
+      }
 
-    canvas.width = 512;
-    canvas.height = 512;
+      // Criar o layout com QR Code + Informações
+      container.innerHTML = `
+        <div style="text-align: center;">
+          <h1 style="font-size: 24px; font-weight: bold; margin: 0 0 8px 0; color: #1a1a1a;">
+            QR Code de Rastreamento
+          </h1>
+          <p style="font-size: 18px; color: #333; margin: 0 0 4px 0; font-weight: 600;">
+            ${produtoModelo}
+          </p>
+          <p style="font-size: 14px; color: #666; margin: 0 0 24px 0;">
+            OP: <strong style="color: #1a1a1a;">${codigoPedido || qrCodeRef}</strong>
+          </p>
+          <div style="display: inline-block; padding: 16px; background: white; border: 2px solid #e5e7eb; border-radius: 12px; margin-bottom: 16px;">
+            ${svgElement.outerHTML}
+          </div>
+          <p style="font-size: 12px; color: #888; margin: 16px 0 0 0;">
+            Referência: ${qrCodeRef}
+          </p>
+          <p style="font-size: 10px; color: #aaa; margin: 8px 0 0 0;">
+            Escaneie para atualizar o status da produção
+          </p>
+        </div>
+      `;
 
-    img.onload = () => {
-      ctx?.drawImage(img, 0, 0);
-      canvas.toBlob((blob) => {
-        if (blob) {
-          const url = URL.createObjectURL(blob);
-          const link = document.createElement('a');
-          link.href = url;
-          link.download = `qrcode-${qrCodeRef}.png`;
-          link.click();
-          URL.revokeObjectURL(url);
-        }
+      // Aguardar renderização
+      await new Promise(resolve => setTimeout(resolve, 100));
+
+      // Converter para imagem
+      const canvas = await html2canvas(container, {
+        scale: 2,
+        backgroundColor: '#ffffff',
+        useCORS: true,
       });
-    };
 
-    img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+      // Download
+      const link = document.createElement('a');
+      link.href = canvas.toDataURL('image/png');
+      link.download = `QRCode_${codigoPedido || qrCodeRef}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+
+      // Limpar
+      document.body.removeChild(container);
+      toast.success('QR Code baixado com sucesso!');
+    } catch (error) {
+      console.error('Erro ao baixar QR Code:', error);
+      toast.error('Erro ao baixar QR Code');
+    } finally {
+      setIsDownloading(false);
+    }
   };
 
   const handlePrint = () => {
@@ -145,9 +196,14 @@ export function QRCodeDisplay({ qrCodeRef, produtoModelo, pedidoId }: QRCodeDisp
             onClick={handleDownload}
             variant="outline"
             className="flex-1"
+            disabled={isDownloading}
           >
-            <Download className="h-4 w-4 mr-2" />
-            Baixar
+            {isDownloading ? (
+              <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4 mr-2" />
+            )}
+            {isDownloading ? 'Baixando...' : 'Baixar'}
           </Button>
           <Button
             onClick={handlePrint}

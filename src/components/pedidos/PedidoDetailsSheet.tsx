@@ -660,6 +660,7 @@ export function PedidoDetailsSheet({
                 qrCodeRef={pedido.qr_code_ref}
                 produtoModelo={pedido.produto_modelo}
                 pedidoId={pedido.id}
+                codigoPedido={pedido.codigo_pedido || undefined}
               />
             )}
           </div>
