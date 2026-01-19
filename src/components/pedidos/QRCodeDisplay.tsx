@@ -24,18 +24,6 @@ export function QRCodeDisplay({ qrCodeRef, produtoModelo, pedidoId, codigoPedido
   const handleDownload = async () => {
     setIsDownloading(true);
     try {
-      const html2canvas = (await import('html2canvas')).default;
-      
-      // Criar container temporário com layout completo
-      const container = document.createElement('div');
-      container.style.position = 'absolute';
-      container.style.left = '-9999px';
-      container.style.background = 'white';
-      container.style.width = '400px';
-      container.style.padding = '32px';
-      container.style.fontFamily = 'system-ui, -apple-system, sans-serif';
-      document.body.appendChild(container);
-
       // Obter o SVG do QR Code
       const svgElement = document.getElementById('qr-code-svg');
       if (!svgElement) {
@@ -44,50 +32,99 @@ export function QRCodeDisplay({ qrCodeRef, produtoModelo, pedidoId, codigoPedido
         return;
       }
 
-      // Criar o layout com QR Code + Informações
-      container.innerHTML = `
-        <div style="text-align: center;">
-          <h1 style="font-size: 24px; font-weight: bold; margin: 0 0 8px 0; color: #1a1a1a;">
-            QR Code de Rastreamento
-          </h1>
-          <p style="font-size: 18px; color: #333; margin: 0 0 4px 0; font-weight: 600;">
-            ${produtoModelo}
-          </p>
-          <p style="font-size: 14px; color: #666; margin: 0 0 24px 0;">
-            OP: <strong style="color: #1a1a1a;">${codigoPedido || qrCodeRef}</strong>
-          </p>
-          <div style="display: inline-block; padding: 16px; background: white; border: 2px solid #e5e7eb; border-radius: 12px; margin-bottom: 16px;">
-            ${svgElement.outerHTML}
-          </div>
-          <p style="font-size: 12px; color: #888; margin: 16px 0 0 0;">
-            Referência: ${qrCodeRef}
-          </p>
-          <p style="font-size: 10px; color: #aaa; margin: 8px 0 0 0;">
-            Escaneie para atualizar o status da produção
-          </p>
-        </div>
-      `;
-
-      // Aguardar renderização
-      await new Promise(resolve => setTimeout(resolve, 100));
-
-      // Converter para imagem
-      const canvas = await html2canvas(container, {
-        scale: 2,
-        backgroundColor: '#ffffff',
-        useCORS: true,
+      // Converter SVG para imagem PNG primeiro
+      const svgData = new XMLSerializer().serializeToString(svgElement);
+      const svgBlob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+      const svgUrl = URL.createObjectURL(svgBlob);
+      
+      // Criar imagem a partir do SVG
+      const img = new Image();
+      await new Promise<void>((resolve, reject) => {
+        img.onload = () => resolve();
+        img.onerror = reject;
+        img.src = svgUrl;
       });
+
+      // Criar canvas para o QR Code
+      const qrCanvas = document.createElement('canvas');
+      qrCanvas.width = img.width;
+      qrCanvas.height = img.height;
+      const qrCtx = qrCanvas.getContext('2d');
+      if (!qrCtx) {
+        toast.error('Erro ao processar QR Code');
+        setIsDownloading(false);
+        return;
+      }
+      qrCtx.drawImage(img, 0, 0);
+      URL.revokeObjectURL(svgUrl);
+
+      // Criar canvas final com layout completo
+      const finalCanvas = document.createElement('canvas');
+      const width = 400;
+      const height = 480;
+      finalCanvas.width = width * 2; // Scale 2x for quality
+      finalCanvas.height = height * 2;
+      const ctx = finalCanvas.getContext('2d');
+      if (!ctx) {
+        toast.error('Erro ao criar imagem');
+        setIsDownloading(false);
+        return;
+      }
+
+      // Escalar para qualidade
+      ctx.scale(2, 2);
+
+      // Fundo branco
+      ctx.fillStyle = '#ffffff';
+      ctx.fillRect(0, 0, width, height);
+
+      // Título
+      ctx.fillStyle = '#1a1a1a';
+      ctx.font = 'bold 22px system-ui, -apple-system, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('QR Code de Rastreamento', width / 2, 40);
+
+      // Produto/Modelo
+      ctx.fillStyle = '#333333';
+      ctx.font = '600 16px system-ui, -apple-system, sans-serif';
+      ctx.fillText(produtoModelo, width / 2, 68);
+
+      // OP
+      ctx.fillStyle = '#666666';
+      ctx.font = '14px system-ui, -apple-system, sans-serif';
+      ctx.fillText(`OP: ${codigoPedido || qrCodeRef}`, width / 2, 92);
+
+      // Borda do QR Code
+      const qrSize = 200;
+      const qrX = (width - qrSize - 32) / 2;
+      const qrY = 110;
+      ctx.strokeStyle = '#e5e7eb';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.roundRect(qrX, qrY, qrSize + 32, qrSize + 32, 12);
+      ctx.stroke();
+
+      // QR Code
+      ctx.drawImage(qrCanvas, qrX + 16, qrY + 16, qrSize, qrSize);
+
+      // Referência
+      ctx.fillStyle = '#888888';
+      ctx.font = '12px system-ui, -apple-system, sans-serif';
+      ctx.fillText(`Referência: ${qrCodeRef}`, width / 2, qrY + qrSize + 60);
+
+      // Instrução
+      ctx.fillStyle = '#aaaaaa';
+      ctx.font = '10px system-ui, -apple-system, sans-serif';
+      ctx.fillText('Escaneie para atualizar o status da produção', width / 2, qrY + qrSize + 80);
 
       // Download
       const link = document.createElement('a');
-      link.href = canvas.toDataURL('image/png');
+      link.href = finalCanvas.toDataURL('image/png');
       link.download = `QRCode_${codigoPedido || qrCodeRef}.png`;
       document.body.appendChild(link);
       link.click();
       document.body.removeChild(link);
 
-      // Limpar
-      document.body.removeChild(container);
       toast.success('QR Code baixado com sucesso!');
     } catch (error) {
       console.error('Erro ao baixar QR Code:', error);
