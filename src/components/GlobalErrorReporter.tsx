@@ -8,9 +8,19 @@ import { toast } from "sonner";
 export function GlobalErrorReporter() {
   useEffect(() => {
     const onError = (event: ErrorEvent) => {
+      const message = String(event.error?.message || event.message || "");
+
+      // Ruído comum do browser quando há muitos ResizeObservers (Radix/Charts/etc.).
+      // Não é um crash do app e estava gerando spam de toasts e pânico de "tela branca".
+      if (message.includes("ResizeObserver loop completed")) {
+        // Mantém um log leve só para diagnóstico.
+        console.debug("[window.onerror:ResizeObserver]", message);
+        return;
+      }
+
       console.error("[window.onerror]", event.error || event.message);
       toast.error("Erro inesperado", {
-        description: String(event.error?.message || event.message || "Erro desconhecido"),
+        description: message || "Erro desconhecido",
         duration: 8000,
       });
     };
