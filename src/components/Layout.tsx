@@ -38,36 +38,62 @@ export default function Layout({ children }: LayoutProps) {
   const [loading, setLoading] = useState(true);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [userName, setUserName] = useState<string>("");
+  const [authRedirecting, setAuthRedirecting] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
   const { roles, hasRole, hasAnyRole } = useUserRoles();
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setLoading(false);
-      if (!session && location.pathname !== "/auth") {
-        navigate("/auth");
+    let cancelled = false;
+
+    const syncSession = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        if (cancelled) return;
+        setSession(session);
+        setLoading(false);
+
+        if (!session && location.pathname !== "/auth") {
+          setAuthRedirecting(true);
+          navigate("/auth", { replace: true });
+        } else {
+          setAuthRedirecting(false);
+        }
+
+        if (session?.user) {
+          fetchUserName(session.user.id);
+        }
+      } catch {
+        if (cancelled) return;
+        setLoading(false);
+        setAuthRedirecting(true);
+        if (location.pathname !== "/auth") {
+          navigate("/auth", { replace: true });
+        }
       }
-      if (session?.user) {
-        fetchUserName(session.user.id);
+    };
+
+    syncSession();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, nextSession) => {
+      if (cancelled) return;
+      setSession(nextSession);
+      if (!nextSession && location.pathname !== "/auth") {
+        setAuthRedirecting(true);
+        navigate("/auth", { replace: true });
+      } else {
+        setAuthRedirecting(false);
+      }
+      if (nextSession?.user) {
+        fetchUserName(nextSession.user.id);
       }
     });
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((_event, session) => {
-      setSession(session);
-      if (!session && location.pathname !== "/auth") {
-        navigate("/auth");
-      }
-      if (session?.user) {
-        fetchUserName(session.user.id);
-      }
-    });
-
-    return () => subscription.unsubscribe();
+    return () => {
+      cancelled = true;
+      subscription.unsubscribe();
+    };
   }, [navigate, location.pathname]);
 
   const fetchUserName = async (userId: string) => {
@@ -99,7 +125,20 @@ export default function Layout({ children }: LayoutProps) {
   }
 
   if (!session && location.pathname !== "/auth") {
-    return null;
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-background px-6">
+        <div className="max-w-md text-center space-y-3">
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+          <h1 className="text-lg font-semibold">Sessão desconectada</h1>
+          <p className="text-sm text-muted-foreground">
+            {authRedirecting ? "Redirecionando para o login..." : "Sua sessão expirou. Faça login novamente."}
+          </p>
+          <Button onClick={() => navigate("/auth", { replace: true })}>
+            Ir para login
+          </Button>
+        </div>
+      </div>
+    );
   }
 
   if (location.pathname === "/auth") {
