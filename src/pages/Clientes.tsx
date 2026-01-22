@@ -56,7 +56,7 @@ export default function Clientes() {
 
     // Configurar listener de mudanças em tempo real
     const clientesChannel = supabase
-      .channel('clientes-changes')
+      .channel('clientes-changes-page')
       .on(
         'postgres_changes',
         {

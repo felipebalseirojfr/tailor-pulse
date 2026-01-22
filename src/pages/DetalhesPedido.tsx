@@ -248,7 +248,7 @@ export default function DetalhesPedido() {
 
     // Configurar listener de mudanças em tempo real
     const etapasChannel = supabase
-      .channel('etapas-changes')
+      .channel(`detalhes-pedido-etapas-${id}`)
       .on(
         'postgres_changes',
         {
@@ -265,7 +265,7 @@ export default function DetalhesPedido() {
       .subscribe();
 
     const pedidosChannel = supabase
-      .channel('pedidos-changes')
+      .channel(`detalhes-pedido-${id}`)
       .on(
         'postgres_changes',
         {

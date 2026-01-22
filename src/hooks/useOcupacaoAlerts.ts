@@ -88,7 +88,7 @@ export const useOcupacaoAlerts = () => {
   // Escutar mudanças em tempo real em pedidos
   useEffect(() => {
     const channel = supabase
-      .channel("ocupacao-changes")
+      .channel("ocupacao-changes-hook")
       .on(
         "postgres_changes",
         {

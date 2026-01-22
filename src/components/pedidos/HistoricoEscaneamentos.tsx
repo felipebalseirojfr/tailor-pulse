@@ -39,7 +39,7 @@ export function HistoricoEscaneamentos({ pedidoId }: HistoricoEscaneamentosProps
 
     // Subscribe to realtime updates
     const channel = supabase
-      .channel('escaneamentos-changes')
+      .channel(`escaneamentos-changes-${pedidoId}`)
       .on(
         'postgres_changes',
         {

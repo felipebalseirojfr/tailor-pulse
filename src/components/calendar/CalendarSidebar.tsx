@@ -29,7 +29,7 @@ export function CalendarSidebar() {
     fetchPedidos();
 
     const channel = supabase
-      .channel('pedidos-changes')
+      .channel('calendar-pedidos-changes')
       .on(
         'postgres_changes',
         {
