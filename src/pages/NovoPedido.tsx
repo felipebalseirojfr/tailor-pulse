@@ -174,57 +174,50 @@ export default function NovoPedido() {
       }
       const qrCodeRef = pedidoData[0].qr_code_ref;
 
-      // Gerar QR Code no frontend - URL aponta diretamente para Edge Function (sem login)
-      const QRCode = (await import('qrcode.react')).QRCodeSVG;
+      if (!qrCodeRef) throw new Error("QR do pedido não foi gerado (qr_code_ref ausente)");
+
+      // Gerar QR Code no frontend - URL aponta diretamente para backend function (sem login)
+      // IMPORTANTE: usar QRCodeCanvas evita conversões SVG->PNG (btoa/XMLSerializer) que podem travar a UI.
+      const { QRCodeCanvas } = await import("qrcode.react");
       const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
       const qrUrl = `${supabaseUrl}/functions/v1/qr-update-etapa?ref=${qrCodeRef}`;
-      
+
       // Criar elemento temporário para gerar o QR Code
-      const container = document.createElement('div');
-      container.style.position = 'absolute';
-      container.style.left = '-9999px';
+      const container = document.createElement("div");
+      container.style.position = "absolute";
+      container.style.left = "-9999px";
+      container.style.top = "0";
       document.body.appendChild(container);
-      
-      const { createRoot } = await import('react-dom/client');
+
+      const { createRoot } = await import("react-dom/client");
       const root = createRoot(container);
-      
-      await new Promise<void>((resolve) => {
-        root.render(
-          <QRCode
-            value={qrUrl}
-            size={512}
-            level="H"
-            includeMargin={true}
-          />
-        );
-        setTimeout(resolve, 100);
-      });
 
-      const svgElement = container.querySelector('svg');
-      if (!svgElement) throw new Error("Erro ao gerar QR Code");
+      let qrCodeImage: string;
+      try {
+        await new Promise<void>((resolve) => {
+          root.render(
+            <QRCodeCanvas value={qrUrl} size={512} level="H" includeMargin />
+          );
+          // 2 RAFs para garantir que o canvas foi pintado antes do toDataURL
+          requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+        });
 
-      // Converter SVG para PNG
-      const svgData = new XMLSerializer().serializeToString(svgElement);
-      const canvas = document.createElement('canvas');
-      canvas.width = 512;
-      canvas.height = 512;
-      const ctx = canvas.getContext('2d');
-      const img = new Image();
-
-      await new Promise<void>((resolve, reject) => {
-        img.onload = () => {
-          ctx?.drawImage(img, 0, 0);
-          resolve();
-        };
-        img.onerror = reject;
-        img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
-      });
-
-      const qrCodeImage = canvas.toDataURL('image/png');
-
-      // Limpar elementos temporários
-      root.unmount();
-      document.body.removeChild(container);
+        const canvas = container.querySelector("canvas") as HTMLCanvasElement | null;
+        if (!canvas) throw new Error("Erro ao gerar QR Code (canvas não encontrado)");
+        qrCodeImage = canvas.toDataURL("image/png");
+      } finally {
+        // Limpeza SEMPRE (mesmo se der erro), para não deixar roots/DOM órfãos e evitar instabilidade.
+        try {
+          root.unmount();
+        } catch {
+          // ignore
+        }
+        try {
+          document.body.removeChild(container);
+        } catch {
+          // ignore
+        }
+      }
 
       // Enviar para edge function salvar no storage
       const { error: uploadError } = await supabase.functions.invoke('gerar-qr-code', {
