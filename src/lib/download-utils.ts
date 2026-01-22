@@ -32,38 +32,49 @@ export const downloadChecklist = async (pedidoData: ChecklistData) => {
   container.style.width = '600px';
   document.body.appendChild(container);
   
-  // Renderizar o checklist
   const root = createRoot(container);
-  root.render(
-    React.createElement(ChecklistProducao, {
-      pedido: {
-        codigo_pedido: pedidoData.codigo_pedido,
-        produto_modelo: pedidoData.produto_modelo,
-        tipo_peca: pedidoData.tipo_peca,
-        quantidade_total: pedidoData.quantidade_total,
-        aviamentos: pedidoData.aviamentos,
-        tipos_personalizacao: pedidoData.tipos_personalizacao,
-      }
-    })
-  );
-  
-  await new Promise(resolve => setTimeout(resolve, 300));
-  
-  // Converter para imagem
-  const canvas = await html2canvas(container, { 
-    scale: 2,
-    backgroundColor: '#ffffff',
-    useCORS: true,
-  });
-  
-  const link = document.createElement('a');
-  link.href = canvas.toDataURL('image/png');
-  link.download = `Checklist_${pedidoData.codigo_pedido || 'pedido'}.png`;
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-  
-  // Limpar
-  root.unmount();
-  document.body.removeChild(container);
+  try {
+    // Renderizar o checklist
+    root.render(
+      React.createElement(ChecklistProducao, {
+        pedido: {
+          codigo_pedido: pedidoData.codigo_pedido,
+          produto_modelo: pedidoData.produto_modelo,
+          tipo_peca: pedidoData.tipo_peca,
+          quantidade_total: pedidoData.quantidade_total,
+          aviamentos: pedidoData.aviamentos,
+          tipos_personalizacao: pedidoData.tipos_personalizacao,
+        }
+      })
+    );
+
+    // Dar tempo do layout estabilizar antes do snapshot
+    await new Promise((resolve) => requestAnimationFrame(() => requestAnimationFrame(resolve)));
+
+    // Converter para imagem
+    const canvas = await html2canvas(container, {
+      scale: 2,
+      backgroundColor: '#ffffff',
+      useCORS: true,
+    });
+
+    const link = document.createElement('a');
+    link.href = canvas.toDataURL('image/png');
+    link.download = `Checklist_${pedidoData.codigo_pedido || 'pedido'}.png`;
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  } finally {
+    // Limpeza SEMPRE (mesmo se html2canvas falhar)
+    try {
+      root.unmount();
+    } catch {
+      // ignore
+    }
+    try {
+      document.body.removeChild(container);
+    } catch {
+      // ignore
+    }
+  }
 };

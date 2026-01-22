@@ -14,9 +14,12 @@ const ETAPAS_NOMES: Record<string, string> = {
   entrega: "Entrega",
 };
 
-export function useQRScanNotifications() {
+type NavigateToPedido = (pedidoId: string) => void;
+
+export function useQRScanNotifications(options?: { navigateToPedido?: NavigateToPedido }) {
   const channelRef = useRef<ReturnType<typeof supabase.channel> | null>(null);
   const mountedRef = useRef(true);
+  const navigateToPedido = options?.navigateToPedido;
 
   const handleNotification = useCallback(async (payload: {
     new: { status: string; pedido_id: string; tipo_etapa: string };
@@ -49,8 +52,12 @@ export function useQRScanNotifications() {
           action: {
             label: "Ver detalhes",
             onClick: () => {
-              // Usar window.location para navegação simples e evitar problemas com hooks
-              window.location.href = `/pedidos/${newData.pedido_id}`;
+              // Preferir navegação SPA (evita reload/tela branca); fallback para location.
+              if (navigateToPedido) {
+                navigateToPedido(newData.pedido_id);
+              } else {
+                window.location.assign(`/pedidos/${newData.pedido_id}`);
+              }
             }
           }
         });
@@ -58,7 +65,7 @@ export function useQRScanNotifications() {
     } catch (err) {
       console.error('🔔 Erro ao processar notificação:', err);
     }
-  }, []);
+  }, [navigateToPedido]);
 
   useEffect(() => {
     mountedRef.current = true;

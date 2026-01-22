@@ -123,7 +123,7 @@ export default function Pedidos() {
 
     // Configurar listener de mudanças em tempo real para pedidos
     const pedidosChannel = supabase
-      .channel('pedidos-list-changes')
+      .channel('pedidos-list-changes-page')
       .on(
         'postgres_changes',
         {
@@ -147,7 +147,7 @@ export default function Pedidos() {
 
     // Listener para etapas (afeta progresso dos pedidos)
     const etapasChannel = supabase
-      .channel('etapas-list-changes')
+      .channel('etapas-list-changes-page')
       .on(
         'postgres_changes',
         {
