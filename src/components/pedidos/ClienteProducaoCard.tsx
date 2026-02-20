@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, Package, AlertCircle, Copy } from "lucide-react";
+import { ChevronRight, Package, AlertCircle, Copy, SkipForward, Loader2 } from "lucide-react";
 import { useState } from "react";
 import {
   Dialog,
@@ -9,8 +9,19 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 
 interface Pedido {
   id: string;
@@ -68,6 +79,83 @@ interface ClienteProducaoCardProps {
 
 export function ClienteProducaoCard({ cliente, producoes, onViewProducao }: ClienteProducaoCardProps) {
   const [expanded, setExpanded] = useState(false);
+  const [advancingId, setAdvancingId] = useState<string | null>(null);
+  const [confirmData, setConfirmData] = useState<{ pedidoId: string; etapaAtual: string; proximaEtapa: string; etapaAtualId: string; proximaEtapaId: string } | null>(null);
+
+  const handleAvancarEtapa = (producao: Pedido, e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    const etapasOrdenadas = [...(producao.etapas_producao || [])].sort((a, b) => a.ordem - b.ordem);
+    const etapaEmAndamento = etapasOrdenadas.find((et) => et.status === "em_andamento");
+    
+    if (!etapaEmAndamento) {
+      // Se não há etapa em andamento, iniciar a primeira pendente
+      const primeiraPendente = etapasOrdenadas.find((et) => et.status === "pendente");
+      if (!primeiraPendente) {
+        toast.info("Todas as etapas já foram concluídas.");
+        return;
+      }
+      setConfirmData({
+        pedidoId: producao.id,
+        etapaAtual: "Nenhuma",
+        proximaEtapa: getEtapaLabel(primeiraPendente.tipo_etapa),
+        etapaAtualId: "",
+        proximaEtapaId: primeiraPendente.id,
+      });
+      return;
+    }
+
+    const indexAtual = etapasOrdenadas.findIndex((et) => et.id === etapaEmAndamento.id);
+    const proximaEtapa = etapasOrdenadas[indexAtual + 1];
+
+    setConfirmData({
+      pedidoId: producao.id,
+      etapaAtual: getEtapaLabel(etapaEmAndamento.tipo_etapa),
+      proximaEtapa: proximaEtapa ? getEtapaLabel(proximaEtapa.tipo_etapa) : "Concluir",
+      etapaAtualId: etapaEmAndamento.id,
+      proximaEtapaId: proximaEtapa?.id || "",
+    });
+  };
+
+  const confirmarAvanco = async () => {
+    if (!confirmData) return;
+    setAdvancingId(confirmData.pedidoId);
+    
+    try {
+      // Concluir etapa atual
+      if (confirmData.etapaAtualId) {
+        const { error: errConcluir } = await supabase
+          .from("etapas_producao")
+          .update({ status: "concluido", data_termino: new Date().toISOString() })
+          .eq("id", confirmData.etapaAtualId);
+        if (errConcluir) throw errConcluir;
+      }
+
+      // Iniciar próxima etapa
+      if (confirmData.proximaEtapaId) {
+        const { error: errIniciar } = await supabase
+          .from("etapas_producao")
+          .update({ status: "em_andamento", data_inicio: new Date().toISOString() })
+          .eq("id", confirmData.proximaEtapaId);
+        if (errIniciar) throw errIniciar;
+      }
+
+      toast.success("Etapa avançada!", {
+        description: confirmData.proximaEtapaId
+          ? `Agora em: ${confirmData.proximaEtapa}`
+          : "Produção concluída!",
+      });
+
+      // Recarregar a página para refletir mudanças
+      window.location.reload();
+    } catch (error: any) {
+      console.error("Erro ao avançar etapa:", error);
+      toast.error("Erro ao avançar etapa", { description: error.message });
+    } finally {
+      setAdvancingId(null);
+      setConfirmData(null);
+    }
+  };
 
   const getEtapasResumo = () => {
     const etapasCounts: Record<string, number> = {};
@@ -241,19 +329,37 @@ export function ClienteProducaoCard({ cliente, producoes, onViewProducao }: Clie
                         <Progress value={producao.progresso_percentual} className="h-2" />
                       </div>
 
-                      <Button 
-                        variant="ghost" 
-                        size="sm"
-                        className="w-full justify-between text-primary hover:text-primary hover:bg-primary/10"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setExpanded(false);
-                          onViewProducao(producao);
-                        }}
-                      >
-                        Ver detalhes completos
-                        <ChevronRight className="h-4 w-4" />
-                      </Button>
+                      <div className="flex gap-2">
+                        {producao.status_geral !== "concluido" && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="flex-1 justify-center gap-2 border-primary/30 text-primary hover:bg-primary/10"
+                            disabled={advancingId === producao.id}
+                            onClick={(e) => handleAvancarEtapa(producao, e)}
+                          >
+                            {advancingId === producao.id ? (
+                              <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                              <SkipForward className="h-4 w-4" />
+                            )}
+                            Avançar Etapa
+                          </Button>
+                        )}
+                        <Button 
+                          variant="ghost" 
+                          size="sm"
+                          className="flex-1 justify-between text-primary hover:text-primary hover:bg-primary/10"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setExpanded(false);
+                            onViewProducao(producao);
+                          }}
+                        >
+                          Ver detalhes
+                          <ChevronRight className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                   </CardContent>
                 </Card>
@@ -262,6 +368,34 @@ export function ClienteProducaoCard({ cliente, producoes, onViewProducao }: Clie
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Confirmação de avanço de etapa */}
+      <AlertDialog open={!!confirmData} onOpenChange={(open) => !open && setConfirmData(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Avançar etapa de produção?</AlertDialogTitle>
+            <AlertDialogDescription>
+              {confirmData?.etapaAtualId ? (
+                <>
+                  A etapa <strong>{confirmData.etapaAtual}</strong> será marcada como concluída
+                  {confirmData.proximaEtapaId && (
+                    <> e <strong>{confirmData.proximaEtapa}</strong> será iniciada</>
+                  )}
+                  .
+                </>
+              ) : (
+                <>A etapa <strong>{confirmData?.proximaEtapa}</strong> será iniciada.</>
+              )}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmarAvanco}>
+              Confirmar
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
