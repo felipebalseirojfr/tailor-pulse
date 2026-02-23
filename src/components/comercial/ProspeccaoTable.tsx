@@ -1,21 +1,21 @@
 import { useState, useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Plus, ArrowUpRight, Trash2 } from "lucide-react";
-import { useLeads, useProfiles, useQualifyLead } from "@/hooks/useComercialData";
+import { Plus, ArrowUpRight } from "lucide-react";
+import { useLeads, useProfiles } from "@/hooks/useComercialData";
 import {
   STATUS_PROSPECCAO_LABELS,
   ORIGEM_LABELS,
   FINALIZED_PROSPECCAO_STATUSES,
   type Lead,
-  type StatusProspeccao,
 } from "@/types/comercial";
 import { isBefore, startOfDay } from "date-fns";
 import LeadFormDialog from "./LeadFormDialog";
 import QualifyLeadDialog from "./QualifyLeadDialog";
+import { TableSkeleton } from "./ComercialSkeleton";
 
 export default function ProspeccaoTable() {
   const { data: leads = [], isLoading } = useLeads();
@@ -27,14 +27,13 @@ export default function ProspeccaoTable() {
   const [editLead, setEditLead] = useState<Lead | null>(null);
   const [qualifyLead, setQualifyLead] = useState<Lead | null>(null);
 
-  const today = startOfDay(new Date());
+  const today = useMemo(() => startOfDay(new Date()), []);
 
   const filtered = useMemo(() => {
     return leads.filter((l) => {
       if (filterStatus !== "all" && l.status_prospeccao !== filterStatus) return false;
       if (filterResponsavel !== "all" && l.responsavel_id !== filterResponsavel) return false;
       if (filterOrigem !== "all" && l.origem !== filterOrigem) return false;
-      // Hide qualified/descartado by default unless explicitly filtered
       if (filterStatus === "all" && FINALIZED_PROSPECCAO_STATUSES.includes(l.status_prospeccao)) return false;
       return true;
     });
@@ -46,17 +45,13 @@ export default function ProspeccaoTable() {
   };
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
+    return <TableSkeleton />;
   }
 
   return (
     <div className="space-y-4">
       {/* Filters */}
-      <Card className="hover:scale-100">
+      <Card>
         <CardContent className="p-4 flex flex-wrap items-center gap-3">
           <Select value={filterStatus} onValueChange={setFilterStatus}>
             <SelectTrigger className="w-[160px]"><SelectValue placeholder="Status" /></SelectTrigger>
@@ -94,7 +89,7 @@ export default function ProspeccaoTable() {
       </Card>
 
       {/* Table */}
-      <Card className="hover:scale-100">
+      <Card>
         <CardContent className="p-0">
           <Table>
             <TableHeader>
@@ -155,7 +150,7 @@ export default function ProspeccaoTable() {
         </CardContent>
       </Card>
 
-      <LeadFormDialog open={showNewLead} onClose={() => setShowNewLead(false)} />
+      {showNewLead && <LeadFormDialog open={showNewLead} onClose={() => setShowNewLead(false)} />}
       {editLead && (
         <LeadFormDialog open={!!editLead} onClose={() => setEditLead(null)} lead={editLead} />
       )}

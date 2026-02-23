@@ -3,9 +3,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { Negociacao, Lead, Interacao, StatusPipeline } from "@/types/comercial";
 
+const STALE_TIME = 5 * 60 * 1000; // 5 min cache
+
 export function useNegociacoes() {
   return useQuery({
     queryKey: ["negociacoes"],
+    staleTime: STALE_TIME,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("negociacoes" as any)
@@ -20,6 +23,7 @@ export function useNegociacoes() {
 export function useLeads() {
   return useQuery({
     queryKey: ["leads"],
+    staleTime: STALE_TIME,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("leads" as any)
@@ -35,6 +39,7 @@ export function useNegociacaoInteracoes(negociacaoId: string | null) {
   return useQuery({
     queryKey: ["negociacao_interacoes", negociacaoId],
     enabled: !!negociacaoId,
+    staleTime: STALE_TIME,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("negociacao_interacoes" as any)
@@ -50,6 +55,7 @@ export function useNegociacaoInteracoes(negociacaoId: string | null) {
 export function useProfiles() {
   return useQuery({
     queryKey: ["profiles-comercial"],
+    staleTime: 10 * 60 * 1000, // 10 min — rarely changes
     queryFn: async () => {
       const { data, error } = await supabase
         .from("profiles")
@@ -133,7 +139,6 @@ export function useAddInteracao() {
           .from("negociacao_interacoes" as any)
           .insert({ negociacao_id: params.negociacao_id, tipo: params.tipo, resumo: params.resumo, usuario_id: user?.id });
         if (error) throw error;
-        // Update data_ultima_interacao
         await supabase
           .from("negociacoes" as any)
           .update({ data_ultima_interacao: new Date().toISOString().split("T")[0] })
@@ -164,7 +169,6 @@ export function useQualifyLead() {
   return useMutation({
     mutationFn: async (params: { lead: Lead; proxima_acao: string; data_proxima_acao: string }) => {
       const { lead, proxima_acao, data_proxima_acao } = params;
-      // Create negociacao from lead
       const { error: negError } = await supabase
         .from("negociacoes" as any)
         .insert({
@@ -181,7 +185,6 @@ export function useQualifyLead() {
           lead_origem_id: lead.id,
         });
       if (negError) throw negError;
-      // Mark lead as qualified
       const { error: leadError } = await supabase
         .from("leads" as any)
         .update({ status_prospeccao: 'qualificado' })

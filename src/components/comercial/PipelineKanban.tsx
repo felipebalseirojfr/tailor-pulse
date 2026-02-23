@@ -1,11 +1,11 @@
-import { useState, useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useState, useMemo, useCallback } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
-import { Plus, AlertTriangle, ChevronRight, Eye } from "lucide-react";
+import { Plus, AlertTriangle } from "lucide-react";
 import { useNegociacoes, useProfiles } from "@/hooks/useComercialData";
 import {
   STATUS_PIPELINE_LABELS,
@@ -21,6 +21,7 @@ import {
 import { isBefore, startOfDay } from "date-fns";
 import NegociacaoFormDialog from "./NegociacaoFormDialog";
 import NegociacaoDetailSheet from "./NegociacaoDetailSheet";
+import { KanbanSkeleton } from "./ComercialSkeleton";
 
 export default function PipelineKanban() {
   const { data: negociacoes = [], isLoading } = useNegociacoes();
@@ -31,10 +32,9 @@ export default function PipelineKanban() {
   const [filterTemperatura, setFilterTemperatura] = useState<string>("all");
   const [somenteAtrasados, setSomenteAtrasados] = useState(false);
   const [showNewNeg, setShowNewNeg] = useState(false);
-  const [editNeg, setEditNeg] = useState<Negociacao | null>(null);
   const [detailNeg, setDetailNeg] = useState<Negociacao | null>(null);
 
-  const today = startOfDay(new Date());
+  const today = useMemo(() => startOfDay(new Date()), []);
 
   const filtered = useMemo(() => {
     return negociacoes.filter((n) => {
@@ -50,27 +50,23 @@ export default function PipelineKanban() {
     });
   }, [negociacoes, filterPrioridade, filterResponsavel, filterBloqueado, filterTemperatura, somenteAtrasados, today]);
 
-  const columns = STATUS_PIPELINE_ORDER.filter((s) => !FINALIZED_PIPELINE_STATUSES.includes(s));
-  const finalizedColumns: StatusPipeline[] = ['fechado', 'perdido'];
+  const columns = useMemo(() => STATUS_PIPELINE_ORDER.filter((s) => !FINALIZED_PIPELINE_STATUSES.includes(s)), []);
+  const finalizedColumns: StatusPipeline[] = useMemo(() => ['fechado', 'perdido'], []);
 
-  const isOverdue = (n: Negociacao) => {
+  const isOverdue = useCallback((n: Negociacao) => {
     if (FINALIZED_PIPELINE_STATUSES.includes(n.status_pipeline)) return false;
     const d = startOfDay(new Date(n.data_proxima_acao + "T00:00:00"));
     return isBefore(d, today);
-  };
+  }, [today]);
 
   if (isLoading) {
-    return (
-      <div className="flex justify-center py-12">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
-      </div>
-    );
+    return <KanbanSkeleton />;
   }
 
   return (
     <div className="space-y-4">
       {/* Filters */}
-      <Card className="hover:scale-100">
+      <Card>
         <CardContent className="p-4 flex flex-wrap items-center gap-3">
           <Select value={filterPrioridade} onValueChange={setFilterPrioridade}>
             <SelectTrigger className="w-[140px]"><SelectValue placeholder="Prioridade" /></SelectTrigger>
@@ -120,7 +116,7 @@ export default function PipelineKanban() {
         </CardContent>
       </Card>
 
-      {/* Kanban Board */}
+      {/* Kanban Board — simplified cards */}
       <div className="overflow-x-auto pb-4">
         <div className="flex gap-3 min-w-max">
           {[...columns, ...finalizedColumns].map((status) => {
@@ -140,7 +136,7 @@ export default function PipelineKanban() {
                     return (
                       <Card
                         key={neg.id}
-                        className={`hover:scale-100 cursor-pointer transition-all ${
+                        className={`cursor-pointer transition-all hover:ring-1 hover:ring-primary/30 ${
                           overdue && neg.prioridade === 'alta'
                             ? 'border-destructive ring-1 ring-destructive/50'
                             : overdue
@@ -149,7 +145,7 @@ export default function PipelineKanban() {
                         }`}
                         onClick={() => setDetailNeg(neg)}
                       >
-                        <CardContent className="p-3 space-y-2">
+                        <CardContent className="p-3 space-y-1.5">
                           <div className="flex items-start justify-between gap-1">
                             <span className="font-medium text-sm text-foreground truncate">{neg.marca_nome}</span>
                             {overdue && <AlertTriangle className="h-4 w-4 text-destructive shrink-0" />}
@@ -158,22 +154,11 @@ export default function PipelineKanban() {
                             {neg.prioridade === 'alta' && <Badge variant="destructive" className="text-xs">Alta</Badge>}
                             {neg.prioridade === 'media' && <Badge variant="default" className="text-xs">Média</Badge>}
                             {neg.prioridade === 'baixa' && <Badge variant="secondary" className="text-xs">Baixa</Badge>}
-                            {neg.temperatura && (
-                              <Badge variant="outline" className="text-xs">
-                                {TEMPERATURA_LABELS[neg.temperatura]}
-                              </Badge>
-                            )}
                           </div>
-                          <p className="text-xs text-muted-foreground truncate">
-                            {neg.proxima_acao}
-                          </p>
-                          <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <div className="text-xs text-muted-foreground">
                             <span className={overdue ? "text-destructive" : ""}>
                               📅 {neg.data_proxima_acao.split("-").reverse().join("/")}
                             </span>
-                            {neg.ticket_estimado_mes && (
-                              <span>R$ {Number(neg.ticket_estimado_mes).toLocaleString("pt-BR")}</span>
-                            )}
                           </div>
                         </CardContent>
                       </Card>
@@ -187,9 +172,6 @@ export default function PipelineKanban() {
       </div>
 
       {showNewNeg && <NegociacaoFormDialog open={showNewNeg} onClose={() => setShowNewNeg(false)} />}
-      {editNeg && (
-        <NegociacaoFormDialog open={!!editNeg} onClose={() => setEditNeg(null)} negociacao={editNeg} />
-      )}
       {detailNeg && (
         <NegociacaoDetailSheet open={!!detailNeg} onClose={() => setDetailNeg(null)} negociacao={detailNeg} />
       )}
