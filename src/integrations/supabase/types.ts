@@ -416,6 +416,250 @@ export type Database = {
           },
         ]
       }
+      lead_interacoes: {
+        Row: {
+          created_at: string
+          id: string
+          lead_id: string
+          resumo: string
+          tipo: string
+          usuario_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          lead_id: string
+          resumo: string
+          tipo?: string
+          usuario_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          lead_id?: string
+          resumo?: string
+          tipo?: string
+          usuario_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_interacoes_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_interacoes_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          cidade: string | null
+          contato_email: string | null
+          contato_instagram: string | null
+          contato_nome: string | null
+          contato_whatsapp: string | null
+          created_at: string
+          data_proxima_acao: string
+          estado: string | null
+          id: string
+          lead_nome: string
+          observacoes: string | null
+          origem: Database["public"]["Enums"]["origem_comercial"] | null
+          proxima_acao: string
+          responsavel_id: string
+          segmento: Database["public"]["Enums"]["segmento_comercial"] | null
+          status_prospeccao: Database["public"]["Enums"]["status_prospeccao"]
+          ticket_estimado: number | null
+          updated_at: string
+          volume_estimado: number | null
+        }
+        Insert: {
+          cidade?: string | null
+          contato_email?: string | null
+          contato_instagram?: string | null
+          contato_nome?: string | null
+          contato_whatsapp?: string | null
+          created_at?: string
+          data_proxima_acao: string
+          estado?: string | null
+          id?: string
+          lead_nome: string
+          observacoes?: string | null
+          origem?: Database["public"]["Enums"]["origem_comercial"] | null
+          proxima_acao: string
+          responsavel_id: string
+          segmento?: Database["public"]["Enums"]["segmento_comercial"] | null
+          status_prospeccao?: Database["public"]["Enums"]["status_prospeccao"]
+          ticket_estimado?: number | null
+          updated_at?: string
+          volume_estimado?: number | null
+        }
+        Update: {
+          cidade?: string | null
+          contato_email?: string | null
+          contato_instagram?: string | null
+          contato_nome?: string | null
+          contato_whatsapp?: string | null
+          created_at?: string
+          data_proxima_acao?: string
+          estado?: string | null
+          id?: string
+          lead_nome?: string
+          observacoes?: string | null
+          origem?: Database["public"]["Enums"]["origem_comercial"] | null
+          proxima_acao?: string
+          responsavel_id?: string
+          segmento?: Database["public"]["Enums"]["segmento_comercial"] | null
+          status_prospeccao?: Database["public"]["Enums"]["status_prospeccao"]
+          ticket_estimado?: number | null
+          updated_at?: string
+          volume_estimado?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      negociacao_interacoes: {
+        Row: {
+          created_at: string
+          id: string
+          negociacao_id: string
+          resumo: string
+          tipo: string
+          usuario_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          negociacao_id: string
+          resumo: string
+          tipo?: string
+          usuario_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          negociacao_id?: string
+          resumo?: string
+          tipo?: string
+          usuario_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "negociacao_interacoes_negociacao_id_fkey"
+            columns: ["negociacao_id"]
+            isOneToOne: false
+            referencedRelation: "negociacoes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "negociacao_interacoes_usuario_id_fkey"
+            columns: ["usuario_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      negociacoes: {
+        Row: {
+          bloqueado_por:
+            | Database["public"]["Enums"]["bloqueado_por_comercial"]
+            | null
+          created_at: string
+          data_proxima_acao: string
+          data_ultima_interacao: string | null
+          id: string
+          lead_origem_id: string | null
+          marca_nome: string
+          observacoes: string | null
+          origem: Database["public"]["Enums"]["origem_comercial"] | null
+          previsao_fechamento: string | null
+          prioridade: Database["public"]["Enums"]["prioridade_comercial"]
+          proxima_acao: string
+          responsavel_id: string
+          segmento: Database["public"]["Enums"]["segmento_comercial"] | null
+          status_pipeline: Database["public"]["Enums"]["status_pipeline"]
+          temperatura:
+            | Database["public"]["Enums"]["temperatura_comercial"]
+            | null
+          ticket_estimado_mes: number | null
+          updated_at: string
+          volume_estimado_mes: number | null
+        }
+        Insert: {
+          bloqueado_por?:
+            | Database["public"]["Enums"]["bloqueado_por_comercial"]
+            | null
+          created_at?: string
+          data_proxima_acao: string
+          data_ultima_interacao?: string | null
+          id?: string
+          lead_origem_id?: string | null
+          marca_nome: string
+          observacoes?: string | null
+          origem?: Database["public"]["Enums"]["origem_comercial"] | null
+          previsao_fechamento?: string | null
+          prioridade?: Database["public"]["Enums"]["prioridade_comercial"]
+          proxima_acao: string
+          responsavel_id: string
+          segmento?: Database["public"]["Enums"]["segmento_comercial"] | null
+          status_pipeline?: Database["public"]["Enums"]["status_pipeline"]
+          temperatura?:
+            | Database["public"]["Enums"]["temperatura_comercial"]
+            | null
+          ticket_estimado_mes?: number | null
+          updated_at?: string
+          volume_estimado_mes?: number | null
+        }
+        Update: {
+          bloqueado_por?:
+            | Database["public"]["Enums"]["bloqueado_por_comercial"]
+            | null
+          created_at?: string
+          data_proxima_acao?: string
+          data_ultima_interacao?: string | null
+          id?: string
+          lead_origem_id?: string | null
+          marca_nome?: string
+          observacoes?: string | null
+          origem?: Database["public"]["Enums"]["origem_comercial"] | null
+          previsao_fechamento?: string | null
+          prioridade?: Database["public"]["Enums"]["prioridade_comercial"]
+          proxima_acao?: string
+          responsavel_id?: string
+          segmento?: Database["public"]["Enums"]["segmento_comercial"] | null
+          status_pipeline?: Database["public"]["Enums"]["status_pipeline"]
+          temperatura?:
+            | Database["public"]["Enums"]["temperatura_comercial"]
+            | null
+          ticket_estimado_mes?: number | null
+          updated_at?: string
+          volume_estimado_mes?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "negociacoes_responsavel_id_fkey"
+            columns: ["responsavel_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       pedidos: {
         Row: {
           arquivos: Json | null
@@ -714,9 +958,46 @@ export type Database = {
         | "viewer"
         | "pcp_closer"
         | "backoffice_fiscal"
+      bloqueado_por_comercial:
+        | "aguardando_cliente"
+        | "aguardando_interno"
+        | "aguardando_piloto"
+        | "aguardando_proposta"
+        | "outro"
       etapa_referencia: "corte" | "costura" | "acabamento" | "pronto"
+      origem_comercial:
+        | "indicacao"
+        | "instagram"
+        | "evento"
+        | "pesquisa_ativa"
+        | "representante"
+        | "outro"
+      prioridade_comercial: "alta" | "media" | "baixa"
       prioridade_pedido: "baixa" | "media" | "alta"
+      segmento_comercial:
+        | "private_label_moda"
+        | "uniformes"
+        | "esportivo"
+        | "outros"
       status_etapa: "pendente" | "em_andamento" | "concluido"
+      status_pipeline:
+        | "lead_qualificado"
+        | "reuniao_realizada"
+        | "interesse_confirmado"
+        | "escopo_definido"
+        | "piloto_solicitada"
+        | "piloto_enviada"
+        | "proposta_comercial"
+        | "negociacao"
+        | "fechado"
+        | "perdido"
+      status_prospeccao:
+        | "identificado"
+        | "contato_feito"
+        | "reuniao_marcada"
+        | "qualificado"
+        | "descartado"
+      temperatura_comercial: "frio" | "morno" | "quente"
       tipo_etapa:
         | "pilotagem"
         | "liberacao_corte"
@@ -862,9 +1143,51 @@ export const Constants = {
         "pcp_closer",
         "backoffice_fiscal",
       ],
+      bloqueado_por_comercial: [
+        "aguardando_cliente",
+        "aguardando_interno",
+        "aguardando_piloto",
+        "aguardando_proposta",
+        "outro",
+      ],
       etapa_referencia: ["corte", "costura", "acabamento", "pronto"],
+      origem_comercial: [
+        "indicacao",
+        "instagram",
+        "evento",
+        "pesquisa_ativa",
+        "representante",
+        "outro",
+      ],
+      prioridade_comercial: ["alta", "media", "baixa"],
       prioridade_pedido: ["baixa", "media", "alta"],
+      segmento_comercial: [
+        "private_label_moda",
+        "uniformes",
+        "esportivo",
+        "outros",
+      ],
       status_etapa: ["pendente", "em_andamento", "concluido"],
+      status_pipeline: [
+        "lead_qualificado",
+        "reuniao_realizada",
+        "interesse_confirmado",
+        "escopo_definido",
+        "piloto_solicitada",
+        "piloto_enviada",
+        "proposta_comercial",
+        "negociacao",
+        "fechado",
+        "perdido",
+      ],
+      status_prospeccao: [
+        "identificado",
+        "contato_feito",
+        "reuniao_marcada",
+        "qualificado",
+        "descartado",
+      ],
+      temperatura_comercial: ["frio", "morno", "quente"],
       tipo_etapa: [
         "pilotagem",
         "liberacao_corte",
