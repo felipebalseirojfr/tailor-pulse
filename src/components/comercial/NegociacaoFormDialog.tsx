@@ -49,6 +49,7 @@ export default function NegociacaoFormDialog({ open, onClose, negociacao }: Prop
   });
 
   useEffect(() => {
+    if (!open) return;
     if (negociacao) {
       setForm({
         marca_nome: negociacao.marca_nome,
@@ -84,7 +85,8 @@ export default function NegociacaoFormDialog({ open, onClose, negociacao }: Prop
         observacoes: "",
       });
     }
-  }, [negociacao, open, profiles]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [negociacao, open]);
 
   const isFinal = FINALIZED_PIPELINE_STATUSES.includes(form.status_pipeline);
 
