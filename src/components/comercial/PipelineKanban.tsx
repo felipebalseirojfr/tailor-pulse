@@ -186,7 +186,7 @@ export default function PipelineKanban() {
         </div>
       </div>
 
-      <NegociacaoFormDialog open={showNewNeg} onClose={() => setShowNewNeg(false)} />
+      {showNewNeg && <NegociacaoFormDialog open={showNewNeg} onClose={() => setShowNewNeg(false)} />}
       {editNeg && (
         <NegociacaoFormDialog open={!!editNeg} onClose={() => setEditNeg(null)} negociacao={editNeg} />
       )}
