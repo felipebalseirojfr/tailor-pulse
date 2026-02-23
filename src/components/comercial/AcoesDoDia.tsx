@@ -279,7 +279,7 @@ export default function AcoesDoDia() {
         />
       )}
 
-      <NegociacaoFormDialog open={showNewNeg} onClose={() => setShowNewNeg(false)} />
+      {showNewNeg && <NegociacaoFormDialog open={showNewNeg} onClose={() => setShowNewNeg(false)} />}
     </div>
   );
 }
