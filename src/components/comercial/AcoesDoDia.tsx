@@ -1,8 +1,8 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CalendarCheck, AlertTriangle, Flame, Clock, CheckCircle, MessageSquarePlus, Plus } from "lucide-react";
+import { CalendarCheck, AlertTriangle, Flame, Clock, CheckCircle, MessageSquarePlus, Plus, RefreshCw, ChevronDown } from "lucide-react";
 import { useNegociacoes, useLeads } from "@/hooks/useComercialData";
 import {
   STATUS_PIPELINE_LABELS,
@@ -15,10 +15,11 @@ import {
   type Lead,
 } from "@/types/comercial";
 import { format, isToday, isBefore, startOfDay, addDays } from "date-fns";
-import { ptBR } from "date-fns/locale";
 import ConcluirAcaoDialog from "./ConcluirAcaoDialog";
 import RegistrarInteracaoDialog from "./RegistrarInteracaoDialog";
 import NegociacaoFormDialog from "./NegociacaoFormDialog";
+import { KpiSkeleton, ListSkeleton } from "./ComercialSkeleton";
+import { useQueryClient } from "@tanstack/react-query";
 
 type AcaoItem = {
   type: "negociacao" | "lead";
@@ -35,20 +36,54 @@ type AcaoItem = {
   raw: Negociacao | Lead;
 };
 
+const PAGE_SIZE = 20;
+
 export default function AcoesDoDia() {
   const { data: negociacoes = [], isLoading: loadingNeg } = useNegociacoes();
   const { data: leads = [], isLoading: loadingLeads } = useLeads();
   const [concluirItem, setConcluirItem] = useState<AcaoItem | null>(null);
   const [interacaoItem, setInteracaoItem] = useState<AcaoItem | null>(null);
   const [showNewNeg, setShowNewNeg] = useState(false);
+  const [negLimit, setNegLimit] = useState(PAGE_SIZE);
+  const [leadLimit, setLeadLimit] = useState(PAGE_SIZE);
+  const queryClient = useQueryClient();
 
-  const today = startOfDay(new Date());
-  const in7Days = addDays(today, 7);
+  const today = useMemo(() => startOfDay(new Date()), []);
 
-  const allItems = useMemo((): AcaoItem[] => {
-    const negItems: AcaoItem[] = negociacoes
-      .filter((n) => !FINALIZED_PIPELINE_STATUSES.includes(n.status_pipeline))
-      .map((n) => ({
+  // === KPIs computed from cached data ===
+  const kpis = useMemo(() => {
+    const activeNegs = negociacoes.filter(n => !FINALIZED_PIPELINE_STATUSES.includes(n.status_pipeline));
+    const activeLeads = leads.filter(l => !FINALIZED_PROSPECCAO_STATUSES.includes(l.status_prospeccao));
+
+    let acoesHoje = 0;
+    let atrasadas = 0;
+
+    for (const n of activeNegs) {
+      const d = startOfDay(new Date(n.data_proxima_acao + "T00:00:00"));
+      if (isToday(d)) acoesHoje++;
+      if (isBefore(d, today)) atrasadas++;
+    }
+    for (const l of activeLeads) {
+      const d = startOfDay(new Date(l.data_proxima_acao + "T00:00:00"));
+      if (isToday(d)) acoesHoje++;
+      if (isBefore(d, today)) atrasadas++;
+    }
+
+    const altaPrioridade = activeNegs.filter(n => n.prioridade === "alta").length;
+    const aguardandoCliente = activeNegs.filter(n => n.bloqueado_por === "aguardando_cliente").length;
+
+    return { acoesHoje, atrasadas, altaPrioridade, aguardandoCliente };
+  }, [negociacoes, leads, today]);
+
+  // === Negociações list (sorted by date, paginated) ===
+  const negItems = useMemo((): AcaoItem[] => {
+    return negociacoes
+      .filter(n => {
+        if (FINALIZED_PIPELINE_STATUSES.includes(n.status_pipeline)) return false;
+        const d = startOfDay(new Date(n.data_proxima_acao + "T00:00:00"));
+        return isBefore(d, addDays(today, 1));
+      })
+      .map(n => ({
         type: "negociacao" as const,
         id: n.id,
         nome: n.marca_nome,
@@ -62,10 +97,17 @@ export default function AcoesDoDia() {
         ticket_estimado: n.ticket_estimado_mes,
         raw: n,
       }));
+  }, [negociacoes, today]);
 
-    const leadItems: AcaoItem[] = leads
-      .filter((l) => !FINALIZED_PROSPECCAO_STATUSES.includes(l.status_prospeccao))
-      .map((l) => ({
+  // === Leads list (sorted by date, paginated) ===
+  const leadItems = useMemo((): AcaoItem[] => {
+    return leads
+      .filter(l => {
+        if (FINALIZED_PROSPECCAO_STATUSES.includes(l.status_prospeccao)) return false;
+        const d = startOfDay(new Date(l.data_proxima_acao + "T00:00:00"));
+        return isBefore(d, addDays(today, 1));
+      })
+      .map(l => ({
         type: "lead" as const,
         id: l.id,
         nome: l.lead_nome,
@@ -79,48 +121,17 @@ export default function AcoesDoDia() {
         ticket_estimado: l.ticket_estimado,
         raw: l,
       }));
+  }, [leads, today]);
 
-    return [...negItems, ...leadItems];
-  }, [negociacoes, leads]);
+  const handleRefresh = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ["negociacoes"] });
+    queryClient.invalidateQueries({ queryKey: ["leads"] });
+  }, [queryClient]);
 
-  // Counters
-  const acoesHoje = allItems.filter((i) => {
-    const d = startOfDay(new Date(i.data_proxima_acao + "T00:00:00"));
-    return isToday(d);
-  }).length;
-
-  const atrasadas = allItems.filter((i) => {
-    const d = startOfDay(new Date(i.data_proxima_acao + "T00:00:00"));
+  const isOverdue = useCallback((dateStr: string) => {
+    const d = startOfDay(new Date(dateStr + "T00:00:00"));
     return isBefore(d, today);
-  }).length;
-
-  const altaPrioridade = allItems.filter((i) => {
-    const d = startOfDay(new Date(i.data_proxima_acao + "T00:00:00"));
-    return i.prioridade === "alta" && (isBefore(d, in7Days) || isToday(d));
-  }).length;
-
-  const aguardandoCliente = negociacoes.filter(
-    (n) => n.bloqueado_por === "aguardando_cliente" && !FINALIZED_PIPELINE_STATUSES.includes(n.status_pipeline)
-  ).length;
-
-  // Filter: show items with data_proxima_acao <= today
-  const actionableItems = useMemo(() => {
-    return allItems
-      .filter((i) => {
-        const d = startOfDay(new Date(i.data_proxima_acao + "T00:00:00"));
-        return isBefore(d, addDays(today, 1)); // <= today
-      })
-      .sort((a, b) => {
-        const prioOrder = { alta: 0, media: 1, baixa: 2 };
-        const pa = prioOrder[a.prioridade as keyof typeof prioOrder] ?? 1;
-        const pb = prioOrder[b.prioridade as keyof typeof prioOrder] ?? 1;
-        if (pa !== pb) return pa - pb;
-        if (a.data_proxima_acao !== b.data_proxima_acao) return a.data_proxima_acao.localeCompare(b.data_proxima_acao);
-        return (b.ticket_estimado || 0) - (a.ticket_estimado || 0);
-      });
-  }, [allItems, today]);
-
-  const isLoading = loadingNeg || loadingLeads;
+  }, [today]);
 
   const getPrioridadeBadge = (p: string) => {
     if (p === "alta") return <Badge variant="destructive" className="text-xs">Alta</Badge>;
@@ -128,157 +139,179 @@ export default function AcoesDoDia() {
     return <Badge variant="secondary" className="text-xs">Baixa</Badge>;
   };
 
-  const isOverdue = (dateStr: string) => {
-    const d = startOfDay(new Date(dateStr + "T00:00:00"));
-    return isBefore(d, today);
-  };
+  const isLoading = loadingNeg || loadingLeads;
+
+  const renderItem = (item: AcaoItem) => (
+    <div
+      key={`${item.type}-${item.id}`}
+      className={`flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border transition-colors ${
+        isOverdue(item.data_proxima_acao)
+          ? "border-destructive/50 bg-destructive/5"
+          : "border-border bg-card"
+      }`}
+    >
+      <div className="flex-1 min-w-0 space-y-1">
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-medium text-foreground truncate">{item.nome}</span>
+          {getPrioridadeBadge(item.prioridade)}
+          {item.bloqueado_por && (
+            <Badge variant="secondary" className="text-xs">
+              {BLOQUEADO_POR_LABELS[item.bloqueado_por as keyof typeof BLOQUEADO_POR_LABELS] || item.bloqueado_por}
+            </Badge>
+          )}
+        </div>
+        <p className="text-sm text-muted-foreground">{item.statusLabel}</p>
+        <p className="text-sm text-foreground">
+          <span className="text-muted-foreground">Próxima ação:</span> {item.proxima_acao}
+        </p>
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
+          <span className={isOverdue(item.data_proxima_acao) ? "text-destructive font-medium" : ""}>
+            📅 {format(new Date(item.data_proxima_acao + "T00:00:00"), "dd/MM/yyyy")}
+            {isOverdue(item.data_proxima_acao) && " (atrasado)"}
+          </span>
+          {item.responsavel_nome && <span>👤 {item.responsavel_nome}</span>}
+        </div>
+      </div>
+      <div className="flex gap-2 shrink-0">
+        <Button size="sm" variant="outline" className="gap-1" onClick={() => setInteracaoItem(item)}>
+          <MessageSquarePlus className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Interação</span>
+        </Button>
+        <Button size="sm" className="gap-1" onClick={() => setConcluirItem(item)}>
+          <CheckCircle className="h-3.5 w-3.5" />
+          <span className="hidden sm:inline">Concluir</span>
+        </Button>
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-6">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="hover:scale-100">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-primary/20">
-              <CalendarCheck className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">{acoesHoje}</p>
-              <p className="text-xs text-muted-foreground">Ações Hoje</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="hover:scale-100">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-destructive/20">
-              <AlertTriangle className="h-5 w-5 text-destructive" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">{atrasadas}</p>
-              <p className="text-xs text-muted-foreground">Atrasadas</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="hover:scale-100">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-warning/20">
-              <Flame className="h-5 w-5 text-warning" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">{altaPrioridade}</p>
-              <p className="text-xs text-muted-foreground">Alta Prioridade</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="hover:scale-100">
-          <CardContent className="p-4 flex items-center gap-3">
-            <div className="p-2 rounded-lg bg-secondary/20">
-              <Clock className="h-5 w-5 text-secondary" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">{aguardandoCliente}</p>
-              <p className="text-xs text-muted-foreground">Aguardando Cliente</p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      {/* KPIs */}
+      {isLoading ? (
+        <KpiSkeleton />
+      ) : (
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <Card>
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/20">
+                <CalendarCheck className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-foreground">{kpis.acoesHoje}</p>
+                <p className="text-xs text-muted-foreground">Ações Hoje</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-destructive/20">
+                <AlertTriangle className="h-5 w-5 text-destructive" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-foreground">{kpis.atrasadas}</p>
+                <p className="text-xs text-muted-foreground">Atrasadas</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-warning/20">
+                <Flame className="h-5 w-5 text-warning" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-foreground">{kpis.altaPrioridade}</p>
+                <p className="text-xs text-muted-foreground">Alta Prioridade</p>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4 flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-secondary/20">
+                <Clock className="h-5 w-5 text-secondary" />
+              </div>
+              <div>
+                <p className="text-2xl font-bold text-foreground">{kpis.aguardandoCliente}</p>
+                <p className="text-xs text-muted-foreground">Aguardando Cliente</p>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
-      {/* Action List */}
-      <Card className="hover:scale-100">
-        <CardHeader className="flex flex-row items-center justify-between pb-3">
-          <CardTitle className="text-lg">Ações Pendentes</CardTitle>
+      {/* Header with refresh */}
+      <div className="flex items-center justify-between">
+        <div />
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={handleRefresh}>
+            <RefreshCw className="h-4 w-4 mr-1" /> Atualizar
+          </Button>
           <Button size="sm" onClick={() => setShowNewNeg(true)}>
             <Plus className="h-4 w-4 mr-1" /> Nova Negociação
           </Button>
-        </CardHeader>
-        <CardContent>
-          {isLoading ? (
-            <div className="flex justify-center py-8">
-              <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" />
-            </div>
-          ) : actionableItems.length === 0 ? (
-            <p className="text-center text-muted-foreground py-8">Nenhuma ação pendente para hoje. 🎉</p>
-          ) : (
-            <div className="space-y-2">
-              {actionableItems.map((item) => (
-                <div
-                  key={`${item.type}-${item.id}`}
-                  className={`flex flex-col sm:flex-row sm:items-center gap-3 p-3 rounded-lg border transition-colors ${
-                    isOverdue(item.data_proxima_acao)
-                      ? "border-destructive/50 bg-destructive/5"
-                      : "border-border bg-card"
-                  }`}
-                >
-                  <div className="flex-1 min-w-0 space-y-1">
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <span className="font-medium text-foreground truncate">{item.nome}</span>
-                      {getPrioridadeBadge(item.prioridade)}
-                      <Badge variant="outline" className="text-xs">
-                        {item.type === "negociacao" ? "Pipeline" : "Lead"}
-                      </Badge>
-                      {item.bloqueado_por && (
-                        <Badge variant="secondary" className="text-xs">
-                          {BLOQUEADO_POR_LABELS[item.bloqueado_por as keyof typeof BLOQUEADO_POR_LABELS] || item.bloqueado_por}
-                        </Badge>
-                      )}
-                    </div>
-                    <p className="text-sm text-muted-foreground">{item.statusLabel}</p>
-                    <p className="text-sm text-foreground">
-                      <span className="text-muted-foreground">Próxima ação:</span> {item.proxima_acao}
-                    </p>
-                    <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                      <span className={isOverdue(item.data_proxima_acao) ? "text-destructive font-medium" : ""}>
-                        📅 {format(new Date(item.data_proxima_acao + "T00:00:00"), "dd/MM/yyyy")}
-                        {isOverdue(item.data_proxima_acao) && " (atrasado)"}
-                      </span>
-                      {item.responsavel_nome && <span>👤 {item.responsavel_nome}</span>}
-                      {item.ticket_estimado ? (
-                        <span>💰 R$ {Number(item.ticket_estimado).toLocaleString("pt-BR")}</span>
-                      ) : null}
-                    </div>
-                  </div>
-                  <div className="flex gap-2 shrink-0">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-1"
-                      onClick={() => setInteracaoItem(item)}
-                    >
-                      <MessageSquarePlus className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline">Interação</span>
-                    </Button>
-                    <Button
-                      size="sm"
-                      className="gap-1"
-                      onClick={() => setConcluirItem(item)}
-                    >
-                      <CheckCircle className="h-3.5 w-3.5" />
-                      <span className="hidden sm:inline">Concluir</span>
+        </div>
+      </div>
+
+      {/* Negociações list */}
+      {isLoading ? (
+        <ListSkeleton rows={4} />
+      ) : (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Ações – Negociações ({negItems.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {negItems.length === 0 ? (
+              <p className="text-center text-muted-foreground py-6">Nenhuma ação de negociação pendente. 🎉</p>
+            ) : (
+              <div className="space-y-2">
+                {negItems.slice(0, negLimit).map(renderItem)}
+                {negItems.length > negLimit && (
+                  <div className="flex justify-center pt-2">
+                    <Button variant="outline" size="sm" onClick={() => setNegLimit(l => l + PAGE_SIZE)}>
+                      <ChevronDown className="h-4 w-4 mr-1" /> Carregar mais ({negItems.length - negLimit} restantes)
                     </Button>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Leads list */}
+      {isLoading ? (
+        <ListSkeleton rows={3} />
+      ) : (
+        <Card>
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg">Ações – Prospecção ({leadItems.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            {leadItems.length === 0 ? (
+              <p className="text-center text-muted-foreground py-6">Nenhuma ação de prospecção pendente. 🎉</p>
+            ) : (
+              <div className="space-y-2">
+                {leadItems.slice(0, leadLimit).map(renderItem)}
+                {leadItems.length > leadLimit && (
+                  <div className="flex justify-center pt-2">
+                    <Button variant="outline" size="sm" onClick={() => setLeadLimit(l => l + PAGE_SIZE)}>
+                      <ChevronDown className="h-4 w-4 mr-1" /> Carregar mais ({leadItems.length - leadLimit} restantes)
+                    </Button>
+                  </div>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
 
       {concluirItem && (
-        <ConcluirAcaoDialog
-          item={concluirItem}
-          open={!!concluirItem}
-          onClose={() => setConcluirItem(null)}
-        />
+        <ConcluirAcaoDialog item={concluirItem} open={!!concluirItem} onClose={() => setConcluirItem(null)} />
       )}
-
       {interacaoItem && (
-        <RegistrarInteracaoDialog
-          item={interacaoItem}
-          open={!!interacaoItem}
-          onClose={() => setInteracaoItem(null)}
-        />
+        <RegistrarInteracaoDialog item={interacaoItem} open={!!interacaoItem} onClose={() => setInteracaoItem(null)} />
       )}
-
       {showNewNeg && <NegociacaoFormDialog open={showNewNeg} onClose={() => setShowNewNeg(false)} />}
     </div>
   );
