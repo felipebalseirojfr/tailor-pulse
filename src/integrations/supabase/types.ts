@@ -666,6 +666,7 @@ export type Database = {
           aviamentos: string[] | null
           cliente_id: string
           codigo_pedido: string | null
+          codigo_produto_cliente: string | null
           composicao_tecido: string | null
           created_at: string | null
           data_inicio: string
@@ -696,6 +697,7 @@ export type Database = {
           aviamentos?: string[] | null
           cliente_id: string
           codigo_pedido?: string | null
+          codigo_produto_cliente?: string | null
           composicao_tecido?: string | null
           created_at?: string | null
           data_inicio: string
@@ -726,6 +728,7 @@ export type Database = {
           aviamentos?: string[] | null
           cliente_id?: string
           codigo_pedido?: string | null
+          codigo_produto_cliente?: string | null
           composicao_tecido?: string | null
           created_at?: string | null
           data_inicio?: string

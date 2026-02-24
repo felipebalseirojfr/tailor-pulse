@@ -36,6 +36,7 @@ export default function NovoPedido() {
     cliente_id: "",
     produto_modelo: "",
     tipo_peca: "",
+    codigo_produto_cliente: "",
     tecido: "",
     aviamentos: [] as string[],
     quantidade_total: "",
@@ -129,6 +130,7 @@ export default function NovoPedido() {
           cliente_id: formData.cliente_id,
           produto_modelo: formData.produto_modelo,
           tipo_peca: formData.tipo_peca,
+          codigo_produto_cliente: formData.codigo_produto_cliente,
           tecido: formData.tecido,
           aviamentos: formData.aviamentos,
           quantidade_total: parseInt(formData.quantidade_total),
@@ -388,6 +390,18 @@ export default function NovoPedido() {
                   required
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="codigo_produto_cliente">Código do Produto do Cliente *</Label>
+              <Input
+                id="codigo_produto_cliente"
+                name="codigo_produto_cliente"
+                value={formData.codigo_produto_cliente}
+                onChange={handleChange}
+                placeholder="Ex: SKU-12345 (código interno do cliente)"
+                required
+              />
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">

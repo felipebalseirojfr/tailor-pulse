@@ -50,6 +50,7 @@ import { FichaCorte } from "@/components/pedidos/FichaCorte";
 interface Pedido {
   id: string;
   codigo_pedido?: string;
+  codigo_produto_cliente?: string;
   produto_modelo: string;
   tipo_peca: string;
   tecido: string;
@@ -628,6 +629,12 @@ export default function DetalhesPedido() {
                       Tipo de Peça
                     </p>
                     <p className="text-base">{pedido.tipo_peca}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">
+                      Código do Produto do Cliente
+                    </p>
+                    <p className="text-base">{(pedido as any).codigo_produto_cliente || "Não informado"}</p>
                   </div>
                   <div>
                     <p className="text-sm font-medium text-muted-foreground">

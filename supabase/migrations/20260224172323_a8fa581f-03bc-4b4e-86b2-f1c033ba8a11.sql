@@ -1,0 +1,1 @@
+ALTER TABLE public.pedidos ADD COLUMN codigo_produto_cliente text;

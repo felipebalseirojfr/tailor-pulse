@@ -48,6 +48,7 @@ export default function EditarPedido() {
     cliente_id: "",
     produto_modelo: "",
     tipo_peca: "",
+    codigo_produto_cliente: "",
     tecido: "",
     aviamentos: [] as string[],
     quantidade_total: "",
@@ -110,6 +111,7 @@ export default function EditarPedido() {
         cliente_id: data.cliente_id || "",
         produto_modelo: data.produto_modelo || "",
         tipo_peca: data.tipo_peca || "",
+        codigo_produto_cliente: (data as any).codigo_produto_cliente || "",
         tecido: data.tecido || "",
         aviamentos: data.aviamentos || [],
         quantidade_total: data.quantidade_total?.toString() || "",
@@ -266,6 +268,7 @@ export default function EditarPedido() {
           cliente_id: formData.cliente_id,
           produto_modelo: formData.produto_modelo,
           tipo_peca: formData.tipo_peca,
+          codigo_produto_cliente: formData.codigo_produto_cliente || null,
           tecido: formData.tecido,
           aviamentos: formData.aviamentos,
           quantidade_total: parseInt(formData.quantidade_total),
@@ -465,6 +468,19 @@ export default function EditarPedido() {
                     onChange={(e) =>
                       setFormData({ ...formData, tipo_peca: e.target.value })
                     }
+                    required
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="codigo_produto_cliente">Código do Produto do Cliente *</Label>
+                  <Input
+                    id="codigo_produto_cliente"
+                    value={formData.codigo_produto_cliente}
+                    onChange={(e) =>
+                      setFormData({ ...formData, codigo_produto_cliente: e.target.value })
+                    }
+                    placeholder="Código interno do cliente"
                     required
                   />
                 </div>
