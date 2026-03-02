@@ -145,9 +145,6 @@ export function ClienteProducaoCard({ cliente, producoes, onViewProducao }: Clie
           ? `Agora em: ${confirmData.proximaEtapa}`
           : "Produção concluída!",
       });
-
-      // Recarregar a página para refletir mudanças
-      window.location.reload();
     } catch (error: any) {
       console.error("Erro ao avançar etapa:", error);
       toast.error("Erro ao avançar etapa", { description: error.message });
