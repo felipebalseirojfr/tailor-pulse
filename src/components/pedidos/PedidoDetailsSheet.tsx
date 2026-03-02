@@ -210,7 +210,6 @@ export function PedidoDetailsSheet({
       }
 
       onUpdate();
-      onOpenChange(false);
     } catch (error: any) {
       console.error("❌ Erro ao avançar etapa:", error);
       toast.error(`Erro ao avançar etapa: ${error.message || 'Erro desconhecido'}`);
