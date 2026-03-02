@@ -264,7 +264,7 @@ export function ClienteProducaoCard({ cliente, producoes, onViewProducao }: Clie
           </DialogHeader>
           
           <div className="space-y-3 mt-4">
-            {producoes.map((producao) => {
+            {[...producoes].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map((producao) => {
               const hoje = new Date().toISOString().split("T")[0];
               const isAtrasado = producao.prazo_final < hoje && producao.status_geral !== "concluido";
               
