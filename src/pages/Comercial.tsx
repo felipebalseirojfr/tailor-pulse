@@ -1,56 +1,90 @@
 import { useState } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { CalendarCheck, Kanban, UserSearch, BarChart3 } from "lucide-react";
-import AcoesDoDia from "@/components/comercial/AcoesDoDia";
+import { Button } from "@/components/ui/button";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { CalendarCheck, Kanban, MoreHorizontal, UserSearch, BarChart3 } from "lucide-react";
+import HojeView from "@/components/comercial/HojeView";
 import PipelineKanban from "@/components/comercial/PipelineKanban";
 import ProspeccaoTable from "@/components/comercial/ProspeccaoTable";
 import RelatoriosView from "@/components/comercial/RelatoriosView";
 
+type View = "hoje" | "pipeline" | "prospeccao" | "relatorios";
+
 export default function Comercial() {
-  const [activeTab, setActiveTab] = useState("acoes");
+  const [activeView, setActiveView] = useState<View>("hoje");
+
+  const isSecondary = activeView === "prospeccao" || activeView === "relatorios";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-5">
       <div>
         <h1 className="text-2xl font-bold text-foreground">Comercial</h1>
         <p className="text-muted-foreground text-sm">
-          Gerencie negociações, prospecção e acompanhe o pipeline comercial.
+          Gerencie negociações e acompanhe o pipeline comercial.
         </p>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-        <TabsList className="bg-muted/50 p-1">
-          <TabsTrigger value="acoes" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <CalendarCheck className="h-4 w-4" />
-            Ações do Dia
-          </TabsTrigger>
-          <TabsTrigger value="pipeline" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <Kanban className="h-4 w-4" />
-            Pipeline
-          </TabsTrigger>
-          <TabsTrigger value="prospeccao" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <UserSearch className="h-4 w-4" />
-            Prospecção
-          </TabsTrigger>
-          <TabsTrigger value="relatorios" className="gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
-            <BarChart3 className="h-4 w-4" />
-            Relatórios
-          </TabsTrigger>
-        </TabsList>
+      {/* Navigation */}
+      <div className="flex items-center gap-1 border-b border-border pb-px">
+        <button
+          onClick={() => setActiveView("hoje")}
+          className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-t-md transition-colors ${
+            activeView === "hoje"
+              ? "text-primary border-b-2 border-primary bg-primary/5"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <CalendarCheck className="h-4 w-4" />
+          Hoje
+        </button>
+        <button
+          onClick={() => setActiveView("pipeline")}
+          className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-t-md transition-colors ${
+            activeView === "pipeline"
+              ? "text-primary border-b-2 border-primary bg-primary/5"
+              : "text-muted-foreground hover:text-foreground"
+          }`}
+        >
+          <Kanban className="h-4 w-4" />
+          Pipeline
+        </button>
 
-        <TabsContent value="acoes">
-          <AcoesDoDia />
-        </TabsContent>
-        <TabsContent value="pipeline">
-          <PipelineKanban />
-        </TabsContent>
-        <TabsContent value="prospeccao">
-          <ProspeccaoTable />
-        </TabsContent>
-        <TabsContent value="relatorios">
-          <RelatoriosView />
-        </TabsContent>
-      </Tabs>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              className={`flex items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-t-md transition-colors ${
+                isSecondary
+                  ? "text-primary border-b-2 border-primary bg-primary/5"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <MoreHorizontal className="h-4 w-4" />
+              Mais
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem onClick={() => setActiveView("prospeccao")} className="gap-2">
+              <UserSearch className="h-4 w-4" />
+              Prospecção
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setActiveView("relatorios")} className="gap-2">
+              <BarChart3 className="h-4 w-4" />
+              Relatórios
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      {/* Content */}
+      {activeView === "hoje" && <HojeView />}
+      {activeView === "pipeline" && <PipelineKanban />}
+      {activeView === "prospeccao" && <ProspeccaoTable />}
+      {activeView === "relatorios" && <RelatoriosView />}
     </div>
   );
 }
