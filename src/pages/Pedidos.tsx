@@ -536,36 +536,6 @@ export default function Pedidos() {
           activeFilter={statusFilter}
         />
         
-        {/* Barra de Progresso Global */}
-        {!modoTV && activeTab === "controle" && (
-          <Card className="mt-4">
-            <CardContent className="pt-6">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-muted-foreground">Progresso total da produção</span>
-                  <span className="font-bold">
-                    {pedidos.length > 0
-                      ? Math.round(
-                          (pedidos.reduce((sum, p) => sum + p.progresso_percentual, 0) /
-                            pedidos.length)
-                        )
-                      : 0}
-                    % concluído
-                  </span>
-                </div>
-                <Progress
-                  value={
-                    pedidos.length > 0
-                      ? pedidos.reduce((sum, p) => sum + p.progresso_percentual, 0) /
-                        pedidos.length
-                      : 0
-                  }
-                  className="h-3"
-                />
-              </div>
-            </CardContent>
-          </Card>
-        )}
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className={`space-y-6 ${modoTV ? 'px-6' : ''}`}>

@@ -46,20 +46,20 @@ export function PedidosSummaryCards({
       filter: "em_producao",
     },
     {
-      title: "Concluídos",
-      value: concluidos,
-      icon: CheckCircle2,
-      color: "text-success",
-      bgColor: "bg-success/10",
-      filter: "concluido",
-    },
-    {
       title: "Atrasados",
       value: atrasados,
       icon: AlertCircle,
       color: "text-destructive",
       bgColor: "bg-destructive/10",
       filter: "atrasado",
+    },
+    {
+      title: "Concluídos",
+      value: concluidos,
+      icon: CheckCircle2,
+      color: "text-success",
+      bgColor: "bg-success/10",
+      filter: "concluido",
     },
   ];
 
