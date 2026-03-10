@@ -124,6 +124,7 @@ export default function DetalhesPedido() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [showChecklist, setShowChecklist] = useState(false);
   const [showFichaCorte, setShowFichaCorte] = useState(false);
+  const [avancarEtapaId, setAvancarEtapaId] = useState<string | null>(null);
   const checklistRef = useRef<HTMLDivElement>(null);
   const fichaCorteRef = useRef<HTMLDivElement>(null);
 
