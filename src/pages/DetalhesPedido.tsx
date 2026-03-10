@@ -958,6 +958,23 @@ export default function DetalhesPedido() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Modal de avanço de etapa com datas */}
+      {avancarEtapaId && (() => {
+        const etapaAtual = etapas.find((e) => e.id === avancarEtapaId);
+        const proximaEtapa = etapaAtual ? etapas.find((e) => e.ordem === etapaAtual.ordem + 1) : null;
+        return (
+          <AvancarEtapaDialog
+            open={true}
+            onOpenChange={(open) => !open && setAvancarEtapaId(null)}
+            etapaAtualNome={etapaAtual ? (ETAPAS_NOMES[etapaAtual.tipo_etapa] || etapaAtual.tipo_etapa) : ""}
+            proximaEtapaNome={proximaEtapa ? (ETAPAS_NOMES[proximaEtapa.tipo_etapa] || proximaEtapa.tipo_etapa) : "Concluir"}
+            isConcluindo={!proximaEtapa}
+            loading={false}
+            onConfirm={(dataInicio, dataTerminoPrevista) => avancarEtapa(avancarEtapaId, dataInicio, dataTerminoPrevista)}
+          />
+        );
+      })()}
     </div>
   );
 }
