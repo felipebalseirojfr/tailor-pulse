@@ -361,33 +361,16 @@ export function ClienteProducaoCard({ cliente, producoes, onViewProducao }: Clie
         </DialogContent>
       </Dialog>
 
-      {/* Confirmação de avanço de etapa */}
-      <AlertDialog open={!!confirmData} onOpenChange={(open) => !open && setConfirmData(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Avançar etapa de produção?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {confirmData?.etapaAtualId ? (
-                <>
-                  A etapa <strong>{confirmData.etapaAtual}</strong> será marcada como concluída
-                  {confirmData.proximaEtapaId && (
-                    <> e <strong>{confirmData.proximaEtapa}</strong> será iniciada</>
-                  )}
-                  .
-                </>
-              ) : (
-                <>A etapa <strong>{confirmData?.proximaEtapa}</strong> será iniciada.</>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmarAvanco}>
-              Confirmar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Modal de avanço de etapa com datas */}
+      <AvancarEtapaDialog
+        open={!!confirmData}
+        onOpenChange={(open) => !open && setConfirmData(null)}
+        etapaAtualNome={confirmData?.etapaAtual || ""}
+        proximaEtapaNome={confirmData?.proximaEtapa || ""}
+        isConcluindo={!!confirmData && !confirmData.proximaEtapaId}
+        loading={!!advancingId}
+        onConfirm={confirmarAvanco}
+      />
     </>
   );
 }
