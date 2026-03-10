@@ -812,7 +812,7 @@ export default function DetalhesPedido() {
                         {etapa.status !== "concluido" && (
                           <Button
                             size="sm"
-                            onClick={() => avancarEtapa(etapa.id)}
+                            onClick={() => setAvancarEtapaId(etapa.id)}
                             className="whitespace-nowrap"
                           >
                             Avançar Etapa
