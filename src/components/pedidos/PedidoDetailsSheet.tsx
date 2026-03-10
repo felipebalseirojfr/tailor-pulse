@@ -15,6 +15,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CheckCircle2, ChevronRight, Edit2, Save, X, ChevronLeft, ExternalLink, Trash2, Scissors, Printer, Copy } from "lucide-react";
+import { AvancarEtapaDialog } from "./AvancarEtapaDialog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { QRCodeDisplay } from "./QRCodeDisplay";
@@ -49,6 +50,7 @@ export function PedidoDetailsSheet({
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [showAvancarDialog, setShowAvancarDialog] = useState(false);
   const [showFichaCorte, setShowFichaCorte] = useState(false);
   const fichaCorteRef = useRef<HTMLDivElement>(null);
   const [editData, setEditData] = useState({
@@ -145,7 +147,7 @@ export function PedidoDetailsSheet({
     }
   };
 
-  const handleMoverProximaEtapa = async () => {
+  const handleMoverProximaEtapa = async (dataInicio: Date, dataTerminoPrevista: Date) => {
     if (!etapaAtual) {
       toast.error("Não há etapa em andamento");
       return;
@@ -179,7 +181,9 @@ export function PedidoDetailsSheet({
           .from("etapas_producao")
           .update({
             status: "em_andamento",
-            data_inicio: new Date().toISOString(),
+            data_inicio: dataInicio.toISOString(),
+            data_inicio_prevista: dataInicio.toISOString().split('T')[0],
+            data_termino_prevista: dataTerminoPrevista.toISOString().split('T')[0],
           })
           .eq("id", proximaEtapa.id);
 
@@ -215,6 +219,7 @@ export function PedidoDetailsSheet({
       toast.error(`Erro ao avançar etapa: ${error.message || 'Erro desconhecido'}`);
     } finally {
       setLoading(false);
+      setShowAvancarDialog(false);
     }
   };
 
@@ -673,7 +678,7 @@ export function PedidoDetailsSheet({
                 <div className="flex flex-col gap-2">
                   {etapaAtual && (
                     <Button
-                      onClick={handleMoverProximaEtapa}
+                      onClick={() => setShowAvancarDialog(true)}
                       disabled={loading}
                       className="w-full"
                     >
@@ -764,6 +769,24 @@ export function PedidoDetailsSheet({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Modal de avanço com datas */}
+      {etapaAtual && (
+        <AvancarEtapaDialog
+          open={showAvancarDialog}
+          onOpenChange={setShowAvancarDialog}
+          etapaAtualNome={getEtapaLabel(etapaAtual.tipo_etapa)}
+          proximaEtapaNome={
+            (() => {
+              const proxima = etapas.find((e: any) => e.ordem === etapaAtual.ordem + 1);
+              return proxima ? getEtapaLabel(proxima.tipo_etapa) : "Concluir";
+            })()
+          }
+          isConcluindo={!etapas.find((e: any) => e.ordem === etapaAtual.ordem + 1)}
+          loading={loading}
+          onConfirm={handleMoverProximaEtapa}
+        />
+      )}
     </Sheet>
   );
 }

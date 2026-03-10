@@ -9,19 +9,10 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { AvancarEtapaDialog } from "./AvancarEtapaDialog";
 
 interface Pedido {
   id: string;
@@ -89,7 +80,6 @@ export function ClienteProducaoCard({ cliente, producoes, onViewProducao }: Clie
     const etapaEmAndamento = etapasOrdenadas.find((et) => et.status === "em_andamento");
     
     if (!etapaEmAndamento) {
-      // Se não há etapa em andamento, iniciar a primeira pendente
       const primeiraPendente = etapasOrdenadas.find((et) => et.status === "pendente");
       if (!primeiraPendente) {
         toast.info("Todas as etapas já foram concluídas.");
@@ -117,7 +107,7 @@ export function ClienteProducaoCard({ cliente, producoes, onViewProducao }: Clie
     });
   };
 
-  const confirmarAvanco = async () => {
+  const confirmarAvanco = async (dataInicio: Date, dataTerminoPrevista: Date) => {
     if (!confirmData) return;
     setAdvancingId(confirmData.pedidoId);
     
@@ -131,11 +121,16 @@ export function ClienteProducaoCard({ cliente, producoes, onViewProducao }: Clie
         if (errConcluir) throw errConcluir;
       }
 
-      // Iniciar próxima etapa
+      // Iniciar próxima etapa com datas informadas
       if (confirmData.proximaEtapaId) {
         const { error: errIniciar } = await supabase
           .from("etapas_producao")
-          .update({ status: "em_andamento", data_inicio: new Date().toISOString() })
+          .update({ 
+            status: "em_andamento", 
+            data_inicio: dataInicio.toISOString(),
+            data_inicio_prevista: dataInicio.toISOString().split('T')[0],
+            data_termino_prevista: dataTerminoPrevista.toISOString().split('T')[0],
+          })
           .eq("id", confirmData.proximaEtapaId);
         if (errIniciar) throw errIniciar;
       }
@@ -366,33 +361,16 @@ export function ClienteProducaoCard({ cliente, producoes, onViewProducao }: Clie
         </DialogContent>
       </Dialog>
 
-      {/* Confirmação de avanço de etapa */}
-      <AlertDialog open={!!confirmData} onOpenChange={(open) => !open && setConfirmData(null)}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Avançar etapa de produção?</AlertDialogTitle>
-            <AlertDialogDescription>
-              {confirmData?.etapaAtualId ? (
-                <>
-                  A etapa <strong>{confirmData.etapaAtual}</strong> será marcada como concluída
-                  {confirmData.proximaEtapaId && (
-                    <> e <strong>{confirmData.proximaEtapa}</strong> será iniciada</>
-                  )}
-                  .
-                </>
-              ) : (
-                <>A etapa <strong>{confirmData?.proximaEtapa}</strong> será iniciada.</>
-              )}
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={confirmarAvanco}>
-              Confirmar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Modal de avanço de etapa com datas */}
+      <AvancarEtapaDialog
+        open={!!confirmData}
+        onOpenChange={(open) => !open && setConfirmData(null)}
+        etapaAtualNome={confirmData?.etapaAtual || ""}
+        proximaEtapaNome={confirmData?.proximaEtapa || ""}
+        isConcluindo={!!confirmData && !confirmData.proximaEtapaId}
+        loading={!!advancingId}
+        onConfirm={confirmarAvanco}
+      />
     </>
   );
 }

@@ -46,6 +46,7 @@ import { HistoricoAuditoria } from "@/components/pedidos/HistoricoAuditoria";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { ChecklistProducao } from "@/components/pedidos/ChecklistProducao";
 import { FichaCorte } from "@/components/pedidos/FichaCorte";
+import { AvancarEtapaDialog } from "@/components/pedidos/AvancarEtapaDialog";
 
 interface Pedido {
   id: string;
@@ -123,6 +124,7 @@ export default function DetalhesPedido() {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [showChecklist, setShowChecklist] = useState(false);
   const [showFichaCorte, setShowFichaCorte] = useState(false);
+  const [avancarEtapaId, setAvancarEtapaId] = useState<string | null>(null);
   const checklistRef = useRef<HTMLDivElement>(null);
   const fichaCorteRef = useRef<HTMLDivElement>(null);
 
@@ -420,7 +422,7 @@ export default function DetalhesPedido() {
     }
   };
 
-  const avancarEtapa = async (etapaId: string) => {
+  const avancarEtapa = async (etapaId: string, dataInicio: Date, dataTerminoPrevista: Date) => {
     try {
       const etapaAtual = etapas.find((e) => e.id === etapaId);
       if (!etapaAtual) return;
@@ -448,7 +450,9 @@ export default function DetalhesPedido() {
           .from("etapas_producao")
           .update({
             status: "em_andamento",
-            data_inicio: new Date().toISOString(),
+            data_inicio: dataInicio.toISOString(),
+            data_inicio_prevista: dataInicio.toISOString().split('T')[0],
+            data_termino_prevista: dataTerminoPrevista.toISOString().split('T')[0],
           })
           .eq("id", proximaEtapa.id);
         
@@ -472,6 +476,8 @@ export default function DetalhesPedido() {
         description: error.message || "Erro desconhecido ao avançar etapa",
         variant: "destructive",
       });
+    } finally {
+      setAvancarEtapaId(null);
     }
   };
 
@@ -806,7 +812,7 @@ export default function DetalhesPedido() {
                         {etapa.status !== "concluido" && (
                           <Button
                             size="sm"
-                            onClick={() => avancarEtapa(etapa.id)}
+                            onClick={() => setAvancarEtapaId(etapa.id)}
                             className="whitespace-nowrap"
                           >
                             Avançar Etapa
@@ -952,6 +958,23 @@ export default function DetalhesPedido() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Modal de avanço de etapa com datas */}
+      {avancarEtapaId && (() => {
+        const etapaAtual = etapas.find((e) => e.id === avancarEtapaId);
+        const proximaEtapa = etapaAtual ? etapas.find((e) => e.ordem === etapaAtual.ordem + 1) : null;
+        return (
+          <AvancarEtapaDialog
+            open={true}
+            onOpenChange={(open) => !open && setAvancarEtapaId(null)}
+            etapaAtualNome={etapaAtual ? (ETAPAS_NOMES[etapaAtual.tipo_etapa] || etapaAtual.tipo_etapa) : ""}
+            proximaEtapaNome={proximaEtapa ? (ETAPAS_NOMES[proximaEtapa.tipo_etapa] || proximaEtapa.tipo_etapa) : "Concluir"}
+            isConcluindo={!proximaEtapa}
+            loading={false}
+            onConfirm={(dataInicio, dataTerminoPrevista) => avancarEtapa(avancarEtapaId, dataInicio, dataTerminoPrevista)}
+          />
+        );
+      })()}
     </div>
   );
 }
