@@ -422,7 +422,7 @@ export default function DetalhesPedido() {
     }
   };
 
-  const avancarEtapa = async (etapaId: string) => {
+  const avancarEtapa = async (etapaId: string, dataInicio: Date, dataTerminoPrevista: Date) => {
     try {
       const etapaAtual = etapas.find((e) => e.id === etapaId);
       if (!etapaAtual) return;
@@ -450,7 +450,9 @@ export default function DetalhesPedido() {
           .from("etapas_producao")
           .update({
             status: "em_andamento",
-            data_inicio: new Date().toISOString(),
+            data_inicio: dataInicio.toISOString(),
+            data_inicio_prevista: dataInicio.toISOString().split('T')[0],
+            data_termino_prevista: dataTerminoPrevista.toISOString().split('T')[0],
           })
           .eq("id", proximaEtapa.id);
         
@@ -474,6 +476,8 @@ export default function DetalhesPedido() {
         description: error.message || "Erro desconhecido ao avançar etapa",
         variant: "destructive",
       });
+    } finally {
+      setAvancarEtapaId(null);
     }
   };
 
