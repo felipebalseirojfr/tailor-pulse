@@ -46,6 +46,7 @@ import { HistoricoAuditoria } from "@/components/pedidos/HistoricoAuditoria";
 import { useUserRoles } from "@/hooks/useUserRoles";
 import { ChecklistProducao } from "@/components/pedidos/ChecklistProducao";
 import { FichaCorte } from "@/components/pedidos/FichaCorte";
+import { AvancarEtapaDialog } from "@/components/pedidos/AvancarEtapaDialog";
 
 interface Pedido {
   id: string;
