@@ -49,6 +49,7 @@ export function PedidoDetailsSheet({
   const [loading, setLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [showAvancarDialog, setShowAvancarDialog] = useState(false);
   const [showFichaCorte, setShowFichaCorte] = useState(false);
   const fichaCorteRef = useRef<HTMLDivElement>(null);
   const [editData, setEditData] = useState({
