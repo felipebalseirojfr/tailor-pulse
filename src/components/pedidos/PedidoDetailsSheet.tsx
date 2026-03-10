@@ -769,6 +769,24 @@ export function PedidoDetailsSheet({
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Modal de avanço com datas */}
+      {etapaAtual && (
+        <AvancarEtapaDialog
+          open={showAvancarDialog}
+          onOpenChange={setShowAvancarDialog}
+          etapaAtualNome={getEtapaLabel(etapaAtual.tipo_etapa)}
+          proximaEtapaNome={
+            (() => {
+              const proxima = etapas.find((e: any) => e.ordem === etapaAtual.ordem + 1);
+              return proxima ? getEtapaLabel(proxima.tipo_etapa) : "Concluir";
+            })()
+          }
+          isConcluindo={!etapas.find((e: any) => e.ordem === etapaAtual.ordem + 1)}
+          loading={loading}
+          onConfirm={handleMoverProximaEtapa}
+        />
+      )}
     </Sheet>
   );
 }
