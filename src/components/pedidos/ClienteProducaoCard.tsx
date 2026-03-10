@@ -80,7 +80,6 @@ export function ClienteProducaoCard({ cliente, producoes, onViewProducao }: Clie
     const etapaEmAndamento = etapasOrdenadas.find((et) => et.status === "em_andamento");
     
     if (!etapaEmAndamento) {
-      // Se não há etapa em andamento, iniciar a primeira pendente
       const primeiraPendente = etapasOrdenadas.find((et) => et.status === "pendente");
       if (!primeiraPendente) {
         toast.info("Todas as etapas já foram concluídas.");
@@ -108,7 +107,7 @@ export function ClienteProducaoCard({ cliente, producoes, onViewProducao }: Clie
     });
   };
 
-  const confirmarAvanco = async () => {
+  const confirmarAvanco = async (dataInicio: Date, dataTerminoPrevista: Date) => {
     if (!confirmData) return;
     setAdvancingId(confirmData.pedidoId);
     
@@ -122,11 +121,16 @@ export function ClienteProducaoCard({ cliente, producoes, onViewProducao }: Clie
         if (errConcluir) throw errConcluir;
       }
 
-      // Iniciar próxima etapa
+      // Iniciar próxima etapa com datas informadas
       if (confirmData.proximaEtapaId) {
         const { error: errIniciar } = await supabase
           .from("etapas_producao")
-          .update({ status: "em_andamento", data_inicio: new Date().toISOString() })
+          .update({ 
+            status: "em_andamento", 
+            data_inicio: dataInicio.toISOString(),
+            data_inicio_prevista: dataInicio.toISOString().split('T')[0],
+            data_termino_prevista: dataTerminoPrevista.toISOString().split('T')[0],
+          })
           .eq("id", confirmData.proximaEtapaId);
         if (errIniciar) throw errIniciar;
       }
