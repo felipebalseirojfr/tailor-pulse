@@ -147,7 +147,7 @@ export function PedidoDetailsSheet({
     }
   };
 
-  const handleMoverProximaEtapa = async () => {
+  const handleMoverProximaEtapa = async (dataInicio: Date, dataTerminoPrevista: Date) => {
     if (!etapaAtual) {
       toast.error("Não há etapa em andamento");
       return;
@@ -181,7 +181,9 @@ export function PedidoDetailsSheet({
           .from("etapas_producao")
           .update({
             status: "em_andamento",
-            data_inicio: new Date().toISOString(),
+            data_inicio: dataInicio.toISOString(),
+            data_inicio_prevista: dataInicio.toISOString().split('T')[0],
+            data_termino_prevista: dataTerminoPrevista.toISOString().split('T')[0],
           })
           .eq("id", proximaEtapa.id);
 
@@ -217,6 +219,7 @@ export function PedidoDetailsSheet({
       toast.error(`Erro ao avançar etapa: ${error.message || 'Erro desconhecido'}`);
     } finally {
       setLoading(false);
+      setShowAvancarDialog(false);
     }
   };
 
