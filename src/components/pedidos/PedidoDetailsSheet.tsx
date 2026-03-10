@@ -678,7 +678,7 @@ export function PedidoDetailsSheet({
                 <div className="flex flex-col gap-2">
                   {etapaAtual && (
                     <Button
-                      onClick={handleMoverProximaEtapa}
+                      onClick={() => setShowAvancarDialog(true)}
                       disabled={loading}
                       className="w-full"
                     >
