@@ -56,6 +56,8 @@ export const RecentOrders = ({ pedidos }: RecentOrdersProps) => {
       costura: "bg-teal-500",
       caseado: "bg-green-500",
       estamparia_bordado: "bg-orange-500",
+      estamparia: "bg-orange-500",
+      bordado: "bg-pink-500",
       acabamento: "bg-amber-500",
       entrega: "bg-red-500",
     };

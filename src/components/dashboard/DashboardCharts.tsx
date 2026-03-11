@@ -50,6 +50,8 @@ export const DashboardCharts = ({ pedidos }: DashboardChartsProps) => {
     costura: "Costura",
     caseado: "Caseado",
     estamparia_bordado: "Estamparia/Bordado",
+    estamparia: "Estamparia",
+    bordado: "Bordado",
     acabamento: "Acabamento",
     entrega: "Entrega",
   };

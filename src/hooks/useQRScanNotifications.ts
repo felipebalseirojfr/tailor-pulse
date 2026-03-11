@@ -10,6 +10,8 @@ const ETAPAS_NOMES: Record<string, string> = {
   costura: "Costura",
   caseado: "Caseado",
   estamparia_bordado: "Estamparia/Bordado",
+  estamparia: "Estamparia",
+  bordado: "Bordado",
   acabamento: "Acabamento",
   entrega: "Entrega",
 };
