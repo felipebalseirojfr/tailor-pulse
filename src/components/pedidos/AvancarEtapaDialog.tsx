@@ -43,8 +43,8 @@ export function AvancarEtapaDialog({
   const [dataTerminoPrevista, setDataTerminoPrevista] = useState<Date | undefined>();
 
   const handleConfirm = () => {
-    if (!dataTerminoPrevista) return;
-    onConfirm(dataInicio, dataTerminoPrevista);
+    if (!isConcluindo && !dataTerminoPrevista) return;
+    onConfirm(dataInicio, dataTerminoPrevista || new Date());
   };
 
   const handleOpenChange = (value: boolean) => {
