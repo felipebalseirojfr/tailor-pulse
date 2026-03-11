@@ -90,7 +90,7 @@ export default function Pedidos() {
   const [tvEtapaFilter, setTvEtapaFilter] = useState<string | null>(null);
 
   // Refs para controle de debounce e channels
-  const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const fetchTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const channelsRef = useRef<ReturnType<typeof supabase.channel>[]>([]);
   const isMountedRef = useRef(true);
 
