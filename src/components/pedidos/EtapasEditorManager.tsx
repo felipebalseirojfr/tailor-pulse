@@ -33,7 +33,8 @@ const tiposEtapaDisponiveis = [
   { value: "lavanderia", label: "Lavanderia" },
   { value: "costura", label: "Costura" },
   { value: "caseado", label: "Caseado" },
-  { value: "estamparia_bordado", label: "Estamparia/Bordado" },
+  { value: "estamparia", label: "Estamparia" },
+  { value: "bordado", label: "Bordado" },
   { value: "acabamento", label: "Acabamento" },
   { value: "entrega", label: "Entrega" },
 ];

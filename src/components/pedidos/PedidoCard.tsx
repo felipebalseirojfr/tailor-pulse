@@ -115,6 +115,8 @@ export function PedidoCard({ pedido, onViewDetails, onAdvanceStage, isTV = false
       costura: "Costura",
       caseado: "Caseado",
       estamparia_bordado: "Estamparia/Bordado",
+      estamparia: "Estamparia",
+      bordado: "Bordado",
       acabamento: "Acabamento",
       entrega: "Entrega",
     };

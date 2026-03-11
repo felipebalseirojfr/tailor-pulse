@@ -76,6 +76,8 @@ export function TimelineEtapas({ etapas, statusGeral, isTV = false }: TimelineEt
       costura: "Costura",
       caseado: "Caseado",
       estamparia_bordado: "Estamparia",
+      estamparia: "Estamparia",
+      bordado: "Bordado",
       acabamento: "Acabamento",
       entrega: "Entrega",
     };

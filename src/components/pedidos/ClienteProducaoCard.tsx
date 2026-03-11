@@ -174,6 +174,8 @@ export function ClienteProducaoCard({ cliente, producoes, onViewProducao }: Clie
       costura: "Costura",
       caseado: "Caseado",
       estamparia_bordado: "Estamparia",
+      estamparia: "Estamparia",
+      bordado: "Bordado",
       acabamento: "Acabamento",
       entrega: "Entrega",
     };

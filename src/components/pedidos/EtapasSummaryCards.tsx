@@ -37,7 +37,9 @@ const ETAPAS_CONFIG = [
   { key: "lavanderia", label: "Lavanderia", icon: Droplets, color: "text-cyan-500", bgColor: "bg-cyan-500/10" },
   { key: "costura", label: "Costura", icon: Shirt, color: "text-green-500", bgColor: "bg-green-500/10" },
   { key: "caseado", label: "Caseado", icon: Circle, color: "text-purple-500", bgColor: "bg-purple-500/10" },
-  { key: "estamparia_bordado", label: "Estamparia", icon: Palette, color: "text-pink-500", bgColor: "bg-pink-500/10" },
+  { key: "estamparia_bordado", label: "Estamparia/Bordado", icon: Palette, color: "text-pink-500", bgColor: "bg-pink-500/10" },
+  { key: "estamparia", label: "Estamparia", icon: Palette, color: "text-pink-500", bgColor: "bg-pink-500/10" },
+  { key: "bordado", label: "Bordado", icon: Palette, color: "text-orange-500", bgColor: "bg-orange-500/10" },
   { key: "acabamento", label: "Acabamento", icon: CheckSquare, color: "text-orange-500", bgColor: "bg-orange-500/10" },
   { key: "entrega", label: "Entrega", icon: Truck, color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
 ];
