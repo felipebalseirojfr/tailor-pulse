@@ -15,6 +15,7 @@ import {
   FileCheck,
   Wallet,
   Handshake,
+  UsersRound,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useToast } from "@/hooks/use-toast";
@@ -154,10 +155,10 @@ export default function Layout({ children }: LayoutProps) {
     { name: "Fechamento", href: "/pcp/fechamentos", icon: FileCheck, roles: ["admin", "pcp_closer", "backoffice_fiscal", "commercial"] },
     { name: "Clientes", href: "/clientes", icon: Users, roles: ["admin", "commercial"] },
     { name: "Calendário", href: "/calendario", icon: CalendarIcon },
+    { name: "Terceiros", href: "/terceiros", icon: UsersRound, roles: ["admin", "pcp_closer"] },
     { name: "Usuários", href: "/usuarios", icon: UserCog, roles: ["admin"] },
   ];
 
-  // Filter navigation based on user roles
   const navigation = allNavigation.filter((item) => {
     if (!item.roles) return true;
     return hasAnyRole(item.roles);
@@ -176,26 +177,19 @@ export default function Layout({ children }: LayoutProps) {
 
   return (
     <div className="flex min-h-screen bg-background">
-      {/* Listener de notificações (isolado) */}
       <QRNotificationsListener />
 
       {/* Sidebar Desktop */}
       <aside className="hidden lg:fixed lg:inset-y-0 lg:flex lg:w-64 lg:flex-col">
         <div className="flex grow flex-col gap-y-5 overflow-y-auto border-r border-sidebar-border bg-sidebar px-6 pb-4">
-          {/* Logo Section */}
           <div className="flex h-24 shrink-0 items-center gap-3 border-b border-sidebar-border pb-4 pt-4">
-            <img 
-              src={logoJfr} 
-              alt="JFR Logo" 
-              className="h-20 w-auto object-contain"
-            />
+            <img src={logoJfr} alt="JFR Logo" className="h-20 w-auto object-contain" />
             <div className="flex flex-col">
               <span className="text-sm font-semibold text-sidebar-foreground">Controle de</span>
               <span className="text-sm font-semibold text-sidebar-foreground">Produções</span>
             </div>
           </div>
 
-          {/* User Info */}
           {userName && (
             <div className="flex items-center gap-2 px-2 py-2 rounded-lg bg-sidebar-accent/50">
               <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20">
@@ -258,39 +252,23 @@ export default function Layout({ children }: LayoutProps) {
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             className="text-foreground"
           >
-            {mobileMenuOpen ? (
-              <X className="h-6 w-6" />
-            ) : (
-              <Menu className="h-6 w-6" />
-            )}
+            {mobileMenuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
           </Button>
           <div className="flex items-center gap-3">
-            <img 
-              src={logoJfr} 
-              alt="JFR Logo" 
-              className="h-12 w-auto object-contain"
-            />
+            <img src={logoJfr} alt="JFR Logo" className="h-12 w-auto object-contain" />
             <span className="text-lg font-bold text-primary">JFR Produções</span>
           </div>
         </div>
 
         {mobileMenuOpen && (
           <div className="fixed inset-0 z-40 lg:hidden">
-            <div
-              className="fixed inset-0 bg-background/80 backdrop-blur-sm"
-              onClick={() => setMobileMenuOpen(false)}
-            />
+            <div className="fixed inset-0 bg-background/80 backdrop-blur-sm" onClick={() => setMobileMenuOpen(false)} />
             <div className="fixed inset-y-0 left-0 w-full max-w-xs bg-sidebar p-6 border-r border-sidebar-border">
               <div className="flex items-center gap-3 mb-4">
-                <img 
-                  src={logoJfr} 
-                  alt="JFR Logo" 
-                  className="h-16 w-auto object-contain"
-                />
+                <img src={logoJfr} alt="JFR Logo" className="h-16 w-auto object-contain" />
                 <span className="text-lg font-bold text-sidebar-foreground">JFR Produções</span>
               </div>
 
-              {/* User Info Mobile */}
               {userName && (
                 <div className="flex items-center gap-2 px-2 py-2 rounded-lg bg-sidebar-accent/50 mb-4">
                   <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/20">
