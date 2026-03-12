@@ -141,7 +141,11 @@ export function AvancarEtapaDialog({
                     mode="single"
                     selected={dataTerminoPrevista}
                     onSelect={setDataTerminoPrevista}
-                    disabled={(date) => date < dataInicio}
+                    disabled={(date) => {
+                      const inicio = new Date(dataInicio);
+                      inicio.setHours(0, 0, 0, 0);
+                      return date < inicio;
+                    }}
                     initialFocus
                     className={cn("p-3 pointer-events-auto")}
                     locale={ptBR}
