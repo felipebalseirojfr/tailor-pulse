@@ -18,16 +18,30 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
+
+interface Terceiro {
+  id: string;
+  nome: string;
+}
 
 interface AvancarEtapaDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   etapaAtualNome: string;
   proximaEtapaNome: string;
-  isConcluindo: boolean; // true when concluding last stage (no next stage)
+  isConcluindo: boolean;
   loading: boolean;
-  onConfirm: (dataInicio: Date, dataTerminoPrevista: Date) => void;
+  terceirosDisponiveis?: Terceiro[]; // terceiros da próxima etapa
+  terceiroAtualId?: string | null;   // terceiro já definido na próxima etapa
+  onConfirm: (dataInicio: Date, dataTerminoPrevista: Date, terceiroId?: string | null) => void;
 }
 
 export function AvancarEtapaDialog({
@@ -37,20 +51,30 @@ export function AvancarEtapaDialog({
   proximaEtapaNome,
   isConcluindo,
   loading,
+  terceirosDisponiveis = [],
+  terceiroAtualId,
   onConfirm,
 }: AvancarEtapaDialogProps) {
   const [dataInicio, setDataInicio] = useState<Date>(new Date());
   const [dataTerminoPrevista, setDataTerminoPrevista] = useState<Date | undefined>();
+  const [terceiroId, setTerceiroId] = useState<string>(terceiroAtualId || "nenhum");
+
+  const temTerceiros = terceirosDisponiveis.length > 0;
 
   const handleConfirm = () => {
     if (!isConcluindo && !dataTerminoPrevista) return;
-    onConfirm(dataInicio, dataTerminoPrevista || new Date());
+    onConfirm(
+      dataInicio,
+      dataTerminoPrevista || new Date(),
+      temTerceiros ? (terceiroId === "nenhum" ? null : terceiroId) : undefined
+    );
   };
 
   const handleOpenChange = (value: boolean) => {
     if (!value) {
       setDataInicio(new Date());
       setDataTerminoPrevista(undefined);
+      setTerceiroId(terceiroAtualId || "nenhum");
     }
     onOpenChange(value);
   };
@@ -79,10 +103,7 @@ export function AvancarEtapaDialog({
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !dataInicio && "text-muted-foreground"
-                    )}
+                    className={cn("w-full justify-start text-left font-normal", !dataInicio && "text-muted-foreground")}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {format(dataInicio, "dd/MM/yyyy", { locale: ptBR })}
@@ -107,10 +128,7 @@ export function AvancarEtapaDialog({
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !dataTerminoPrevista && "text-muted-foreground"
-                    )}
+                    className={cn("w-full justify-start text-left font-normal", !dataTerminoPrevista && "text-muted-foreground")}
                   >
                     <CalendarIcon className="mr-2 h-4 w-4" />
                     {dataTerminoPrevista
@@ -131,6 +149,26 @@ export function AvancarEtapaDialog({
                 </PopoverContent>
               </Popover>
             </div>
+
+            {/* Seletor de terceiro — só aparece se houver terceiros cadastrados para a próxima etapa */}
+            {temTerceiros && (
+              <div className="space-y-2">
+                <Label className="text-sm font-medium">
+                  Terceiro responsável por {proximaEtapaNome}
+                </Label>
+                <Select value={terceiroId} onValueChange={setTerceiroId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecionar terceiro" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="nenhum">Nenhum</SelectItem>
+                    {terceirosDisponiveis.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
           </div>
         )}
 
