@@ -22,9 +22,9 @@ import CarteiraPedidos from "./pages/CarteiraPedidos";
 import Comercial from "./pages/Comercial";
 import NotFound from "./pages/NotFound";
 import ScanResultado from "./pages/ScanResultado";
+import Terceiros from "./pages/Terceiros";
 
 const queryClient = new QueryClient();
-
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
@@ -49,6 +49,7 @@ const App = () => (
             <Route path="/pcp/fechamentos" element={<Layout><Fechamentos /></Layout>} />
             <Route path="/pcp/fechamentos/:id" element={<Layout><DetalhesFechamento /></Layout>} />
             <Route path="/usuarios" element={<Layout><Usuarios /></Layout>} />
+            <Route path="/terceiros" element={<Layout><Terceiros /></Layout>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
@@ -57,5 +58,4 @@ const App = () => (
     </TooltipProvider>
   </QueryClientProvider>
 );
-
 export default App;
