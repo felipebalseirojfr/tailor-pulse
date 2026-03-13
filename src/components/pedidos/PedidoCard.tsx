@@ -1,7 +1,7 @@
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Eye, Clock, AlertCircle } from "lucide-react";
+import { Eye, Clock, AlertCircle, AlertTriangle } from "lucide-react";
 import { TimelineEtapas } from "./TimelineEtapas";
 import { differenceInDays, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -41,63 +41,72 @@ interface PedidoCardProps {
 
 export function PedidoCard({ pedido, onViewDetails, onAdvanceStage, isTV = false }: PedidoCardProps) {
   const hoje = new Date();
+  hoje.setHours(0, 0, 0, 0);
   const prazoFinal = new Date(pedido.prazo_final);
   const diasRestantes = differenceInDays(prazoFinal, hoje);
   const atrasado = diasRestantes < 0 && pedido.status_geral !== "concluido";
-  
+
   const temEtapaEmAtraso = pedido.etapas_producao?.some((etapa) => {
     if (etapa.status === "concluido" || !etapa.data_termino_prevista) return false;
     const dataTerminoPrevista = new Date(etapa.data_termino_prevista);
     dataTerminoPrevista.setHours(0, 0, 0, 0);
-    const hojeCopy = new Date();
-    hojeCopy.setHours(0, 0, 0, 0);
-    return dataTerminoPrevista < hojeCopy;
+    return dataTerminoPrevista < hoje;
   }) || false;
+
+  // Etapa em risco = prazo da etapa em 1 ou 2 dias
+  const temEtapaEmRisco = !temEtapaEmAtraso && (pedido.etapas_producao?.some((etapa) => {
+    if (etapa.status === "concluido" || !etapa.data_termino_prevista) return false;
+    const dataTerminoPrevista = new Date(etapa.data_termino_prevista);
+    dataTerminoPrevista.setHours(0, 0, 0, 0);
+    const diasParaEtapa = differenceInDays(dataTerminoPrevista, hoje);
+    return diasParaEtapa >= 0 && diasParaEtapa <= 2;
+  }) || false);
 
   const getBorderColor = () => {
     if (pedido.status_geral === "concluido") return "border-l-success";
     if (atrasado || temEtapaEmAtraso) return "border-l-destructive";
+    if (temEtapaEmRisco) return "border-l-warning";
     return "border-l-primary";
   };
 
   const getStatusConfig = () => {
     if (pedido.status_geral === "aguardando_inicio") {
-      return { 
-        label: "Aguardando Início", 
+      return {
+        label: "Aguardando Início",
         color: "bg-muted/50 text-muted-foreground border-muted",
         dot: "bg-muted-foreground"
       };
     }
     if (pedido.status_geral === "concluido") {
-      return { 
-        label: "Concluído", 
+      return {
+        label: "Concluído",
         color: "bg-success/10 text-success border-success/20",
         dot: "bg-success"
       };
     }
     if (atrasado) {
-      return { 
-        label: `Atrasado ${Math.abs(diasRestantes)}d`, 
+      return {
+        label: `Atrasado ${Math.abs(diasRestantes)}d`,
         color: "bg-destructive/10 text-destructive border-destructive/20",
         dot: "bg-destructive"
       };
     }
     if (diasRestantes === 0) {
-      return { 
-        label: "Entrega Hoje", 
+      return {
+        label: "Entrega Hoje",
         color: "bg-warning/10 text-warning border-warning/20",
         dot: "bg-warning"
       };
     }
     if (diasRestantes <= 3) {
-      return { 
-        label: `${diasRestantes}d restantes`, 
+      return {
+        label: `${diasRestantes}d restantes`,
         color: "bg-warning/10 text-warning border-warning/20",
         dot: "bg-warning"
       };
     }
-    return { 
-      label: "Em Produção", 
+    return {
+      label: "Em Produção",
       color: "bg-primary/10 text-primary border-primary/20",
       dot: "bg-primary"
     };
@@ -124,7 +133,7 @@ export function PedidoCard({ pedido, onViewDetails, onAdvanceStage, isTV = false
   };
 
   return (
-    <Card 
+    <Card
       className={`bg-card border-l-4 ${getBorderColor()} transition-all duration-200 ease-out hover:shadow-xl hover:scale-[1.03] cursor-pointer animate-fade-in rounded-xl`}
       onClick={onViewDetails}
     >
@@ -152,29 +161,39 @@ export function PedidoCard({ pedido, onViewDetails, onAdvanceStage, isTV = false
               <span className={`inline-block w-1.5 h-1.5 rounded-full ${statusConfig.dot} mr-1.5`} />
               {statusConfig.label}
             </Badge>
-            {temEtapaEmAtraso && (
+
+            {/* Badge de etapa atrasada */}
+            {temEtapaEmAtraso && !atrasado && (
               <div className="flex items-center gap-1 text-destructive">
-                <AlertCircle className={`${isTV ? 'h-3 w-3' : 'h-3 w-3'}`} />
+                <AlertCircle className="h-3 w-3" />
                 <span className={`font-medium ${isTV ? 'text-xs' : 'text-xs'}`}>
-                  Etapas atrasadas
+                  Etapa atrasada
+                </span>
+              </div>
+            )}
+
+            {/* Badge de etapa em risco */}
+            {temEtapaEmRisco && (
+              <div className="flex items-center gap-1 text-warning">
+                <AlertTriangle className="h-3 w-3" />
+                <span className={`font-medium ${isTV ? 'text-xs' : 'text-xs'}`}>
+                  Etapa em risco
                 </span>
               </div>
             )}
           </div>
         </div>
       </CardHeader>
-      
+
       <CardContent className={`${isTV ? 'space-y-3 px-4 pb-4' : 'space-y-4 px-5 pb-5'}`}>
-        {/* Timeline de Etapas */}
         <div className={`${isTV ? 'py-1' : 'py-2'}`}>
-          <TimelineEtapas 
-            etapas={pedido.etapas_producao || []} 
+          <TimelineEtapas
+            etapas={pedido.etapas_producao || []}
             statusGeral={pedido.status_geral}
             isTV={isTV}
           />
         </div>
 
-        {/* Rodapé com informações essenciais */}
         <div className={`${isTV ? 'pt-3' : 'pt-4'} border-t border-border/50`}>
           <div className="flex items-start justify-between gap-3">
             <div className={`flex flex-col ${isTV ? 'gap-2' : 'gap-2.5'} flex-1 min-w-0`}>
@@ -191,7 +210,7 @@ export function PedidoCard({ pedido, onViewDetails, onAdvanceStage, isTV = false
                   </span>
                 </div>
               </div>
-              
+
               {etapaAtual && (
                 <div className="flex items-center gap-2">
                   <div className={`flex items-center justify-center ${isTV ? 'w-4 h-4' : 'w-5 h-5'} rounded-full bg-primary/10`}>
@@ -208,7 +227,7 @@ export function PedidoCard({ pedido, onViewDetails, onAdvanceStage, isTV = false
                 </div>
               )}
             </div>
-            
+
             {!isTV && (
               <Button
                 size="icon"
