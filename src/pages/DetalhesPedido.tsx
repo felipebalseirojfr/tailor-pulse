@@ -178,7 +178,7 @@ export default function DetalhesPedido() {
         }
       }
 
-      await supabase.from("pedidos_auditoria").insert({
+      await (supabase.from("pedidos_auditoria") as any).insert({
         pedido_id: id,
         usuario_id: user?.id,
         usuario_nome: usuarioNome,
