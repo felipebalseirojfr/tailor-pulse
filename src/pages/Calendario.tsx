@@ -21,6 +21,7 @@ import { calcularNivelAlerta, NivelAlerta } from "@/hooks/useAlertasAtraso";
 
 const ETAPAS_NOMES: Record<string, string> = {
   pilotagem: "Pilotagem",
+  compra_de_insumos: "Compra de Insumos",
   lacre_piloto: "Lacre Piloto",
   liberacao_corte: "Liberação de Corte",
   corte: "Corte",

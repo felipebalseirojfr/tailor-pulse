@@ -44,6 +44,7 @@ export const DashboardCharts = ({ pedidos }: DashboardChartsProps) => {
 
   const etapasLabels: Record<string, string> = {
     pilotagem: "Pilotagem",
+    compra_de_insumos: "Compra de Insumos",
     liberacao_corte: "Liberação de Corte",
     corte: "Corte",
     lavanderia: "Lavanderia",
