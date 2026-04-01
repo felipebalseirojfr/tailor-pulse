@@ -234,7 +234,7 @@ export default function DetalhesPedido() {
       if (etapasError) throw etapasError;
 
       setPedido({ ...pedidoData, arquivos: pedidoData.arquivos as any } as Pedido);
-      setEtapas(etapasData);
+      setEtapas(etapasData as any);
     } catch (error) {
       toast({ title: "Erro", description: "Não foi possível carregar os detalhes do pedido.", variant: "destructive" });
     } finally {
