@@ -239,7 +239,7 @@ export default function Clientes() {
   };
 
   const toggleAtivoTerceiro = async (terceiro: Terceiro) => {
-    const { error } = await supabase.from("terceiros").update({ ativo: !terceiro.ativo }).eq("id", terceiro.id);
+    const { error } = await (supabase.from("terceiros") as any).update({ ativo: !terceiro.ativo }).eq("id", terceiro.id);
     if (!error) fetchTerceiros();
   };
 

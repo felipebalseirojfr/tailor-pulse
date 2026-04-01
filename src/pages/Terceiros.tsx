@@ -139,8 +139,8 @@ export default function Terceiros() {
   };
 
   const toggleAtivo = async (terceiro: Terceiro) => {
-    const { error } = await supabase
-      .from("terceiros")
+    const { error } = await (supabase
+      .from("terceiros") as any)
       .update({ ativo: !terceiro.ativo })
       .eq("id", terceiro.id);
     if (!error) fetchTerceiros();
