@@ -66,13 +66,13 @@ export default function Terceiros() {
 
   const fetchTerceiros = async () => {
     try {
-      const { data, error } = await supabase
-        .from("terceiros")
+      const { data, error } = await (supabase
+        .from("terceiros") as any)
         .select("*")
         .order("tipo_etapa")
         .order("nome");
       if (error) throw error;
-      setTerceiros(data || []);
+      setTerceiros((data || []) as Terceiro[]);
     } catch (error) {
       console.error("Erro ao buscar terceiros:", error);
     } finally {
