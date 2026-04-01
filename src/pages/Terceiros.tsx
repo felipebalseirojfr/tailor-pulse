@@ -102,8 +102,8 @@ export default function Terceiros() {
     setSalvando(true);
     try {
       if (editando) {
-        const { error } = await supabase
-          .from("terceiros")
+        const { error } = await (supabase
+          .from("terceiros") as any)
           .update({ nome: nome.trim(), tipo_etapa: tipoEtapa })
           .eq("id", editando.id);
         if (error) throw error;
