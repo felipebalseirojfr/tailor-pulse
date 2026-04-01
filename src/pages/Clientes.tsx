@@ -122,9 +122,9 @@ export default function Clientes() {
 
   const fetchTerceiros = async () => {
     try {
-      const { data, error } = await supabase.from("terceiros").select("*").order("tipo_etapa").order("nome");
+      const { data, error } = await (supabase.from("terceiros") as any).select("*").order("tipo_etapa").order("nome");
       if (error) throw error;
-      setTerceiros(data || []);
+      setTerceiros((data || []) as Terceiro[]);
     } catch (error) {
       console.error("Erro ao buscar terceiros:", error);
     } finally {
