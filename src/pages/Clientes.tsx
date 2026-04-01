@@ -206,7 +206,7 @@ export default function Clientes() {
     setSalvandoTerceiro(true);
     try {
       if (editingTerceiro) {
-        const { error } = await supabase.from("terceiros").update({ nome: nomeTerceiro.trim(), tipo_etapa: tipoEtapa }).eq("id", editingTerceiro.id);
+        const { error } = await (supabase.from("terceiros") as any).update({ nome: nomeTerceiro.trim(), tipo_etapa: tipoEtapa }).eq("id", editingTerceiro.id);
         if (error) throw error;
         toast({ title: "Terceiro atualizado!" });
       } else {
