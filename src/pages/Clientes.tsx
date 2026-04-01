@@ -210,7 +210,7 @@ export default function Clientes() {
         if (error) throw error;
         toast({ title: "Terceiro atualizado!" });
       } else {
-        const { error } = await supabase.from("terceiros").insert({ nome: nomeTerceiro.trim(), tipo_etapa: tipoEtapa });
+        const { error } = await (supabase.from("terceiros") as any).insert({ nome: nomeTerceiro.trim(), tipo_etapa: tipoEtapa });
         if (error) throw error;
         toast({ title: "Terceiro cadastrado!" });
       }
