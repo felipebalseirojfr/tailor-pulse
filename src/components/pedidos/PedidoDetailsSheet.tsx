@@ -107,8 +107,8 @@ export function PedidoDetailsSheet({
 
   const atualizarTerceiroEtapa = async (etapaId: string, terceiroId: string | null) => {
     try {
-      const { error } = await supabase
-        .from("etapas_producao")
+      const { error } = await (supabase
+        .from("etapas_producao") as any)
         .update({ terceiro_id: terceiroId })
         .eq("id", etapaId);
       if (error) throw error;
