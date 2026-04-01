@@ -109,8 +109,8 @@ export default function Terceiros() {
         if (error) throw error;
         toast({ title: "Terceiro atualizado!" });
       } else {
-        const { error } = await supabase
-          .from("terceiros")
+        const { error } = await (supabase
+          .from("terceiros") as any)
           .insert({ nome: nome.trim(), tipo_etapa: tipoEtapa });
         if (error) throw error;
         toast({ title: "Terceiro cadastrado!" });
