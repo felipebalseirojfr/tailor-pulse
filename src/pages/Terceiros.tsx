@@ -25,12 +25,15 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, Pencil, Trash2, Users } from "lucide-react";
 
 const ETAPAS_NOMES: Record<string, string> = {
+  pilotagem: "Pilotagem",
+  compra_de_insumos: "Compra de Insumos",
   lacre_piloto: "Lacre Piloto",
   liberacao_corte: "Liberação de Corte",
   corte: "Corte",
   lavanderia: "Lavanderia",
   costura: "Costura",
   caseado: "Caseado",
+  estamparia_bordado: "Estamparia/Bordado",
   estamparia: "Estamparia",
   bordado: "Bordado",
   personalizacao: "Personalização",
@@ -63,13 +66,13 @@ export default function Terceiros() {
 
   const fetchTerceiros = async () => {
     try {
-      const { data, error } = await supabase
-        .from("terceiros")
+      const { data, error } = await (supabase
+        .from("terceiros") as any)
         .select("*")
         .order("tipo_etapa")
         .order("nome");
       if (error) throw error;
-      setTerceiros(data || []);
+      setTerceiros((data || []) as Terceiro[]);
     } catch (error) {
       console.error("Erro ao buscar terceiros:", error);
     } finally {
@@ -99,15 +102,15 @@ export default function Terceiros() {
     setSalvando(true);
     try {
       if (editando) {
-        const { error } = await supabase
-          .from("terceiros")
+        const { error } = await (supabase
+          .from("terceiros") as any)
           .update({ nome: nome.trim(), tipo_etapa: tipoEtapa })
           .eq("id", editando.id);
         if (error) throw error;
         toast({ title: "Terceiro atualizado!" });
       } else {
-        const { error } = await supabase
-          .from("terceiros")
+        const { error } = await (supabase
+          .from("terceiros") as any)
           .insert({ nome: nome.trim(), tipo_etapa: tipoEtapa });
         if (error) throw error;
         toast({ title: "Terceiro cadastrado!" });
@@ -124,7 +127,7 @@ export default function Terceiros() {
   const deletar = async () => {
     if (!deletandoId) return;
     try {
-      const { error } = await supabase.from("terceiros").delete().eq("id", deletandoId);
+      const { error } = await (supabase.from("terceiros") as any).delete().eq("id", deletandoId);
       if (error) throw error;
       toast({ title: "Terceiro removido." });
       fetchTerceiros();
@@ -136,8 +139,8 @@ export default function Terceiros() {
   };
 
   const toggleAtivo = async (terceiro: Terceiro) => {
-    const { error } = await supabase
-      .from("terceiros")
+    const { error } = await (supabase
+      .from("terceiros") as any)
       .update({ ativo: !terceiro.ativo })
       .eq("id", terceiro.id);
     if (!error) fetchTerceiros();

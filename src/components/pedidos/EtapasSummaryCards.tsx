@@ -32,6 +32,7 @@ interface EtapasSummaryCardsProps {
 
 const ETAPAS_CONFIG = [
   { key: "pilotagem", label: "Pilotagem", icon: Lightbulb, color: "text-amber-500", bgColor: "bg-amber-500/10" },
+  { key: "compra_de_insumos", label: "Compra Insumos", icon: Truck, color: "text-teal-500", bgColor: "bg-teal-500/10" },
   { key: "liberacao_corte", label: "Liberação", icon: FileCheck, color: "text-blue-500", bgColor: "bg-blue-500/10" },
   { key: "corte", label: "Corte", icon: Scissors, color: "text-red-500", bgColor: "bg-red-500/10" },
   { key: "lavanderia", label: "Lavanderia", icon: Droplets, color: "text-cyan-500", bgColor: "bg-cyan-500/10" },

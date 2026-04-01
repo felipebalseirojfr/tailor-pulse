@@ -24,6 +24,7 @@ interface EtapasManagerProps {
 
 const tiposEtapaDisponiveis = [
   { value: "pilotagem", label: "Pilotagem" },
+  { value: "compra_de_insumos", label: "Compra de Insumos" },
   { value: "liberacao_corte", label: "Liberação de Corte" },
   { value: "corte", label: "Corte" },
   { value: "lavanderia", label: "Lavanderia" },

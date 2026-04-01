@@ -185,6 +185,7 @@ export type Database = {
           referencia_id: string | null
           responsavel_id: string | null
           status: Database["public"]["Enums"]["status_etapa"] | null
+          terceiro_id: string | null
           tipo_etapa: Database["public"]["Enums"]["tipo_etapa"]
           updated_at: string | null
         }
@@ -201,6 +202,7 @@ export type Database = {
           referencia_id?: string | null
           responsavel_id?: string | null
           status?: Database["public"]["Enums"]["status_etapa"] | null
+          terceiro_id?: string | null
           tipo_etapa: Database["public"]["Enums"]["tipo_etapa"]
           updated_at?: string | null
         }
@@ -217,6 +219,7 @@ export type Database = {
           referencia_id?: string | null
           responsavel_id?: string | null
           status?: Database["public"]["Enums"]["status_etapa"] | null
+          terceiro_id?: string | null
           tipo_etapa?: Database["public"]["Enums"]["tipo_etapa"]
           updated_at?: string | null
         }
@@ -233,6 +236,13 @@ export type Database = {
             columns: ["responsavel_id"]
             isOneToOne: false
             referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "etapas_producao_terceiro_id_fkey"
+            columns: ["terceiro_id"]
+            isOneToOne: false
+            referencedRelation: "terceiros"
             referencedColumns: ["id"]
           },
           {
@@ -904,6 +914,33 @@ export type Database = {
           },
         ]
       }
+      terceiros: {
+        Row: {
+          ativo: boolean | null
+          created_at: string | null
+          id: string
+          nome: string
+          tipo_etapa: string
+          updated_at: string | null
+        }
+        Insert: {
+          ativo?: boolean | null
+          created_at?: string | null
+          id?: string
+          nome: string
+          tipo_etapa: string
+          updated_at?: string | null
+        }
+        Update: {
+          ativo?: boolean | null
+          created_at?: string | null
+          id?: string
+          nome?: string
+          tipo_etapa?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
@@ -1013,6 +1050,7 @@ export type Database = {
         | "entrega"
         | "estamparia"
         | "bordado"
+        | "compra_de_insumos"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1205,6 +1243,7 @@ export const Constants = {
         "entrega",
         "estamparia",
         "bordado",
+        "compra_de_insumos",
       ],
     },
   },

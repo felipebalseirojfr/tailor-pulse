@@ -118,6 +118,7 @@ export function PedidoCard({ pedido, onViewDetails, onAdvanceStage, isTV = false
   const getEtapaLabel = (tipo: string) => {
     const labels: Record<string, string> = {
       pilotagem: "Pilotagem",
+      compra_de_insumos: "Compra de Insumos",
       liberacao_corte: "Liberação de Corte",
       corte: "Corte",
       lavanderia: "Lavanderia",

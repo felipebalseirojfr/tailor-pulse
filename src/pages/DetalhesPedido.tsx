@@ -108,6 +108,7 @@ interface Terceiro {
 
 const ETAPAS_NOMES: Record<string, string> = {
   pilotagem: "Pilotagem",
+  compra_de_insumos: "Compra de Insumos",
   liberacao_corte: "Liberação de Corte",
   corte: "Corte",
   lavanderia: "Lavanderia",
@@ -177,7 +178,7 @@ export default function DetalhesPedido() {
         }
       }
 
-      await supabase.from("pedidos_auditoria").insert({
+      await (supabase.from("pedidos_auditoria") as any).insert({
         pedido_id: id,
         usuario_id: user?.id,
         usuario_nome: usuarioNome,
@@ -233,7 +234,7 @@ export default function DetalhesPedido() {
       if (etapasError) throw etapasError;
 
       setPedido({ ...pedidoData, arquivos: pedidoData.arquivos as any } as Pedido);
-      setEtapas(etapasData);
+      setEtapas(etapasData as any);
     } catch (error) {
       toast({ title: "Erro", description: "Não foi possível carregar os detalhes do pedido.", variant: "destructive" });
     } finally {
@@ -247,8 +248,8 @@ export default function DetalhesPedido() {
   };
 
   const fetchTerceiros = async () => {
-    const { data } = await supabase.from("terceiros").select("id, nome, tipo_etapa").eq("ativo", true).order("nome");
-    if (data) setTerceiros(data);
+    const { data } = await (supabase.from("terceiros") as any).select("id, nome, tipo_etapa").eq("ativo", true).order("nome");
+    if (data) setTerceiros(data as Terceiro[]);
   };
 
   const getTerceirosDaEtapa = (tipoEtapa: string) => {

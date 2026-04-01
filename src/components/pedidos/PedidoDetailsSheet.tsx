@@ -80,13 +80,13 @@ export function PedidoDetailsSheet({
   // Buscar todos os terceiros ativos ao abrir
   useEffect(() => {
     if (open) {
-      supabase
-        .from("terceiros")
+      (supabase
+        .from("terceiros") as any)
         .select("id, nome, tipo_etapa")
         .eq("ativo", true)
         .order("nome")
-        .then(({ data }) => {
-          if (data) setTerceiros(data);
+        .then(({ data }: any) => {
+          if (data) setTerceiros(data as Terceiro[]);
         });
     }
   }, [open]);
@@ -107,8 +107,8 @@ export function PedidoDetailsSheet({
 
   const atualizarTerceiroEtapa = async (etapaId: string, terceiroId: string | null) => {
     try {
-      const { error } = await supabase
-        .from("etapas_producao")
+      const { error } = await (supabase
+        .from("etapas_producao") as any)
         .update({ terceiro_id: terceiroId })
         .eq("id", etapaId);
       if (error) throw error;
@@ -250,6 +250,7 @@ export function PedidoDetailsSheet({
   const getEtapaLabel = (tipo: string) => {
     const labels: Record<string, string> = {
       pilotagem: "Pilotagem",
+      compra_de_insumos: "Compra de Insumos",
       liberacao_corte: "Liberação de Corte",
       corte: "Corte",
       lavanderia: "Lavanderia",
