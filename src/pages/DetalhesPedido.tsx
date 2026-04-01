@@ -248,8 +248,8 @@ export default function DetalhesPedido() {
   };
 
   const fetchTerceiros = async () => {
-    const { data } = await supabase.from("terceiros").select("id, nome, tipo_etapa").eq("ativo", true).order("nome");
-    if (data) setTerceiros(data);
+    const { data } = await (supabase.from("terceiros") as any).select("id, nome, tipo_etapa").eq("ativo", true).order("nome");
+    if (data) setTerceiros(data as Terceiro[]);
   };
 
   const getTerceirosDaEtapa = (tipoEtapa: string) => {
