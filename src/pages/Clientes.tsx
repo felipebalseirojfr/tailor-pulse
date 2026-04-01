@@ -226,7 +226,7 @@ export default function Clientes() {
   const deletarTerceiro = async () => {
     if (!terceiroToDelete) return;
     try {
-      const { error } = await supabase.from("terceiros").delete().eq("id", terceiroToDelete.id);
+      const { error } = await (supabase.from("terceiros") as any).delete().eq("id", terceiroToDelete.id);
       if (error) throw error;
       toast({ title: "Terceiro removido." });
       fetchTerceiros();
