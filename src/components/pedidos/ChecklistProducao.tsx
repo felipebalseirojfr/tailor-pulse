@@ -1,4 +1,5 @@
 import { forwardRef } from "react";
+import { calcularQuantidadeReal } from "@/lib/quantidade-utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -7,6 +8,7 @@ interface PedidoChecklist {
   produto_modelo: string;
   tipo_peca: string;
   quantidade_total: number;
+  grade_tamanhos?: Record<string, number> | null;
   aviamentos?: string[] | null;
   tipos_personalizacao?: string[] | null;
   clientes?: {
@@ -67,7 +69,7 @@ export const ChecklistProducao = forwardRef<HTMLDivElement, ChecklistProducaoPro
             <p className="font-semibold text-lg">{pedido.produto_modelo}</p>
             <p className="text-sm">
               {pedido.codigo_pedido && `Pedido: ${pedido.codigo_pedido} | `}
-              Tipo: {pedido.tipo_peca} | Qtd: {pedido.quantidade_total} peças
+              Tipo: {pedido.tipo_peca} | Qtd: {calcularQuantidadeReal(pedido.grade_tamanhos, pedido.quantidade_total)} peças
             </p>
             {pedido.clientes?.nome && (
               <p className="text-sm">Cliente: {pedido.clientes.nome}</p>
