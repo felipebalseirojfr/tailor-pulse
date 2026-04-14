@@ -1,4 +1,5 @@
 import { useEffect, useState, useRef } from "react";
+import { calcularQuantidadeReal } from "@/lib/quantidade-utils";
 import { useParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -432,7 +433,7 @@ export default function DetalhesPedido() {
                   <div><p className="text-sm font-medium text-muted-foreground">Aviamentos</p><p className="text-base">{pedido.aviamentos || "Não especificado"}</p></div>
                 </div>
                 <div className="space-y-4">
-                  <div><p className="text-sm font-medium text-muted-foreground">Quantidade Total</p><p className="text-base">{pedido.quantidade_total} unidades</p></div>
+                  <div><p className="text-sm font-medium text-muted-foreground">Quantidade Total</p><p className="text-base">{calcularQuantidadeReal(pedido.grade_tamanhos, pedido.quantidade_total)} unidades</p></div>
                   <div><p className="text-sm font-medium text-muted-foreground">Data de Início</p><p className="text-base">{new Date(pedido.data_inicio).toLocaleDateString("pt-BR")}</p></div>
                   <div><p className="text-sm font-medium text-muted-foreground">Prazo Final</p><p className="text-base">{new Date(pedido.prazo_final).toLocaleDateString("pt-BR")}</p></div>
                   <div><p className="text-sm font-medium text-muted-foreground">Responsável Comercial</p><p className="text-base">{pedido.profiles?.nome}</p></div>
