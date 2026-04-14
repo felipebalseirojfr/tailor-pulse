@@ -49,17 +49,10 @@ interface Pedido {
   }>;
 }
 
-// Função para calcular quantidade total a partir da grade de tamanhos
+import { calcularQuantidadeReal } from "@/lib/quantidade-utils";
+
 const calcularQuantidadeTotal = (pedido: Pedido): number => {
-  if (pedido.grade_tamanhos && typeof pedido.grade_tamanhos === 'object') {
-    const valores = Object.values(pedido.grade_tamanhos).filter(
-      (v): v is number => typeof v === 'number'
-    );
-    if (valores.length > 0) {
-      return valores.reduce((acc, val) => acc + val, 0);
-    }
-  }
-  return pedido.quantidade_total;
+  return calcularQuantidadeReal(pedido.grade_tamanhos, pedido.quantidade_total);
 };
 
 interface ClienteProducaoCardProps {
