@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
@@ -36,16 +36,24 @@ interface Profile {
 
 interface UserRole {
   user_id: string;
-  role: string;
+  role: AppRole;
 }
 
 interface UserWithRoles extends Profile {
-  roles: string[];
+  roles: AppRole[];
 }
 
-const PRODUCTION_FULL_ROLES = ["commercial", "production"];
+type AppRole = "admin" | "commercial" | "production" | "viewer" | "pcp_closer" | "backoffice_fiscal";
+type RoleDefinition = {
+  value: AppRole | "production_full";
+  label: string;
+  description: string;
+  combo?: AppRole[];
+};
 
-const ALL_ROLES = [
+const PRODUCTION_FULL_ROLES: AppRole[] = ["commercial", "production"];
+
+const ALL_ROLES: RoleDefinition[] = [
   { value: "admin", label: "Administrador", description: "Acesso total ao sistema" },
   { value: "production_full", label: "Produção Completa", description: "Cadastra pedidos, controla produção e acompanha calendário", combo: PRODUCTION_FULL_ROLES },
   { value: "commercial", label: "Comercial", description: "Gerencia pedidos e clientes" },
@@ -54,6 +62,9 @@ const ALL_ROLES = [
   { value: "pcp_closer", label: "PCP Fechamento", description: "Gerencia fechamentos" },
   { value: "backoffice_fiscal", label: "Backoffice Fiscal", description: "Emite notas fiscais" },
 ];
+
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : "Não foi possível concluir a operação.";
 
 export default function Usuarios() {
   const [users, setUsers] = useState<UserWithRoles[]>([]);
