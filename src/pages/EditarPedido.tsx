@@ -497,42 +497,25 @@ export default function EditarPedido() {
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div>
-                  <Label htmlFor="preco_venda">Preço de Venda (R$)</Label>
-                  <Input
-                    id="preco_venda"
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.preco_venda}
-                    onChange={(e) =>
-                      setFormData({ ...formData, preco_venda: e.target.value })
-                    }
-                    placeholder="Ex: 59.90"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="composicao_tecido">Composição do Tecido (NCM)</Label>
-                  <Select
-                    value={formData.composicao_tecido}
-                    onValueChange={(value) =>
-                      setFormData({ ...formData, composicao_tecido: value })
-                    }
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione a composição" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {composicoesComuns.map((comp) => (
-                        <SelectItem key={comp} value={comp}>
-                          {comp}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
+              <div>
+                <Label htmlFor="composicao_tecido">Composição do Tecido (NCM)</Label>
+                <Select
+                  value={formData.composicao_tecido}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, composicao_tecido: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione a composição" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {composicoesComuns.map((comp) => (
+                      <SelectItem key={comp} value={comp}>
+                        {comp}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
 
               <div>
