@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
+import { Badge, type BadgeProps } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
@@ -36,16 +36,24 @@ interface Profile {
 
 interface UserRole {
   user_id: string;
-  role: string;
+  role: AppRole;
 }
 
 interface UserWithRoles extends Profile {
-  roles: string[];
+  roles: AppRole[];
 }
 
-const PRODUCTION_FULL_ROLES = ["commercial", "production"];
+type AppRole = "admin" | "commercial" | "production" | "viewer" | "pcp_closer" | "backoffice_fiscal";
+type RoleDefinition = {
+  value: AppRole | "production_full";
+  label: string;
+  description: string;
+  combo?: AppRole[];
+};
 
-const ALL_ROLES = [
+const PRODUCTION_FULL_ROLES: AppRole[] = ["commercial", "production"];
+
+const ALL_ROLES: RoleDefinition[] = [
   { value: "admin", label: "Administrador", description: "Acesso total ao sistema" },
   { value: "production_full", label: "Produção Completa", description: "Cadastra pedidos, controla produção e acompanha calendário", combo: PRODUCTION_FULL_ROLES },
   { value: "commercial", label: "Comercial", description: "Gerencia pedidos e clientes" },
@@ -54,6 +62,9 @@ const ALL_ROLES = [
   { value: "pcp_closer", label: "PCP Fechamento", description: "Gerencia fechamentos" },
   { value: "backoffice_fiscal", label: "Backoffice Fiscal", description: "Emite notas fiscais" },
 ];
+
+const getErrorMessage = (error: unknown) =>
+  error instanceof Error ? error.message : "Não foi possível concluir a operação.";
 
 export default function Usuarios() {
   const [users, setUsers] = useState<UserWithRoles[]>([]);
@@ -65,7 +76,7 @@ export default function Usuarios() {
     nome: "",
     email: "",
     password: "",
-    roles: [] as string[],
+    roles: [] as AppRole[],
   });
   const [saving, setSaving] = useState(false);
 
@@ -116,11 +127,11 @@ export default function Usuarios() {
       }));
 
       setUsers(usersWithRoles);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao carregar usuários:", error);
       toast({
         title: "Erro ao carregar usuários",
-        description: error.message,
+        description: getErrorMessage(error),
         variant: "destructive",
       });
     } finally {
@@ -147,9 +158,9 @@ export default function Usuarios() {
     setIsDialogOpen(true);
   };
 
-  const handleRoleToggle = (role: string) => {
+  const handleRoleToggle = (role: RoleDefinition["value"]) => {
     const roleDef = ALL_ROLES.find((r) => r.value === role);
-    const targets = (roleDef as any)?.combo as string[] | undefined;
+    const targets = roleDef?.combo;
 
     setFormData((prev) => {
       if (targets) {
@@ -157,6 +168,7 @@ export default function Usuarios() {
         const without = prev.roles.filter((r) => !targets.includes(r));
         return { ...prev, roles: allActive ? without : [...without, ...targets] };
       }
+      if (role === "production_full") return prev;
       return {
         ...prev,
         roles: prev.roles.includes(role)
@@ -166,8 +178,9 @@ export default function Usuarios() {
     });
   };
 
-  const isRoleChecked = (role: { value: string; combo?: string[] }) => {
+  const isRoleChecked = (role: RoleDefinition) => {
     if (role.combo) return role.combo.every((t) => formData.roles.includes(t));
+    if (role.value === "production_full") return false;
     return formData.roles.includes(role.value);
   };
 
@@ -247,11 +260,11 @@ export default function Usuarios() {
 
       setIsDialogOpen(false);
       fetchUsers();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao salvar usuário:", error);
       toast({
         title: "Erro ao salvar",
-        description: error.message,
+        description: getErrorMessage(error),
         variant: "destructive",
       });
     } finally {
@@ -259,7 +272,7 @@ export default function Usuarios() {
     }
   };
 
-  const getRoleBadgeVariant = (role: string) => {
+  const getRoleBadgeVariant = (role: AppRole): BadgeProps["variant"] => {
     switch (role) {
       case "admin":
         return "destructive";
@@ -342,7 +355,7 @@ export default function Usuarios() {
                         {user.roles.map((role) => (
                           <Badge
                             key={role}
-                            variant={getRoleBadgeVariant(role) as any}
+                            variant={getRoleBadgeVariant(role)}
                             className="text-xs"
                           >
                             {getRoleLabel(role)}
@@ -375,7 +388,7 @@ export default function Usuarios() {
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-md bg-card border-border">
+        <DialogContent className="grid max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] grid-rows-[auto,minmax(0,1fr),auto] overflow-hidden bg-card border-border sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-foreground">
               {isEditing ? "Editar Usuário" : "Novo Usuário"}
@@ -387,7 +400,7 @@ export default function Usuarios() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
+          <div className="min-h-0 space-y-4 overflow-y-auto py-4 pr-1">
             <div className="space-y-2">
               <Label htmlFor="nome">Nome completo</Label>
               <Input
@@ -436,7 +449,7 @@ export default function Usuarios() {
                   >
                     <Checkbox
                       id={role.value}
-                      checked={isRoleChecked(role as any)}
+                      checked={isRoleChecked(role)}
                       onCheckedChange={() => handleRoleToggle(role.value)}
                     />
                     <div className="flex-1">
@@ -456,7 +469,7 @@ export default function Usuarios() {
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="shrink-0 pt-2">
             <Button
               variant="outline"
               onClick={() => setIsDialogOpen(false)}
