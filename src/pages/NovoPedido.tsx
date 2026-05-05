@@ -393,14 +393,13 @@ export default function NovoPedido() {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="codigo_produto_cliente">Código do Produto do Cliente *</Label>
+              <Label htmlFor="codigo_produto_cliente">Código do Produto do Cliente</Label>
               <Input
                 id="codigo_produto_cliente"
                 name="codigo_produto_cliente"
                 value={formData.codigo_produto_cliente}
                 onChange={handleChange}
                 placeholder="Ex: SKU-12345 (código interno do cliente)"
-                required
               />
             </div>
 
