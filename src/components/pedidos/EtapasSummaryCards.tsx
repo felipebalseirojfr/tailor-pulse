@@ -42,6 +42,7 @@ const ETAPAS_CONFIG = [
   { key: "estamparia", label: "Estamparia", icon: Palette, color: "text-pink-500", bgColor: "bg-pink-500/10" },
   { key: "bordado", label: "Bordado", icon: Palette, color: "text-orange-500", bgColor: "bg-orange-500/10" },
   { key: "acabamento", label: "Acabamento", icon: CheckSquare, color: "text-orange-500", bgColor: "bg-orange-500/10" },
+  { key: "aplicacao_travete", label: "Aplicação Travete", icon: Circle, color: "text-fuchsia-500", bgColor: "bg-fuchsia-500/10" },
   { key: "entrega", label: "Entrega", icon: Truck, color: "text-emerald-500", bgColor: "bg-emerald-500/10" },
 ];
 

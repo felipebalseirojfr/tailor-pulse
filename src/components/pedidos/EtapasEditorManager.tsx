@@ -37,6 +37,7 @@ const tiposEtapaDisponiveis = [
   { value: "estamparia", label: "Estamparia" },
   { value: "bordado", label: "Bordado" },
   { value: "acabamento", label: "Acabamento" },
+  { value: "aplicacao_travete", label: "Aplicação de Travete" },
   { value: "entrega", label: "Entrega" },
 ];
 

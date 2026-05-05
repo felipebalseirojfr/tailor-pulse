@@ -161,6 +161,7 @@ export function ClienteProducaoCard({ cliente, producoes, onViewProducao }: Clie
   const getEtapaLabel = (tipo: string) => {
     const labels: Record<string, string> = {
       pilotagem: "Pilotagem",
+      aplicacao_travete: "Aplicação de Travete",
       compra_de_insumos: "Compra Insumos",
       liberacao_corte: "Liberação",
       corte: "Corte",
