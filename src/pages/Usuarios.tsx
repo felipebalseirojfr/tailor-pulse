@@ -76,7 +76,7 @@ export default function Usuarios() {
     nome: "",
     email: "",
     password: "",
-    roles: [] as string[],
+    roles: [] as AppRole[],
   });
   const [saving, setSaving] = useState(false);
 
@@ -127,11 +127,11 @@ export default function Usuarios() {
       }));
 
       setUsers(usersWithRoles);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao carregar usuários:", error);
       toast({
         title: "Erro ao carregar usuários",
-        description: error.message,
+        description: getErrorMessage(error),
         variant: "destructive",
       });
     } finally {
@@ -158,9 +158,9 @@ export default function Usuarios() {
     setIsDialogOpen(true);
   };
 
-  const handleRoleToggle = (role: string) => {
+  const handleRoleToggle = (role: RoleDefinition["value"]) => {
     const roleDef = ALL_ROLES.find((r) => r.value === role);
-    const targets = (roleDef as any)?.combo as string[] | undefined;
+    const targets = roleDef?.combo;
 
     setFormData((prev) => {
       if (targets) {
