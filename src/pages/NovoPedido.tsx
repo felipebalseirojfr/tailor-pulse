@@ -433,23 +433,21 @@ export default function NovoPedido() {
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
                 <Label htmlFor="composicao_tecido">Composição do Tecido (NCM)</Label>
-                <Select
+                <Input
+                  id="composicao_tecido"
+                  name="composicao_tecido"
+                  list="composicoes-comuns"
                   value={formData.composicao_tecido}
-                  onValueChange={(value) =>
-                    setFormData({ ...formData, composicao_tecido: value })
+                  onChange={(e) =>
+                    setFormData({ ...formData, composicao_tecido: e.target.value })
                   }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione a composição" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {composicoesComuns.map((comp) => (
-                      <SelectItem key={comp} value={comp}>
-                        {comp}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                  placeholder="Digite ou selecione a composição"
+                />
+                <datalist id="composicoes-comuns">
+                  {composicoesComuns.map((comp) => (
+                    <option key={comp} value={comp} />
+                  ))}
+                </datalist>
               </div>
             </div>
 
