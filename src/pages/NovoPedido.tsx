@@ -433,20 +433,6 @@ export default function NovoPedido() {
 
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="preco_venda">Preço de Venda (R$)</Label>
-                <Input
-                  id="preco_venda"
-                  name="preco_venda"
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={formData.preco_venda}
-                  onChange={handleChange}
-                  placeholder="Ex: 59.90"
-                />
-              </div>
-
-              <div className="space-y-2">
                 <Label htmlFor="composicao_tecido">Composição do Tecido (NCM)</Label>
                 <Select
                   value={formData.composicao_tecido}
