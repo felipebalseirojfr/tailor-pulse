@@ -168,6 +168,7 @@ export default function Usuarios() {
         const without = prev.roles.filter((r) => !targets.includes(r));
         return { ...prev, roles: allActive ? without : [...without, ...targets] };
       }
+      if (role === "production_full") return prev;
       return {
         ...prev,
         roles: prev.roles.includes(role)
@@ -177,8 +178,9 @@ export default function Usuarios() {
     });
   };
 
-  const isRoleChecked = (role: { value: string; combo?: string[] }) => {
+  const isRoleChecked = (role: RoleDefinition) => {
     if (role.combo) return role.combo.every((t) => formData.roles.includes(t));
+    if (role.value === "production_full") return false;
     return formData.roles.includes(role.value);
   };
 
@@ -258,11 +260,11 @@ export default function Usuarios() {
 
       setIsDialogOpen(false);
       fetchUsers();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("Erro ao salvar usuário:", error);
       toast({
         title: "Erro ao salvar",
-        description: error.message,
+        description: getErrorMessage(error),
         variant: "destructive",
       });
     } finally {
@@ -270,7 +272,7 @@ export default function Usuarios() {
     }
   };
 
-  const getRoleBadgeVariant = (role: string) => {
+  const getRoleBadgeVariant = (role: AppRole): BadgeProps["variant"] => {
     switch (role) {
       case "admin":
         return "destructive";
