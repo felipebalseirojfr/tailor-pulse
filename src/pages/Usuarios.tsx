@@ -148,12 +148,27 @@ export default function Usuarios() {
   };
 
   const handleRoleToggle = (role: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      roles: prev.roles.includes(role)
-        ? prev.roles.filter((r) => r !== role)
-        : [...prev.roles, role],
-    }));
+    const roleDef = ALL_ROLES.find((r) => r.value === role);
+    const targets = (roleDef as any)?.combo as string[] | undefined;
+
+    setFormData((prev) => {
+      if (targets) {
+        const allActive = targets.every((t) => prev.roles.includes(t));
+        const without = prev.roles.filter((r) => !targets.includes(r));
+        return { ...prev, roles: allActive ? without : [...without, ...targets] };
+      }
+      return {
+        ...prev,
+        roles: prev.roles.includes(role)
+          ? prev.roles.filter((r) => r !== role)
+          : [...prev.roles, role],
+      };
+    });
+  };
+
+  const isRoleChecked = (role: { value: string; combo?: string[] }) => {
+    if (role.combo) return role.combo.every((t) => formData.roles.includes(t));
+    return formData.roles.includes(role.value);
   };
 
   const handleSubmit = async () => {
@@ -421,7 +436,7 @@ export default function Usuarios() {
                   >
                     <Checkbox
                       id={role.value}
-                      checked={formData.roles.includes(role.value)}
+                      checked={isRoleChecked(role as any)}
                       onCheckedChange={() => handleRoleToggle(role.value)}
                     />
                     <div className="flex-1">
