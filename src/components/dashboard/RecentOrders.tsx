@@ -51,6 +51,7 @@ export const RecentOrders = ({ pedidos }: RecentOrdersProps) => {
     
     const colors: Record<string, string> = {
       pilotagem: "bg-purple-500",
+      aplicacao_travete: "bg-pink-500",
       liberacao_corte: "bg-indigo-500",
       corte: "bg-blue-500",
       lavanderia: "bg-cyan-500",

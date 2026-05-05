@@ -314,6 +314,7 @@ export default function Pedidos() {
   const getEtapaLabel = (tipo: string) => {
     const labels: Record<string, string> = {
       pilotagem: "Pilotagem",
+      aplicacao_travete: "Aplicação de Travete",
       compra_de_insumos: "Compra de Insumos",
       liberacao_corte: "Liberação de Corte",
       corte: "Corte",
