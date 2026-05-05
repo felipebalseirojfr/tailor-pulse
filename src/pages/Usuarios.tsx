@@ -355,7 +355,7 @@ export default function Usuarios() {
                         {user.roles.map((role) => (
                           <Badge
                             key={role}
-                            variant={getRoleBadgeVariant(role) as any}
+                            variant={getRoleBadgeVariant(role)}
                             className="text-xs"
                           >
                             {getRoleLabel(role)}
@@ -449,7 +449,7 @@ export default function Usuarios() {
                   >
                     <Checkbox
                       id={role.value}
-                      checked={isRoleChecked(role as any)}
+                      checked={isRoleChecked(role)}
                       onCheckedChange={() => handleRoleToggle(role.value)}
                     />
                     <div className="flex-1">
