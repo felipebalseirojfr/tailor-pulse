@@ -43,8 +43,11 @@ interface UserWithRoles extends Profile {
   roles: string[];
 }
 
+const PRODUCTION_FULL_ROLES = ["commercial", "production"];
+
 const ALL_ROLES = [
   { value: "admin", label: "Administrador", description: "Acesso total ao sistema" },
+  { value: "production_full", label: "Produção Completa", description: "Cadastra pedidos, controla produção e acompanha calendário", combo: PRODUCTION_FULL_ROLES },
   { value: "commercial", label: "Comercial", description: "Gerencia pedidos e clientes" },
   { value: "production", label: "Produção", description: "Visualiza e atualiza etapas" },
   { value: "viewer", label: "Visualizador", description: "Apenas visualização" },
