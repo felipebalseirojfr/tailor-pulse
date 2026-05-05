@@ -375,7 +375,7 @@ export default function Usuarios() {
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-md bg-card border-border">
+        <DialogContent className="grid max-h-[calc(100dvh-2rem)] w-[calc(100vw-2rem)] grid-rows-[auto,minmax(0,1fr),auto] overflow-hidden bg-card border-border sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="text-foreground">
               {isEditing ? "Editar Usuário" : "Novo Usuário"}
@@ -387,7 +387,7 @@ export default function Usuarios() {
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
+          <div className="min-h-0 space-y-4 overflow-y-auto py-4 pr-1">
             <div className="space-y-2">
               <Label htmlFor="nome">Nome completo</Label>
               <Input
@@ -456,7 +456,7 @@ export default function Usuarios() {
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="shrink-0 pt-2">
             <Button
               variant="outline"
               onClick={() => setIsDialogOpen(false)}
