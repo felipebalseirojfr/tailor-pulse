@@ -82,10 +82,11 @@ export default function Usuarios() {
   }, [rolesLoading, hasRole, navigate, toast]);
 
   useEffect(() => {
-    if (hasRole("admin")) {
+    if (!rolesLoading && hasRole("admin")) {
       fetchUsers();
     }
-  }, [hasRole]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [rolesLoading]);
 
   const fetchUsers = async () => {
     try {
