@@ -126,6 +126,7 @@ export default function Calendario() {
           pedido_id,
           tipo_etapa,
           status,
+          data_inicio_prevista,
           data_termino_prevista,
           pedidos (
             id,
