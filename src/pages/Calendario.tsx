@@ -328,13 +328,13 @@ export default function Calendario() {
             {dias.map((dia, idx) => {
               if (!dia) return <div key={`empty-${idx}`} />;
               const diaStr = dia.toISOString().split("T")[0];
-              const etapasDia = getEtapasDoDia(dia);
+              const marcosDia = getMarcosDoDia(dia);
               const isHoje = diaStr === hoje;
 
               return (
                 <div
                   key={diaStr}
-                  className={`min-h-[80px] rounded-lg p-1.5 border transition-colors ${
+                  className={`min-h-[90px] rounded-lg p-1.5 border transition-colors ${
                     isHoje ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
                   }`}
                 >
@@ -343,22 +343,26 @@ export default function Calendario() {
                     {isHoje && <span className="ml-1 text-[10px] text-primary">hoje</span>}
                   </div>
                   <div className="space-y-0.5">
-                    {etapasDia.slice(0, 3).map((etapa) => {
-                      const config = getNivelConfig(etapa.nivel_alerta);
+                    {marcosDia.slice(0, 3).map((marco) => {
+                      const config = getNivelConfig(marco.etapa.nivel_alerta);
+                      const etapaNome = ETAPAS_NOMES[marco.etapa.tipo_etapa] || marco.etapa.tipo_etapa;
+                      const prefixo = marco.tipo === "inicio" ? "▶" : "■";
+                      const tipoLabel = marco.tipo === "inicio" ? "Início" : "Fim";
                       return (
                         <button
-                          key={etapa.id}
-                          onClick={() => navigate(`/pedidos/${etapa.pedido_id}`)}
+                          key={marco.key}
+                          onClick={() => navigate(`/pedidos/${marco.etapa.pedido_id}`)}
                           className={`w-full text-left text-[10px] rounded px-1 py-0.5 truncate font-medium transition-opacity hover:opacity-80 ${config.calBg} ${config.calText}`}
-                          title={`${etapa.pedidos?.produto_modelo} — ${ETAPAS_NOMES[etapa.tipo_etapa]}`}
+                          title={`${tipoLabel} — ${etapaNome} · ${marco.etapa.pedidos?.produto_modelo} (${marco.etapa.pedidos?.clientes?.nome || ""})`}
                         >
-                          {etapa.pedidos?.produto_modelo}
+                          <span className="mr-1">{prefixo}</span>
+                          {etapaNome}: {marco.etapa.pedidos?.produto_modelo}
                         </button>
                       );
                     })}
-                    {etapasDia.length > 3 && (
+                    {marcosDia.length > 3 && (
                       <div className="text-[10px] text-muted-foreground pl-1">
-                        +{etapasDia.length - 3} mais
+                        +{marcosDia.length - 3} mais
                       </div>
                     )}
                   </div>
