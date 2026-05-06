@@ -48,6 +48,7 @@ interface EtapaComPedido {
   pedido_id: string;
   tipo_etapa: string;
   status: string;
+  data_inicio_prevista: string | null;
   data_termino_prevista: string | null;
   nivel_alerta: NivelAlerta;
   dias_restantes: number | null;
@@ -57,6 +58,14 @@ interface EtapaComPedido {
     codigo_pedido?: string;
     clientes: { nome: string };
   };
+}
+
+type MarcoTipo = "inicio" | "fim";
+interface MarcoCalendario {
+  key: string;
+  etapa: EtapaComPedido;
+  tipo: MarcoTipo;
+  data: string;
 }
 
 function getNivelConfig(nivel: NivelAlerta) {
