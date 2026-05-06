@@ -169,13 +169,19 @@ export default function Calendario() {
     return dias;
   };
 
-  const getEtapasDoDia = (dia: Date) => {
+  const getMarcosDoDia = (dia: Date): MarcoCalendario[] => {
     const diaStr = dia.toISOString().split("T")[0];
-    return etapas.filter(
-      (e) =>
-        e.data_termino_prevista === diaStr &&
-        (filtroNivel === "todos" || e.nivel_alerta === filtroNivel)
-    );
+    const marcos: MarcoCalendario[] = [];
+    etapas.forEach((e) => {
+      if (filtroNivel !== "todos" && e.nivel_alerta !== filtroNivel) return;
+      if (e.data_inicio_prevista === diaStr) {
+        marcos.push({ key: `${e.id}-inicio`, etapa: e, tipo: "inicio", data: diaStr });
+      }
+      if (e.data_termino_prevista === diaStr) {
+        marcos.push({ key: `${e.id}-fim`, etapa: e, tipo: "fim", data: diaStr });
+      }
+    });
+    return marcos;
   };
 
   const contadores = {
