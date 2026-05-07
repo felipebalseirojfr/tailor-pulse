@@ -440,15 +440,22 @@ export default function Calendario() {
             }
             const inicios = marcos.filter((m) => m.tipo === "inicio");
             const fins = marcos.filter((m) => m.tipo === "fim");
+            const prazos = marcos.filter((m) => m.tipo === "prazo_pedido");
             const renderMarco = (marco: MarcoCalendario) => {
-              const config = getNivelConfig(marco.etapa.nivel_alerta);
-              const etapaNome = ETAPAS_NOMES[marco.etapa.tipo_etapa] || marco.etapa.tipo_etapa;
+              const config = getNivelConfig(marco.nivel_alerta);
+              const isPrazo = marco.tipo === "prazo_pedido";
+              const titulo = isPrazo
+                ? "Prazo Final do Pedido"
+                : ETAPAS_NOMES[marco.etapa!.tipo_etapa] || marco.etapa!.tipo_etapa;
+              const modelo = isPrazo ? marco.pedido!.produto_modelo : marco.etapa!.pedidos?.produto_modelo;
+              const cliente = isPrazo ? marco.pedido!.clientes?.nome : marco.etapa!.pedidos?.clientes?.nome;
+              const pedidoId = isPrazo ? marco.pedido!.id : marco.etapa!.pedido_id;
               return (
                 <button
                   key={marco.key}
                   onClick={() => {
                     setDiaSelecionado(null);
-                    navigate(`/pedidos/${marco.etapa.pedido_id}`);
+                    navigate(`/pedidos/${pedidoId}`);
                   }}
                   className={`w-full flex items-center justify-between rounded-lg border p-3 text-left transition-all hover:scale-[1.01] hover:shadow-sm ${config.bg}`}
                 >
@@ -456,13 +463,13 @@ export default function Calendario() {
                     <div className={`h-3 w-3 rounded-full flex-shrink-0 ${config.dot}`} />
                   <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`font-semibold text-sm ${config.calText}`}>{etapaNome}</span>
+                        <span className={`font-semibold text-sm ${config.calText}`}>{titulo}</span>
                         <Badge className={`text-[10px] border ${config.badge}`}>
                           {config.label}
                         </Badge>
                       </div>
                       <div className={`text-xs mt-0.5 truncate ${config.calText} opacity-90`}>
-                        {marco.etapa.pedidos?.produto_modelo} — {marco.etapa.pedidos?.clientes?.nome || "Sem cliente"}
+                        {modelo} — {cliente || "Sem cliente"}
                       </div>
                     </div>
                   </div>
@@ -473,6 +480,14 @@ export default function Calendario() {
             return (
               <ScrollArea className="flex-1 pr-3 -mr-3">
                 <div className="space-y-4">
+                  {prazos.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                        <span>★</span> Prazos finais de pedidos ({prazos.length})
+                      </h3>
+                      <div className="space-y-2">{prazos.map(renderMarco)}</div>
+                    </div>
+                  )}
                   {inicios.length > 0 && (
                     <div>
                       <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
