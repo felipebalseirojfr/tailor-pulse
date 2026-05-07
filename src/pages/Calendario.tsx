@@ -415,6 +415,16 @@ export default function Calendario() {
                     <div className={`h-3 w-3 rounded-full flex-shrink-0 ${config.dot}`} />
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
+                        <Badge
+                          variant="outline"
+                          className={`text-[10px] font-semibold ${
+                            marco.tipo === "inicio"
+                              ? "bg-blue-100 text-blue-700 border-blue-300"
+                              : "bg-purple-100 text-purple-700 border-purple-300"
+                          }`}
+                        >
+                          {marco.tipo === "inicio" ? "▶ Iniciando etapa" : "■ Finalizando etapa"}
+                        </Badge>
                         <span className={`font-medium text-sm ${config.calText}`}>{etapaNome}</span>
                         <Badge variant="outline" className={`text-[10px] ${config.badge}`}>
                           {config.label}
