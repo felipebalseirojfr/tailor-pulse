@@ -121,6 +121,7 @@ function getNivelConfig(nivel: NivelAlerta) {
 export default function Calendario() {
   const navigate = useNavigate();
   const [etapas, setEtapas] = useState<EtapaComPedido[]>([]);
+  const [pedidos, setPedidos] = useState<PedidoPrazo[]>([]);
   const [loading, setLoading] = useState(true);
   const [mesAtual, setMesAtual] = useState(new Date());
   const [filtroNivel, setFiltroNivel] = useState<NivelAlerta | "todos">("todos");
