@@ -197,11 +197,17 @@ export default function Calendario() {
     etapas.forEach((e) => {
       if (filtroNivel !== "todos" && e.nivel_alerta !== filtroNivel) return;
       if (e.data_inicio_prevista === diaStr) {
-        marcos.push({ key: `${e.id}-inicio`, etapa: e, tipo: "inicio", data: diaStr });
+        marcos.push({ key: `${e.id}-inicio`, etapa: e, tipo: "inicio", data: diaStr, nivel_alerta: e.nivel_alerta });
       }
       if (e.data_termino_prevista === diaStr) {
-        marcos.push({ key: `${e.id}-fim`, etapa: e, tipo: "fim", data: diaStr });
+        marcos.push({ key: `${e.id}-fim`, etapa: e, tipo: "fim", data: diaStr, nivel_alerta: e.nivel_alerta });
       }
+    });
+    pedidos.forEach((p) => {
+      if (p.prazo_final !== diaStr) return;
+      const { nivel } = calcularNivelAlerta(p.status_geral, p.prazo_final);
+      if (filtroNivel !== "todos" && nivel !== filtroNivel) return;
+      marcos.push({ key: `pedido-${p.id}`, pedido: p, tipo: "prazo_pedido", data: diaStr, nivel_alerta: nivel });
     });
     return marcos;
   };
