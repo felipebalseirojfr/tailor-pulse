@@ -133,28 +133,35 @@ export default function Calendario() {
 
   const fetchEtapas = async () => {
     try {
-      const { data, error } = await supabase
-        .from("etapas_producao")
-        .select(`
-          id,
-          pedido_id,
-          tipo_etapa,
-          status,
-          data_inicio_prevista,
-          data_termino_prevista,
-          pedidos (
+      const [etapasRes, pedidosRes] = await Promise.all([
+        supabase
+          .from("etapas_producao")
+          .select(`
             id,
-            produto_modelo,
-            codigo_pedido,
-            clientes ( nome )
-          )
-        `)
-        .neq("status", "concluido")
-        .order("data_termino_prevista");
+            pedido_id,
+            tipo_etapa,
+            status,
+            data_inicio_prevista,
+            data_termino_prevista,
+            pedidos (
+              id,
+              produto_modelo,
+              codigo_pedido,
+              clientes ( nome )
+            )
+          `)
+          .neq("status", "concluido")
+          .order("data_termino_prevista"),
+        supabase
+          .from("pedidos")
+          .select(`id, produto_modelo, codigo_pedido, prazo_final, status_geral, clientes ( nome )`)
+          .neq("status_geral", "concluido"),
+      ]);
 
-      if (error) throw error;
+      if (etapasRes.error) throw etapasRes.error;
+      if (pedidosRes.error) throw pedidosRes.error;
 
-      const comAlertas = (data || []).map((e: any) => {
+      const comAlertas = (etapasRes.data || []).map((e: any) => {
         const { nivel, diasRestantes } = calcularNivelAlerta(
           e.status,
           e.data_termino_prevista
@@ -163,6 +170,7 @@ export default function Calendario() {
       });
 
       setEtapas(comAlertas);
+      setPedidos((pedidosRes.data || []) as any);
     } catch (error) {
       console.error("Erro ao buscar etapas:", error);
     } finally {
