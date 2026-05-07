@@ -373,22 +373,33 @@ export default function Calendario() {
                   </div>
                   <div className="space-y-0.5">
                     {marcosDia.slice(0, 3).map((marco) => {
-                      const config = getNivelConfig(marco.etapa.nivel_alerta);
-                      const etapaNome = ETAPAS_NOMES[marco.etapa.tipo_etapa] || marco.etapa.tipo_etapa;
-                      const prefixo = marco.tipo === "inicio" ? "▶" : "■";
-                      const tipoLabel = marco.tipo === "inicio" ? "Início" : "Fim";
+                      const config = getNivelConfig(marco.nivel_alerta);
+                      const isPrazo = marco.tipo === "prazo_pedido";
+                      const etapaNome = isPrazo
+                        ? "Prazo Final"
+                        : ETAPAS_NOMES[marco.etapa!.tipo_etapa] || marco.etapa!.tipo_etapa;
+                      const prefixo = isPrazo ? "★" : marco.tipo === "inicio" ? "▶" : "■";
+                      const tipoLabel = isPrazo ? "Prazo do pedido" : marco.tipo === "inicio" ? "Início" : "Fim";
+                      const modelo = isPrazo
+                        ? marco.pedido!.produto_modelo
+                        : marco.etapa!.pedidos?.produto_modelo;
+                      const cliente = isPrazo
+                        ? marco.pedido!.clientes?.nome
+                        : marco.etapa!.pedidos?.clientes?.nome;
+                      const pedidoId = isPrazo ? marco.pedido!.id : marco.etapa!.pedido_id;
+                      const extraClass = isPrazo ? "ring-1 ring-offset-0 ring-current/40 font-bold" : "";
                       return (
                         <button
                           key={marco.key}
                           onClick={(e) => {
                             e.stopPropagation();
-                            navigate(`/pedidos/${marco.etapa.pedido_id}`);
+                            navigate(`/pedidos/${pedidoId}`);
                           }}
-                          className={`w-full text-left text-[10px] rounded px-1 py-0.5 truncate font-medium transition-opacity hover:opacity-80 ${config.calBg} ${config.calText}`}
-                          title={`${tipoLabel} — ${etapaNome} · ${marco.etapa.pedidos?.produto_modelo} (${marco.etapa.pedidos?.clientes?.nome || ""})`}
+                          className={`w-full text-left text-[10px] rounded px-1 py-0.5 truncate font-medium transition-opacity hover:opacity-80 ${config.calBg} ${config.calText} ${extraClass}`}
+                          title={`${tipoLabel} — ${etapaNome} · ${modelo} (${cliente || ""})`}
                         >
                           <span className="mr-1">{prefixo}</span>
-                          {etapaNome}: {marco.etapa.pedidos?.produto_modelo}
+                          {etapaNome}: {modelo}
                         </button>
                       );
                     })}
