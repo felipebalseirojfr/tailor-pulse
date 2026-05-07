@@ -334,6 +334,53 @@ export default function EtapasEditorManager({ etapas, onChange }: EtapasEditorMa
                   </div>
 
                   <div className="space-y-2">
+                    <Label className="text-xs text-muted-foreground">
+                      Data de Finalização (real)
+                    </Label>
+                    <div className="flex gap-2">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button
+                            type="button"
+                            variant="outline"
+                            className={cn(
+                              "flex-1 justify-start text-left font-normal",
+                              !etapa.data_termino && "text-muted-foreground"
+                            )}
+                          >
+                            <Calendar className="mr-2 h-4 w-4" />
+                            {etapa.data_termino
+                              ? format(new Date(etapa.data_termino), "dd/MM/yyyy", { locale: ptBR })
+                              : "Não finalizada"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <CalendarComponent
+                            mode="single"
+                            selected={etapa.data_termino ? new Date(etapa.data_termino) : undefined}
+                            onSelect={(date) =>
+                              atualizarEtapa(etapa.id, "data_termino", date ? date.toISOString() : null)
+                            }
+                            initialFocus
+                            className="pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      {etapa.data_termino && (
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => atualizarEtapa(etapa.id, "data_termino", null)}
+                          title="Limpar data de finalização"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
                     <Label className="text-xs text-muted-foreground">Observações</Label>
                     <Textarea
                       value={etapa.observacoes || ""}
