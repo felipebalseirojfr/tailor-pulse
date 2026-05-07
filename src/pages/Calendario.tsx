@@ -61,12 +61,23 @@ interface EtapaComPedido {
   };
 }
 
-type MarcoTipo = "inicio" | "fim";
+type MarcoTipo = "inicio" | "fim" | "prazo_pedido";
 interface MarcoCalendario {
   key: string;
-  etapa: EtapaComPedido;
+  etapa?: EtapaComPedido;
+  pedido?: PedidoPrazo;
   tipo: MarcoTipo;
   data: string;
+  nivel_alerta: NivelAlerta;
+}
+
+interface PedidoPrazo {
+  id: string;
+  produto_modelo: string;
+  codigo_pedido?: string;
+  prazo_final: string;
+  status_geral: string;
+  clientes: { nome: string };
 }
 
 function getNivelConfig(nivel: NivelAlerta) {
