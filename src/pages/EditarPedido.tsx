@@ -157,6 +157,7 @@ export default function EditarPedido() {
           ordem: e.ordem,
           data_inicio_prevista: e.data_inicio_prevista,
           data_termino_prevista: e.data_termino_prevista,
+          data_termino: e.data_termino,
           observacoes: e.observacoes,
         }));
         setEtapas(etapasFormatadas);
