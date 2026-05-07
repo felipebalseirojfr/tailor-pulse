@@ -161,19 +161,23 @@ export function AvancarEtapaDialog({
             {temTerceiros && (
               <div className="space-y-2">
                 <Label className="text-sm font-medium">
-                  Terceiro responsável por {proximaEtapaNome}
+                  Terceiro responsável por {proximaEtapaNome} *
                 </Label>
                 <Select value={terceiroId} onValueChange={setTerceiroId}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecionar terceiro" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="nenhum">Nenhum</SelectItem>
                     {terceirosDisponiveis.map((t) => (
                       <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
+                {terceiroObrigatorioFaltando && (
+                  <p className="text-xs text-destructive">
+                    Selecione um terceiro responsável para esta etapa.
+                  </p>
+                )}
               </div>
             )}
           </div>
@@ -185,7 +189,7 @@ export function AvancarEtapaDialog({
           </Button>
           <Button
             onClick={handleConfirm}
-            disabled={loading || (!isConcluindo && !dataTerminoPrevista)}
+            disabled={loading || (!isConcluindo && !dataTerminoPrevista) || terceiroObrigatorioFaltando}
           >
             {loading ? "Processando..." : "Confirmar"}
           </Button>
