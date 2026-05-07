@@ -61,8 +61,11 @@ export function AvancarEtapaDialog({
 
   const temTerceiros = terceirosDisponiveis.length > 0;
 
+  const terceiroObrigatorioFaltando = !isConcluindo && temTerceiros && (!terceiroId || terceiroId === "nenhum");
+
   const handleConfirm = () => {
     if (!isConcluindo && !dataTerminoPrevista) return;
+    if (terceiroObrigatorioFaltando) return;
     onConfirm(
       dataInicio,
       dataTerminoPrevista || new Date(),
