@@ -407,24 +407,18 @@ export default function Calendario() {
               const config = getNivelConfig(marco.etapa.nivel_alerta);
               const etapaNome = ETAPAS_NOMES[marco.etapa.tipo_etapa] || marco.etapa.tipo_etapa;
               return (
-                <div
+                <button
                   key={marco.key}
-                  className={`flex items-center justify-between rounded-lg border p-3 ${config.bg}`}
+                  onClick={() => {
+                    setDiaSelecionado(null);
+                    navigate(`/pedidos/${marco.etapa.pedido_id}`);
+                  }}
+                  className={`w-full flex items-center justify-between rounded-lg border p-3 text-left transition-all hover:scale-[1.01] hover:shadow-sm ${config.bg}`}
                 >
                   <div className="flex items-center gap-3 min-w-0">
                     <div className={`h-3 w-3 rounded-full flex-shrink-0 ${config.dot}`} />
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <Badge
-                          variant="outline"
-                          className={`text-[10px] font-semibold ${
-                            marco.tipo === "inicio"
-                              ? "bg-blue-100 text-blue-700 border-blue-300"
-                              : "bg-purple-100 text-purple-700 border-purple-300"
-                          }`}
-                        >
-                          {marco.tipo === "inicio" ? "▶ Iniciando etapa" : "■ Finalizando etapa"}
-                        </Badge>
                         <span className={`font-medium text-sm ${config.calText}`}>{etapaNome}</span>
                         <Badge variant="outline" className={`text-[10px] ${config.badge}`}>
                           {config.label}
@@ -435,18 +429,8 @@ export default function Calendario() {
                       </div>
                     </div>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setDiaSelecionado(null);
-                      navigate(`/pedidos/${marco.etapa.pedido_id}`);
-                    }}
-                    className="h-7 w-7 p-0 flex-shrink-0"
-                  >
-                    <ExternalLink className="h-3.5 w-3.5" />
-                  </Button>
-                </div>
+                  <ExternalLink className={`h-4 w-4 flex-shrink-0 ${config.calText} opacity-70`} />
+                </button>
               );
             };
             return (
