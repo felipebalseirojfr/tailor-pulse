@@ -61,12 +61,23 @@ interface EtapaComPedido {
   };
 }
 
-type MarcoTipo = "inicio" | "fim";
+type MarcoTipo = "inicio" | "fim" | "prazo_pedido";
 interface MarcoCalendario {
   key: string;
-  etapa: EtapaComPedido;
+  etapa?: EtapaComPedido;
+  pedido?: PedidoPrazo;
   tipo: MarcoTipo;
   data: string;
+  nivel_alerta: NivelAlerta;
+}
+
+interface PedidoPrazo {
+  id: string;
+  produto_modelo: string;
+  codigo_pedido?: string;
+  prazo_final: string;
+  status_geral: string;
+  clientes: { nome: string };
 }
 
 function getNivelConfig(nivel: NivelAlerta) {
@@ -110,6 +121,7 @@ function getNivelConfig(nivel: NivelAlerta) {
 export default function Calendario() {
   const navigate = useNavigate();
   const [etapas, setEtapas] = useState<EtapaComPedido[]>([]);
+  const [pedidos, setPedidos] = useState<PedidoPrazo[]>([]);
   const [loading, setLoading] = useState(true);
   const [mesAtual, setMesAtual] = useState(new Date());
   const [filtroNivel, setFiltroNivel] = useState<NivelAlerta | "todos">("todos");
@@ -121,28 +133,35 @@ export default function Calendario() {
 
   const fetchEtapas = async () => {
     try {
-      const { data, error } = await supabase
-        .from("etapas_producao")
-        .select(`
-          id,
-          pedido_id,
-          tipo_etapa,
-          status,
-          data_inicio_prevista,
-          data_termino_prevista,
-          pedidos (
+      const [etapasRes, pedidosRes] = await Promise.all([
+        supabase
+          .from("etapas_producao")
+          .select(`
             id,
-            produto_modelo,
-            codigo_pedido,
-            clientes ( nome )
-          )
-        `)
-        .neq("status", "concluido")
-        .order("data_termino_prevista");
+            pedido_id,
+            tipo_etapa,
+            status,
+            data_inicio_prevista,
+            data_termino_prevista,
+            pedidos (
+              id,
+              produto_modelo,
+              codigo_pedido,
+              clientes ( nome )
+            )
+          `)
+          .neq("status", "concluido")
+          .order("data_termino_prevista"),
+        supabase
+          .from("pedidos")
+          .select(`id, produto_modelo, codigo_pedido, prazo_final, status_geral, clientes ( nome )`)
+          .neq("status_geral", "concluido"),
+      ]);
 
-      if (error) throw error;
+      if (etapasRes.error) throw etapasRes.error;
+      if (pedidosRes.error) throw pedidosRes.error;
 
-      const comAlertas = (data || []).map((e: any) => {
+      const comAlertas = (etapasRes.data || []).map((e: any) => {
         const { nivel, diasRestantes } = calcularNivelAlerta(
           e.status,
           e.data_termino_prevista
@@ -151,6 +170,7 @@ export default function Calendario() {
       });
 
       setEtapas(comAlertas);
+      setPedidos((pedidosRes.data || []) as any);
     } catch (error) {
       console.error("Erro ao buscar etapas:", error);
     } finally {
@@ -177,11 +197,17 @@ export default function Calendario() {
     etapas.forEach((e) => {
       if (filtroNivel !== "todos" && e.nivel_alerta !== filtroNivel) return;
       if (e.data_inicio_prevista === diaStr) {
-        marcos.push({ key: `${e.id}-inicio`, etapa: e, tipo: "inicio", data: diaStr });
+        marcos.push({ key: `${e.id}-inicio`, etapa: e, tipo: "inicio", data: diaStr, nivel_alerta: e.nivel_alerta });
       }
       if (e.data_termino_prevista === diaStr) {
-        marcos.push({ key: `${e.id}-fim`, etapa: e, tipo: "fim", data: diaStr });
+        marcos.push({ key: `${e.id}-fim`, etapa: e, tipo: "fim", data: diaStr, nivel_alerta: e.nivel_alerta });
       }
+    });
+    pedidos.forEach((p) => {
+      if (p.prazo_final !== diaStr) return;
+      const { nivel } = calcularNivelAlerta(p.status_geral, p.prazo_final);
+      if (filtroNivel !== "todos" && nivel !== filtroNivel) return;
+      marcos.push({ key: `pedido-${p.id}`, pedido: p, tipo: "prazo_pedido", data: diaStr, nivel_alerta: nivel });
     });
     return marcos;
   };
@@ -347,22 +373,33 @@ export default function Calendario() {
                   </div>
                   <div className="space-y-0.5">
                     {marcosDia.slice(0, 3).map((marco) => {
-                      const config = getNivelConfig(marco.etapa.nivel_alerta);
-                      const etapaNome = ETAPAS_NOMES[marco.etapa.tipo_etapa] || marco.etapa.tipo_etapa;
-                      const prefixo = marco.tipo === "inicio" ? "▶" : "■";
-                      const tipoLabel = marco.tipo === "inicio" ? "Início" : "Fim";
+                      const config = getNivelConfig(marco.nivel_alerta);
+                      const isPrazo = marco.tipo === "prazo_pedido";
+                      const etapaNome = isPrazo
+                        ? "Prazo Final"
+                        : ETAPAS_NOMES[marco.etapa!.tipo_etapa] || marco.etapa!.tipo_etapa;
+                      const prefixo = isPrazo ? "★" : marco.tipo === "inicio" ? "▶" : "■";
+                      const tipoLabel = isPrazo ? "Prazo do pedido" : marco.tipo === "inicio" ? "Início" : "Fim";
+                      const modelo = isPrazo
+                        ? marco.pedido!.produto_modelo
+                        : marco.etapa!.pedidos?.produto_modelo;
+                      const cliente = isPrazo
+                        ? marco.pedido!.clientes?.nome
+                        : marco.etapa!.pedidos?.clientes?.nome;
+                      const pedidoId = isPrazo ? marco.pedido!.id : marco.etapa!.pedido_id;
+                      const extraClass = isPrazo ? "ring-1 ring-offset-0 ring-current/40 font-bold" : "";
                       return (
                         <button
                           key={marco.key}
                           onClick={(e) => {
                             e.stopPropagation();
-                            navigate(`/pedidos/${marco.etapa.pedido_id}`);
+                            navigate(`/pedidos/${pedidoId}`);
                           }}
-                          className={`w-full text-left text-[10px] rounded px-1 py-0.5 truncate font-medium transition-opacity hover:opacity-80 ${config.calBg} ${config.calText}`}
-                          title={`${tipoLabel} — ${etapaNome} · ${marco.etapa.pedidos?.produto_modelo} (${marco.etapa.pedidos?.clientes?.nome || ""})`}
+                          className={`w-full text-left text-[10px] rounded px-1 py-0.5 truncate font-medium transition-opacity hover:opacity-80 ${config.calBg} ${config.calText} ${extraClass}`}
+                          title={`${tipoLabel} — ${etapaNome} · ${modelo} (${cliente || ""})`}
                         >
                           <span className="mr-1">{prefixo}</span>
-                          {etapaNome}: {marco.etapa.pedidos?.produto_modelo}
+                          {etapaNome}: {modelo}
                         </button>
                       );
                     })}
@@ -403,15 +440,22 @@ export default function Calendario() {
             }
             const inicios = marcos.filter((m) => m.tipo === "inicio");
             const fins = marcos.filter((m) => m.tipo === "fim");
+            const prazos = marcos.filter((m) => m.tipo === "prazo_pedido");
             const renderMarco = (marco: MarcoCalendario) => {
-              const config = getNivelConfig(marco.etapa.nivel_alerta);
-              const etapaNome = ETAPAS_NOMES[marco.etapa.tipo_etapa] || marco.etapa.tipo_etapa;
+              const config = getNivelConfig(marco.nivel_alerta);
+              const isPrazo = marco.tipo === "prazo_pedido";
+              const titulo = isPrazo
+                ? "Prazo Final do Pedido"
+                : ETAPAS_NOMES[marco.etapa!.tipo_etapa] || marco.etapa!.tipo_etapa;
+              const modelo = isPrazo ? marco.pedido!.produto_modelo : marco.etapa!.pedidos?.produto_modelo;
+              const cliente = isPrazo ? marco.pedido!.clientes?.nome : marco.etapa!.pedidos?.clientes?.nome;
+              const pedidoId = isPrazo ? marco.pedido!.id : marco.etapa!.pedido_id;
               return (
                 <button
                   key={marco.key}
                   onClick={() => {
                     setDiaSelecionado(null);
-                    navigate(`/pedidos/${marco.etapa.pedido_id}`);
+                    navigate(`/pedidos/${pedidoId}`);
                   }}
                   className={`w-full flex items-center justify-between rounded-lg border p-3 text-left transition-all hover:scale-[1.01] hover:shadow-sm ${config.bg}`}
                 >
@@ -419,13 +463,13 @@ export default function Calendario() {
                     <div className={`h-3 w-3 rounded-full flex-shrink-0 ${config.dot}`} />
                   <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className={`font-semibold text-sm ${config.calText}`}>{etapaNome}</span>
+                        <span className={`font-semibold text-sm ${config.calText}`}>{titulo}</span>
                         <Badge className={`text-[10px] border ${config.badge}`}>
                           {config.label}
                         </Badge>
                       </div>
                       <div className={`text-xs mt-0.5 truncate ${config.calText} opacity-90`}>
-                        {marco.etapa.pedidos?.produto_modelo} — {marco.etapa.pedidos?.clientes?.nome || "Sem cliente"}
+                        {modelo} — {cliente || "Sem cliente"}
                       </div>
                     </div>
                   </div>
@@ -436,6 +480,14 @@ export default function Calendario() {
             return (
               <ScrollArea className="flex-1 pr-3 -mr-3">
                 <div className="space-y-4">
+                  {prazos.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                        <span>★</span> Prazos finais de pedidos ({prazos.length})
+                      </h3>
+                      <div className="space-y-2">{prazos.map(renderMarco)}</div>
+                    </div>
+                  )}
                   {inicios.length > 0 && (
                     <div>
                       <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
