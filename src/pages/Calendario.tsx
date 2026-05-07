@@ -415,12 +415,12 @@ export default function Calendario() {
                     <div className={`h-3 w-3 rounded-full flex-shrink-0 ${config.dot}`} />
                     <div className="min-w-0">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="font-medium text-sm">{etapaNome}</span>
+                        <span className={`font-medium text-sm ${config.calText}`}>{etapaNome}</span>
                         <Badge variant="outline" className={`text-[10px] ${config.badge}`}>
                           {config.label}
                         </Badge>
                       </div>
-                      <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                      <div className={`text-xs mt-0.5 truncate ${config.calText} opacity-80`}>
                         {marco.etapa.pedidos?.produto_modelo} — {marco.etapa.pedidos?.clientes?.nome || "Sem cliente"}
                       </div>
                     </div>
