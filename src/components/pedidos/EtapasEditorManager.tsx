@@ -64,6 +64,7 @@ export default function EtapasEditorManager({ etapas, onChange }: EtapasEditorMa
       ordem: maxOrdem + 1,
       data_inicio_prevista: null,
       data_termino_prevista: null,
+      data_termino: null,
       observacoes: null,
       isNew: true,
     };
