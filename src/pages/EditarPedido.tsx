@@ -315,8 +315,9 @@ export default function EditarPedido() {
             ordem: etapa.ordem,
             data_inicio_prevista: etapa.data_inicio_prevista,
             data_termino_prevista: etapa.data_termino_prevista,
+            data_termino: etapa.data_termino,
             observacoes: etapa.observacoes,
-            status: 'pendente',
+            status: etapa.data_termino ? 'concluido' : 'pendente',
           });
 
         if (createError) {
@@ -326,14 +327,26 @@ export default function EditarPedido() {
 
       // Atualizar etapas existentes
       for (const etapa of etapasParaAtualizar) {
+        const original = etapasOriginais.find(e => e.id === etapa.id);
+        const updates: any = {
+          ordem: etapa.ordem,
+          data_inicio_prevista: etapa.data_inicio_prevista,
+          data_termino_prevista: etapa.data_termino_prevista,
+          data_termino: etapa.data_termino,
+          observacoes: etapa.observacoes,
+        };
+        // Se data_termino mudou, ajustar status automaticamente
+        if (original && etapa.data_termino !== original.data_termino) {
+          if (etapa.data_termino) {
+            updates.status = 'concluido';
+          } else if (original.data_termino) {
+            // Estava concluída e usuário limpou — reverter para em_andamento
+            updates.status = 'em_andamento';
+          }
+        }
         const { error: etapaError } = await supabase
           .from("etapas_producao")
-          .update({
-            ordem: etapa.ordem,
-            data_inicio_prevista: etapa.data_inicio_prevista,
-            data_termino_prevista: etapa.data_termino_prevista,
-            observacoes: etapa.observacoes,
-          })
+          .update(updates)
           .eq("id", etapa.id);
 
         if (etapaError) {
