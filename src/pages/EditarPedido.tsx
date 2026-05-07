@@ -362,6 +362,7 @@ export default function EditarPedido() {
             etapa.ordem !== original.ordem ||
             etapa.data_inicio_prevista !== original.data_inicio_prevista ||
             etapa.data_termino_prevista !== original.data_termino_prevista ||
+            etapa.data_termino !== original.data_termino ||
             etapa.observacoes !== original.observacoes;
         });
 
