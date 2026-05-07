@@ -16,6 +16,7 @@ export interface EtapaEditavel {
   ordem: number;
   data_inicio_prevista: string | null;
   data_termino_prevista: string | null;
+  data_termino: string | null;
   observacoes: string | null;
   isNew?: boolean;
   toDelete?: boolean;
