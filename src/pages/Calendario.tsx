@@ -113,6 +113,7 @@ export default function Calendario() {
   const [loading, setLoading] = useState(true);
   const [mesAtual, setMesAtual] = useState(new Date());
   const [filtroNivel, setFiltroNivel] = useState<NivelAlerta | "todos">("todos");
+  const [diaSelecionado, setDiaSelecionado] = useState<Date | null>(null);
 
   useEffect(() => {
     fetchEtapas();
