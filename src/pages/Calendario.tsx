@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
   AlertCircle,
   Clock,
@@ -112,6 +113,7 @@ export default function Calendario() {
   const [loading, setLoading] = useState(true);
   const [mesAtual, setMesAtual] = useState(new Date());
   const [filtroNivel, setFiltroNivel] = useState<NivelAlerta | "todos">("todos");
+  const [diaSelecionado, setDiaSelecionado] = useState<Date | null>(null);
 
   useEffect(() => {
     fetchEtapas();
@@ -334,8 +336,9 @@ export default function Calendario() {
               return (
                 <div
                   key={diaStr}
-                  className={`min-h-[90px] rounded-lg p-1.5 border transition-colors ${
-                    isHoje ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30"
+                  onClick={() => setDiaSelecionado(dia)}
+                  className={`min-h-[90px] rounded-lg p-1.5 border transition-colors cursor-pointer ${
+                    isHoje ? "border-primary bg-primary/5" : "border-border hover:border-muted-foreground/30 hover:bg-muted/30"
                   }`}
                 >
                   <div className={`text-xs font-medium mb-1 ${isHoje ? "text-primary font-bold" : "text-muted-foreground"}`}>
@@ -351,7 +354,10 @@ export default function Calendario() {
                       return (
                         <button
                           key={marco.key}
-                          onClick={() => navigate(`/pedidos/${marco.etapa.pedido_id}`)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            navigate(`/pedidos/${marco.etapa.pedido_id}`);
+                          }}
                           className={`w-full text-left text-[10px] rounded px-1 py-0.5 truncate font-medium transition-opacity hover:opacity-80 ${config.calBg} ${config.calText}`}
                           title={`${tipoLabel} — ${etapaNome} · ${marco.etapa.pedidos?.produto_modelo} (${marco.etapa.pedidos?.clientes?.nome || ""})`}
                         >
@@ -372,6 +378,92 @@ export default function Calendario() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Dialog do dia selecionado */}
+      <Dialog open={!!diaSelecionado} onOpenChange={(open) => !open && setDiaSelecionado(null)}>
+        <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CalendarIcon className="h-5 w-5 text-primary" />
+              {diaSelecionado && format(diaSelecionado, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
+            </DialogTitle>
+            <DialogDescription>
+              Todos os prazos (inícios e fins de etapas) deste dia
+            </DialogDescription>
+          </DialogHeader>
+          {diaSelecionado && (() => {
+            const marcos = getMarcosDoDia(diaSelecionado);
+            if (marcos.length === 0) {
+              return (
+                <div className="text-center py-12 text-muted-foreground">
+                  <CheckCircle2 className="h-12 w-12 mx-auto mb-3 text-green-400" />
+                  <p className="font-medium">Nenhum prazo neste dia</p>
+                </div>
+              );
+            }
+            const inicios = marcos.filter((m) => m.tipo === "inicio");
+            const fins = marcos.filter((m) => m.tipo === "fim");
+            const renderMarco = (marco: MarcoCalendario) => {
+              const config = getNivelConfig(marco.etapa.nivel_alerta);
+              const etapaNome = ETAPAS_NOMES[marco.etapa.tipo_etapa] || marco.etapa.tipo_etapa;
+              return (
+                <div
+                  key={marco.key}
+                  className={`flex items-center justify-between rounded-lg border p-3 ${config.bg}`}
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className={`h-3 w-3 rounded-full flex-shrink-0 ${config.dot}`} />
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-medium text-sm">{etapaNome}</span>
+                        <Badge variant="outline" className={`text-[10px] ${config.badge}`}>
+                          {config.label}
+                        </Badge>
+                      </div>
+                      <div className="text-xs text-muted-foreground mt-0.5 truncate">
+                        {marco.etapa.pedidos?.produto_modelo} — {marco.etapa.pedidos?.clientes?.nome || "Sem cliente"}
+                      </div>
+                    </div>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => {
+                      setDiaSelecionado(null);
+                      navigate(`/pedidos/${marco.etapa.pedido_id}`);
+                    }}
+                    className="h-7 w-7 p-0 flex-shrink-0"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
+              );
+            };
+            return (
+              <ScrollArea className="flex-1 pr-3 -mr-3">
+                <div className="space-y-4">
+                  {inicios.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                        <span>▶</span> Inícios previstos ({inicios.length})
+                      </h3>
+                      <div className="space-y-2">{inicios.map(renderMarco)}</div>
+                    </div>
+                  )}
+                  {fins.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
+                        <span>■</span> Fins previstos ({fins.length})
+                      </h3>
+                      <div className="space-y-2">{fins.map(renderMarco)}</div>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
 
       {/* Lista detalhada */}
       <Card>
