@@ -250,6 +250,7 @@ export default function FilaEtapas() {
                     )}
                   </div>
                 </CardContent>
+                )}
               </Card>
             );
           })}
