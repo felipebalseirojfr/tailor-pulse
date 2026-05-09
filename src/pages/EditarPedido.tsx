@@ -318,6 +318,7 @@ export default function EditarPedido() {
             data_termino_prevista: etapa.data_termino_prevista,
             data_termino: etapa.data_termino,
             observacoes: etapa.observacoes,
+            terceiro_id: etapa.terceiro_id || null,
             status: etapa.data_termino ? 'concluido' : 'pendente',
           });
 
