@@ -60,6 +60,7 @@ export default function FilaEtapas() {
   const [terceiros, setTerceiros] = useState<Terceiro[]>([]);
   const [loading, setLoading] = useState(true);
   const [selecionados, setSelecionados] = useState<Record<string, string | null>>({});
+  const [expandidos, setExpandidos] = useState<Record<string, boolean>>({});
 
   const fetchData = async () => {
     setLoading(true);
