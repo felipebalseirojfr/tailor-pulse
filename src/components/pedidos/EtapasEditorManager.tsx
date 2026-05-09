@@ -47,6 +47,23 @@ const tiposEtapaDisponiveis = [
 
 export default function EtapasEditorManager({ etapas, onChange }: EtapasEditorManagerProps) {
   const [showAddPanel, setShowAddPanel] = useState(false);
+  const [terceiros, setTerceiros] = useState<{ id: string; nome: string; tipo_etapa: string }[]>([]);
+
+  useEffect(() => {
+    const fetch = async () => {
+      const { data } = await supabase
+        .from("terceiros")
+        .select("id, nome, tipo_etapa")
+        .eq("ativo", true)
+        .order("nome");
+      if (data) setTerceiros(data);
+    };
+    fetch();
+  }, []);
+
+  const getTerceirosForEtapa = (tipoEtapa: string) =>
+    terceiros.filter(t => t.tipo_etapa === tipoEtapa);
+
 
   // Filtrar etapas que não estão marcadas para deletar
   const etapasAtivas = etapas.filter(e => !e.toDelete);
