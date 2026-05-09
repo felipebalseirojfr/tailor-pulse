@@ -160,7 +160,7 @@ export default function Calendario() {
       if (etapasRes.error) throw etapasRes.error;
       if (pedidosRes.error) throw pedidosRes.error;
 
-      const comAlertas = (etapasRes.data || []).map((e: any) => {
+      const comAlertas = (etapasRes.data || []).map((e) => {
         const { nivel, diasRestantes } = calcularNivelAlerta(
           e.status,
           e.data_termino_prevista
@@ -169,7 +169,7 @@ export default function Calendario() {
       });
 
       setEtapas(comAlertas);
-      setPedidos((pedidosRes.data || []) as any);
+      setPedidos((pedidosRes.data || []) as PedidoPrazo[]);
     } catch (error) {
       console.error("Erro ao buscar etapas:", error);
     } finally {
