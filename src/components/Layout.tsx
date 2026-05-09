@@ -150,6 +150,7 @@ export default function Layout({ children }: LayoutProps) {
   const allNavigation: NavItem[] = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Pedidos", href: "/pedidos", icon: Package },
+    { name: "Fila das Etapas", href: "/fila-etapas", icon: ListOrdered, roles: ["admin", "commercial", "production"] },
     { name: "Comercial", href: "/comercial", icon: Handshake, roles: ["admin", "commercial"] },
     { name: "Carteira", href: "/carteira", icon: Wallet, roles: ["admin", "commercial"] },
     
