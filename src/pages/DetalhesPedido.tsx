@@ -436,7 +436,7 @@ export default function DetalhesPedido() {
                 <div className="space-y-4">
                   <div><p className="text-sm font-medium text-muted-foreground">Quantidade Total</p><p className="text-base">{calcularQuantidadeReal(pedido.grade_tamanhos, pedido.quantidade_total)} unidades</p></div>
                   <div><p className="text-sm font-medium text-muted-foreground">Data de Início</p><p className="text-base">{new Date(pedido.data_inicio).toLocaleDateString("pt-BR")}</p></div>
-                  <div><p className="text-sm font-medium text-muted-foreground">Prazo Final</p><p className="text-base">{new Date(pedido.prazo_final).toLocaleDateString("pt-BR")}</p></div>
+                  <div><p className="text-sm font-medium text-muted-foreground">Prazo de Entrega</p><p className="text-base">{new Date(pedido.prazo_final).toLocaleDateString("pt-BR")}</p></div>
                   <div><p className="text-sm font-medium text-muted-foreground">Responsável Comercial</p><p className="text-base">{pedido.profiles?.nome}</p></div>
                 </div>
               </div>

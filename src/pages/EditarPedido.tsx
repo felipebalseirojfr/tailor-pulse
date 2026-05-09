@@ -578,7 +578,7 @@ export default function EditarPedido() {
                 </div>
 
                 <div>
-                  <Label htmlFor="prazo_final">Prazo Final *</Label>
+                  <Label htmlFor="prazo_final">Prazo de Entrega *</Label>
                   <Input
                     id="prazo_final"
                     type="date"
