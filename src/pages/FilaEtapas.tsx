@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Building2, Clock, Package as PackageIcon, AlertTriangle } from "lucide-react";
+import { Building2, Clock, Package as PackageIcon, AlertTriangle, ChevronDown, ChevronRight } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const TIPOS_ETAPA = [
@@ -60,6 +60,7 @@ export default function FilaEtapas() {
   const [terceiros, setTerceiros] = useState<Terceiro[]>([]);
   const [loading, setLoading] = useState(true);
   const [selecionados, setSelecionados] = useState<Record<string, string | null>>({});
+  const [expandidos, setExpandidos] = useState<Record<string, boolean>>({});
 
   const fetchData = async () => {
     setLoading(true);
@@ -133,11 +134,19 @@ export default function FilaEtapas() {
               return d !== null && d < 0;
             }).length;
 
+            const expandido = !!expandidos[tipo.value];
+
             return (
               <Card key={tipo.value} className="flex flex-col hover:scale-100">
-                <CardHeader className="pb-3">
+                <CardHeader
+                  className="pb-3 cursor-pointer select-none"
+                  onClick={() => setExpandidos((s) => ({ ...s, [tipo.value]: !s[tipo.value] }))}
+                >
                   <div className="flex items-start justify-between gap-2">
-                    <CardTitle className="text-lg">{tipo.label}</CardTitle>
+                    <CardTitle className="text-lg flex items-center gap-2">
+                      {expandido ? <ChevronDown className="h-5 w-5" /> : <ChevronRight className="h-5 w-5" />}
+                      {tipo.label}
+                    </CardTitle>
                     <div className="flex items-center gap-2">
                       {atrasadas > 0 && (
                         <Badge variant="destructive" className="gap-1">
@@ -149,6 +158,7 @@ export default function FilaEtapas() {
                     </div>
                   </div>
                 </CardHeader>
+                {expandido && (
                 <CardContent className="flex-1 flex flex-col gap-3">
                   {opcoesTerceiros.length > 0 && (
                     <div className="flex flex-wrap gap-1.5">
@@ -241,6 +251,7 @@ export default function FilaEtapas() {
                     )}
                   </div>
                 </CardContent>
+                )}
               </Card>
             );
           })}
