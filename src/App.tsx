@@ -20,6 +20,7 @@ import DetalhesFechamento from "./pages/DetalhesFechamento";
 import Usuarios from "./pages/Usuarios";
 import CarteiraPedidos from "./pages/CarteiraPedidos";
 import Comercial from "./pages/Comercial";
+import FilaEtapas from "./pages/FilaEtapas";
 import NotFound from "./pages/NotFound";
 import ScanResultado from "./pages/ScanResultado";
 
@@ -38,6 +39,7 @@ const App = () => (
             <Route path="/scan-resultado" element={<ScanResultado />} />
             <Route path="/" element={<Layout><Dashboard /></Layout>} />
             <Route path="/pedidos" element={<Layout><Pedidos /></Layout>} />
+            <Route path="/fila-etapas" element={<Layout><FilaEtapas /></Layout>} />
             <Route path="/comercial" element={<Layout><Comercial /></Layout>} />
             <Route path="/carteira" element={<Layout><CarteiraPedidos /></Layout>} />
             <Route path="/pedidos/novo" element={<Layout><NovoPedido /></Layout>} />
