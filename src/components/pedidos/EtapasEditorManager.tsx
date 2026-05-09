@@ -400,6 +400,26 @@ export default function EtapasEditorManager({ etapas, onChange }: EtapasEditorMa
                     </div>
                   </div>
 
+                  {getTerceirosForEtapa(etapa.tipo_etapa).length > 0 && (
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">Responsável (Fornecedor/Oficina)</Label>
+                      <Select
+                        value={etapa.terceiro_id || "none"}
+                        onValueChange={(v) => atualizarEtapa(etapa.id, "terceiro_id", v === "none" ? null : v)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Não definido</SelectItem>
+                          {getTerceirosForEtapa(etapa.tipo_etapa).map((t) => (
+                            <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
+
                   <div className="space-y-2">
                     <Label className="text-xs text-muted-foreground">Observações</Label>
                     <Textarea
