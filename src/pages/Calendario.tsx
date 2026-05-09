@@ -372,8 +372,17 @@ export default function Calendario() {
                   </div>
                   <div className="space-y-0.5">
                     {marcosDia.slice(0, 3).map((marco) => {
-                      const config = getNivelConfig(marco.nivel_alerta);
+                      const baseConfig = getNivelConfig(marco.nivel_alerta);
                       const isPrazo = marco.tipo === "prazo_pedido";
+                      const config = isPrazo
+                        ? {
+                            ...baseConfig,
+                            calBg: "bg-purple-100 border-l-2 border-purple-500",
+                            calText: "text-purple-800",
+                            bg: "bg-purple-50 border-purple-300",
+                            dot: "bg-purple-500",
+                          }
+                        : baseConfig;
                       const etapaNome = isPrazo
                         ? "Prazo de Entrega"
                         : ETAPAS_NOMES[marco.etapa!.tipo_etapa] || marco.etapa!.tipo_etapa;
