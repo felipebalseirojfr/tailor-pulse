@@ -4,7 +4,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
   AlertCircle,
@@ -161,7 +160,7 @@ export default function Calendario() {
       if (etapasRes.error) throw etapasRes.error;
       if (pedidosRes.error) throw pedidosRes.error;
 
-      const comAlertas = (etapasRes.data || []).map((e: any) => {
+      const comAlertas = (etapasRes.data || []).map((e) => {
         const { nivel, diasRestantes } = calcularNivelAlerta(
           e.status,
           e.data_termino_prevista
@@ -170,7 +169,7 @@ export default function Calendario() {
       });
 
       setEtapas(comAlertas);
-      setPedidos((pedidosRes.data || []) as any);
+      setPedidos((pedidosRes.data || []) as PedidoPrazo[]);
     } catch (error) {
       console.error("Erro ao buscar etapas:", error);
     } finally {
@@ -418,8 +417,8 @@ export default function Calendario() {
 
       {/* Dialog do dia selecionado */}
       <Dialog open={!!diaSelecionado} onOpenChange={(open) => !open && setDiaSelecionado(null)}>
-        <DialogContent className="max-w-2xl max-h-[80vh] flex flex-col">
-          <DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[85vh] overflow-hidden p-0">
+          <DialogHeader className="px-6 pt-6 pb-2">
             <DialogTitle className="flex items-center gap-2">
               <CalendarIcon className="h-5 w-5 text-primary" />
               {diaSelecionado && format(diaSelecionado, "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
@@ -478,8 +477,8 @@ export default function Calendario() {
               );
             };
             return (
-              <ScrollArea className="flex-1 min-h-0 max-h-[60vh] pr-3 -mr-3">
-                <div className="space-y-4">
+              <div className="max-h-[calc(85vh-7.5rem)] overflow-y-auto px-6 pb-6 pr-4">
+                <div className="space-y-4 pr-2">
                   {prazos.length > 0 && (
                     <div>
                       <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
@@ -505,7 +504,7 @@ export default function Calendario() {
                     </div>
                   )}
                 </div>
-              </ScrollArea>
+              </div>
             );
           })()}
         </DialogContent>
