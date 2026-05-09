@@ -20,6 +20,7 @@ import DetalhesFechamento from "./pages/DetalhesFechamento";
 import Usuarios from "./pages/Usuarios";
 import CarteiraPedidos from "./pages/CarteiraPedidos";
 import Comercial from "./pages/Comercial";
+import FilaEtapas from "./pages/FilaEtapas";
 import NotFound from "./pages/NotFound";
 import ScanResultado from "./pages/ScanResultado";
 
