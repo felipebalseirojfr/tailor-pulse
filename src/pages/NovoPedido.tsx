@@ -163,6 +163,7 @@ export default function NovoPedido() {
           data_inicio: null,
           data_inicio_prevista: etapa.data_inicio_prevista?.toISOString().split('T')[0] || null,
           data_termino_prevista: etapa.data_termino_prevista?.toISOString().split('T')[0] || null,
+          terceiro_id: etapa.terceiro_id || null,
         }));
 
         const { error: etapasError } = await supabase
