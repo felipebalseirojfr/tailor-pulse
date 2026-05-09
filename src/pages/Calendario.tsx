@@ -375,7 +375,7 @@ export default function Calendario() {
                       const config = getNivelConfig(marco.nivel_alerta);
                       const isPrazo = marco.tipo === "prazo_pedido";
                       const etapaNome = isPrazo
-                        ? "Prazo Final"
+                        ? "Prazo de Entrega"
                         : ETAPAS_NOMES[marco.etapa!.tipo_etapa] || marco.etapa!.tipo_etapa;
                       const prefixo = isPrazo ? "★" : marco.tipo === "inicio" ? "▶" : "■";
                       const tipoLabel = isPrazo ? "Prazo do pedido" : marco.tipo === "inicio" ? "Início" : "Fim";
@@ -444,7 +444,7 @@ export default function Calendario() {
               const config = getNivelConfig(marco.nivel_alerta);
               const isPrazo = marco.tipo === "prazo_pedido";
               const titulo = isPrazo
-                ? "Prazo Final do Pedido"
+                ? "Prazo de Entrega do Pedido"
                 : ETAPAS_NOMES[marco.etapa!.tipo_etapa] || marco.etapa!.tipo_etapa;
               const modelo = isPrazo ? marco.pedido!.produto_modelo : marco.etapa!.pedidos?.produto_modelo;
               const cliente = isPrazo ? marco.pedido!.clientes?.nome : marco.etapa!.pedidos?.clientes?.nome;
@@ -482,7 +482,7 @@ export default function Calendario() {
                   {prazos.length > 0 && (
                     <div>
                       <h3 className="text-sm font-semibold mb-2 flex items-center gap-2">
-                        <span>★</span> Prazos finais de pedidos ({prazos.length})
+                        <span>★</span> Prazos de entrega de pedidos ({prazos.length})
                       </h3>
                       <div className="space-y-2">{prazos.map(renderMarco)}</div>
                     </div>

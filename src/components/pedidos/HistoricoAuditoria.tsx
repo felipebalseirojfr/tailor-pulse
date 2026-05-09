@@ -41,7 +41,7 @@ const CAMPO_LABELS: Record<string, string> = {
   aviamentos: "Aviamentos",
   quantidade_total: "Quantidade Total",
   data_inicio: "Data de Início",
-  prazo_final: "Prazo Final",
+  prazo_final: "Prazo de Entrega",
   grade_tamanhos: "Grade de Tamanhos",
   observacoes_pedido: "Observações",
   arquivos_adicionados: "Arquivos Adicionados",

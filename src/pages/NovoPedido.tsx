@@ -684,7 +684,7 @@ export default function NovoPedido() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="prazo_final">Prazo Final *</Label>
+                <Label htmlFor="prazo_final">Prazo de Entrega *</Label>
                 <Input
                   id="prazo_final"
                   name="prazo_final"
