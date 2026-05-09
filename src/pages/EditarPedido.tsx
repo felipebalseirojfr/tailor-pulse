@@ -336,6 +336,7 @@ export default function EditarPedido() {
           data_termino_prevista: etapa.data_termino_prevista,
           data_termino: etapa.data_termino,
           observacoes: etapa.observacoes,
+          terceiro_id: etapa.terceiro_id || null,
         };
         // Se data_termino mudou, ajustar status automaticamente
         if (original && etapa.data_termino !== original.data_termino) {
