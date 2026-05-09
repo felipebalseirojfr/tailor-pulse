@@ -1,14 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Calendar, Check, GripVertical, Trash2, Plus } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/components/ui/calendar";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { Textarea } from "@/components/ui/textarea";
+import { supabase } from "@/integrations/supabase/client";
 
 export interface EtapaEditavel {
   id: string;
@@ -18,6 +20,7 @@ export interface EtapaEditavel {
   data_termino_prevista: string | null;
   data_termino: string | null;
   observacoes: string | null;
+  terceiro_id?: string | null;
   isNew?: boolean;
   toDelete?: boolean;
 }
@@ -44,6 +47,23 @@ const tiposEtapaDisponiveis = [
 
 export default function EtapasEditorManager({ etapas, onChange }: EtapasEditorManagerProps) {
   const [showAddPanel, setShowAddPanel] = useState(false);
+  const [terceiros, setTerceiros] = useState<{ id: string; nome: string; tipo_etapa: string }[]>([]);
+
+  useEffect(() => {
+    const fetch = async () => {
+      const { data } = await supabase
+        .from("terceiros")
+        .select("id, nome, tipo_etapa")
+        .eq("ativo", true)
+        .order("nome");
+      if (data) setTerceiros(data);
+    };
+    fetch();
+  }, []);
+
+  const getTerceirosForEtapa = (tipoEtapa: string) =>
+    terceiros.filter(t => t.tipo_etapa === tipoEtapa);
+
 
   // Filtrar etapas que não estão marcadas para deletar
   const etapasAtivas = etapas.filter(e => !e.toDelete);
@@ -379,6 +399,26 @@ export default function EtapasEditorManager({ etapas, onChange }: EtapasEditorMa
                       )}
                     </div>
                   </div>
+
+                  {getTerceirosForEtapa(etapa.tipo_etapa).length > 0 && (
+                    <div className="space-y-2">
+                      <Label className="text-xs text-muted-foreground">Responsável (Fornecedor/Oficina)</Label>
+                      <Select
+                        value={etapa.terceiro_id || "none"}
+                        onValueChange={(v) => atualizarEtapa(etapa.id, "terceiro_id", v === "none" ? null : v)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="none">Não definido</SelectItem>
+                          {getTerceirosForEtapa(etapa.tipo_etapa).map((t) => (
+                            <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  )}
 
                   <div className="space-y-2">
                     <Label className="text-xs text-muted-foreground">Observações</Label>

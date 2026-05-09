@@ -159,6 +159,7 @@ export default function EditarPedido() {
           data_termino_prevista: e.data_termino_prevista,
           data_termino: e.data_termino,
           observacoes: e.observacoes,
+          terceiro_id: e.terceiro_id,
         }));
         setEtapas(etapasFormatadas);
         setEtapasOriginais(etapasFormatadas);
@@ -317,6 +318,7 @@ export default function EditarPedido() {
             data_termino_prevista: etapa.data_termino_prevista,
             data_termino: etapa.data_termino,
             observacoes: etapa.observacoes,
+            terceiro_id: etapa.terceiro_id || null,
             status: etapa.data_termino ? 'concluido' : 'pendente',
           });
 
@@ -334,6 +336,7 @@ export default function EditarPedido() {
           data_termino_prevista: etapa.data_termino_prevista,
           data_termino: etapa.data_termino,
           observacoes: etapa.observacoes,
+          terceiro_id: etapa.terceiro_id || null,
         };
         // Se data_termino mudou, ajustar status automaticamente
         if (original && etapa.data_termino !== original.data_termino) {
