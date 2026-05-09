@@ -478,7 +478,7 @@ export default function Calendario() {
               );
             };
             return (
-              <ScrollArea className="flex-1 pr-3 -mr-3">
+              <ScrollArea className="flex-1 min-h-0 max-h-[60vh] pr-3 -mr-3">
                 <div className="space-y-4">
                   {prazos.length > 0 && (
                     <div>
