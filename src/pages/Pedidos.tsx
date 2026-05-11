@@ -35,6 +35,8 @@ import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 
+const __toLocalISO=(d: Date)=>{const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,"0");const day=String(d.getDate()).padStart(2,"0");return `${y}-${m}-${day}`;};
+
 interface Pedido {
   id: string;
   produto_modelo: string;
@@ -270,7 +272,7 @@ export default function Pedidos() {
     // Filtro por status
     if (statusFilter !== "todos") {
       if (statusFilter === "atrasado") {
-        const hoje = new Date().toISOString().split("T")[0];
+        const hoje = __toLocalISO(new Date());
         filtered = filtered.filter(
           (p) => p.prazo_final < hoje && p.status_geral !== "concluido"
         );
@@ -287,7 +289,7 @@ export default function Pedidos() {
       return <Badge variant="secondary">Aguardando Início</Badge>;
     }
 
-    const hoje = new Date().toISOString().split("T")[0];
+    const hoje = __toLocalISO(new Date());
     const atrasado = pedido.prazo_final < hoje && pedido.status_geral !== "concluido";
 
     if (atrasado) {
@@ -457,7 +459,7 @@ export default function Pedidos() {
   };
 
   const getSummaryData = () => {
-    const hoje = new Date().toISOString().split("T")[0];
+    const hoje = __toLocalISO(new Date());
     return {
       total: pedidos.length,
       aguardandoInicio: pedidos.filter((p) => p.status_geral === "aguardando_inicio").length,
@@ -704,7 +706,7 @@ export default function Pedidos() {
           ) : modoTV && activeTab === "controle" ? (
             /* Vista de Cards individual para Modo TV */
             (() => {
-              const hoje = new Date().toISOString().split("T")[0];
+              const hoje = __toLocalISO(new Date());
               // IMPORTANTE: Usar todos os pedidos não concluídos como base (não filteredPedidos)
               const pedidosEmProducao = pedidos.filter((p) => p.status_geral !== "concluido");
               let tvFiltered = [...pedidosEmProducao];

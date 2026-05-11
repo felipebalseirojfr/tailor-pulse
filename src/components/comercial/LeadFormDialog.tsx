@@ -16,6 +16,8 @@ import {
 } from "@/types/comercial";
 import { Loader2 } from "lucide-react";
 
+const __toLocalISO=(d: Date)=>{const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,"0");const day=String(d.getDate()).padStart(2,"0");return `${y}-${m}-${day}`;};
+
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -82,7 +84,7 @@ function LeadFormInner({ onClose, lead }: Omit<Props, "open">) {
         lead_nome: form.lead_nome,
         status_prospeccao: form.status_prospeccao,
         proxima_acao: isFinal ? (form.proxima_acao || "—") : form.proxima_acao,
-        data_proxima_acao: isFinal ? (form.data_proxima_acao || new Date().toISOString().split("T")[0]) : form.data_proxima_acao,
+        data_proxima_acao: isFinal ? (form.data_proxima_acao || __toLocalISO(new Date())) : form.data_proxima_acao,
         responsavel_id: form.responsavel_id,
         segmento: form.segmento || null,
         origem: form.origem || null,

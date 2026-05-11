@@ -49,6 +49,8 @@ import { ChecklistProducao } from "@/components/pedidos/ChecklistProducao";
 import { FichaCorte } from "@/components/pedidos/FichaCorte";
 import { AvancarEtapaDialog } from "@/components/pedidos/AvancarEtapaDialog";
 
+const __toLocalISO=(d: Date)=>{const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,"0");const day=String(d.getDate()).padStart(2,"0");return `${y}-${m}-${day}`;};
+
 interface Pedido {
   id: string;
   codigo_pedido?: string;
@@ -323,8 +325,8 @@ export default function DetalhesPedido() {
         const { error: proximaError } = await supabase.from("etapas_producao").update({
           status: "em_andamento",
           data_inicio: dataInicio.toISOString(),
-          data_inicio_prevista: dataInicio.toISOString().split('T')[0],
-          data_termino_prevista: dataTerminoPrevista.toISOString().split('T')[0],
+          data_inicio_prevista: __toLocalISO(dataInicio),
+          data_termino_prevista: __toLocalISO(dataTerminoPrevista),
         }).eq("id", proximaEtapa.id);
         if (proximaError) throw proximaError;
       }
@@ -360,7 +362,7 @@ export default function DetalhesPedido() {
     return <div className="flex min-h-screen items-center justify-center"><p>Pedido não encontrado.</p></div>;
   }
 
-  const hoje = new Date().toISOString().split("T")[0];
+  const hoje = __toLocalISO(new Date());
   const atrasado = pedido.prazo_final < hoje && pedido.status_geral !== "concluido";
 
   const getStatusIcon = (status: string) => {

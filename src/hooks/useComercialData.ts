@@ -3,6 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import type { Negociacao, Lead, Interacao, StatusPipeline } from "@/types/comercial";
 
+const __toLocalISO=(d: Date)=>{const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,"0");const day=String(d.getDate()).padStart(2,"0");return `${y}-${m}-${day}`;};
+
 const STALE_TIME = 5 * 60 * 1000; // 5 min cache
 
 export function useNegociacoes() {
@@ -141,7 +143,7 @@ export function useAddInteracao() {
         if (error) throw error;
         await supabase
           .from("negociacoes" as any)
-          .update({ data_ultima_interacao: new Date().toISOString().split("T")[0] })
+          .update({ data_ultima_interacao: __toLocalISO(new Date()) })
           .eq("id", params.negociacao_id);
       } else if (params.lead_id) {
         const { error } = await supabase

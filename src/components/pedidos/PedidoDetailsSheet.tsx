@@ -29,6 +29,8 @@ import { ptBR } from "date-fns/locale";
 import { QRCodeDisplay } from "./QRCodeDisplay";
 import { FichaCorte } from "./FichaCorte";
 import {
+
+const __toLocalISO=(d: Date)=>{const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,"0");const day=String(d.getDate()).padStart(2,"0");return `${y}-${m}-${day}`;};
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -188,8 +190,8 @@ export function PedidoDetailsSheet({
         const updates: any = {
           status: "em_andamento",
           data_inicio: dataInicio.toISOString(),
-          data_inicio_prevista: dataInicio.toISOString().split('T')[0],
-          data_termino_prevista: dataTerminoPrevista.toISOString().split('T')[0],
+          data_inicio_prevista: __toLocalISO(dataInicio),
+          data_termino_prevista: __toLocalISO(dataTerminoPrevista),
         };
         // Só salva terceiro se vier do dialog (não undefined)
         if (terceiroId !== undefined) {
