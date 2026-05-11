@@ -190,8 +190,15 @@ export default function Calendario() {
     return dias;
   };
 
+  const toLocalISO = (d: Date) => {
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const day = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${day}`;
+  };
+
   const getMarcosDoDia = (dia: Date): MarcoCalendario[] => {
-    const diaStr = dia.toISOString().split("T")[0];
+    const diaStr = toLocalISO(dia);
     const marcos: MarcoCalendario[] = [];
     etapas.forEach((e) => {
       if (filtroNivel !== "todos" && e.nivel_alerta !== filtroNivel) return;
@@ -222,7 +229,7 @@ export default function Calendario() {
     : etapas.filter((e) => e.nivel_alerta === filtroNivel);
 
   const dias = getDiasDoMes();
-  const hoje = new Date().toISOString().split("T")[0];
+  const hoje = toLocalISO(new Date());
 
   if (loading) {
     return (
@@ -354,7 +361,7 @@ export default function Calendario() {
             ))}
             {dias.map((dia, idx) => {
               if (!dia) return <div key={`empty-${idx}`} />;
-              const diaStr = dia.toISOString().split("T")[0];
+              const diaStr = toLocalISO(dia);
               const marcosDia = getMarcosDoDia(dia);
               const isHoje = diaStr === hoje;
 
