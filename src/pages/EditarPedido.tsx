@@ -264,11 +264,8 @@ export default function EditarPedido() {
       ];
 
       // Atualizar pedido
-      const { error } = await supabase
-        .from("pedidos")
-        .update({
-          cliente_id: formData.cliente_id,
-          produto_modelo: formData.produto_modelo,
+      const updatePedido: any = {
+        produto_modelo: formData.produto_modelo,
           tipo_peca: formData.tipo_peca,
           codigo_produto_cliente: formData.codigo_produto_cliente || null,
           tecido: formData.tecido,
