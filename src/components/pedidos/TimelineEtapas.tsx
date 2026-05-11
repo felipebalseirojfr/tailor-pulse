@@ -6,6 +6,7 @@ import {
 } from "@/components/ui/tooltip";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { parseLocalDate, todayLocal } from "@/lib/date-utils";
 
 interface Etapa {
   id: string;
