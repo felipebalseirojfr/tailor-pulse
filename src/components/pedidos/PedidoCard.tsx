@@ -210,7 +210,7 @@ export function PedidoCard({ pedido, onViewDetails, onAdvanceStage, isTV = false
                     Previsto:
                   </span>
                   <span className={`text-foreground font-semibold ${isTV ? 'text-sm' : 'text-sm'}`}>
-                    {format(new Date(pedido.prazo_final), "dd/MM/yyyy", { locale: ptBR })}
+                    {format(prazoFinal, "dd/MM/yyyy", { locale: ptBR })}
                   </span>
                 </div>
               </div>
