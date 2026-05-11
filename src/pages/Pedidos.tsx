@@ -357,15 +357,14 @@ export default function Pedidos() {
   const temEtapaEmAtraso = (pedido: Pedido) => {
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
-    
+
     return pedido.etapas_producao?.some((etapa) => {
       if (etapa.status === "concluido" || !etapa.data_termino_prevista) {
         return false;
       }
-      
-      const dataTerminoPrevista = new Date(etapa.data_termino_prevista);
+      const dataTerminoPrevista = parseLocalDate(etapa.data_termino_prevista);
+      if (!dataTerminoPrevista) return false;
       dataTerminoPrevista.setHours(0, 0, 0, 0);
-      
       return dataTerminoPrevista < hoje;
     }) || false;
   };
@@ -373,15 +372,14 @@ export default function Pedidos() {
   const getEtapasAtrasadas = (pedido: Pedido) => {
     const hoje = new Date();
     hoje.setHours(0, 0, 0, 0);
-    
+
     return pedido.etapas_producao?.filter((etapa) => {
       if (etapa.status === "concluido" || !etapa.data_termino_prevista) {
         return false;
       }
-      
-      const dataTerminoPrevista = new Date(etapa.data_termino_prevista);
+      const dataTerminoPrevista = parseLocalDate(etapa.data_termino_prevista);
+      if (!dataTerminoPrevista) return false;
       dataTerminoPrevista.setHours(0, 0, 0, 0);
-      
       return dataTerminoPrevista < hoje;
     }) || [];
   };
