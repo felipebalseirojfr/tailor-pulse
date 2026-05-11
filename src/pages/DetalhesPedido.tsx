@@ -332,6 +332,19 @@ export default function DetalhesPedido() {
       const etapaAtual = etapas.find((e) => e.id === etapaId);
       if (!etapaAtual) return;
 
+      const anteriorPendente = etapas.find(
+        (e) => e.ordem < etapaAtual.ordem && e.status !== "concluido"
+      );
+      if (anteriorPendente) {
+        toast({
+          title: "Sequência inválida",
+          description: `Conclua a etapa "${anteriorPendente.tipo_etapa}" antes de avançar esta.`,
+          variant: "destructive",
+        });
+        setAvancarEtapaId(null);
+        return;
+      }
+
       const { error } = await supabase.from("etapas_producao").update({
         status: "concluido",
         data_termino: new Date().toISOString(),
