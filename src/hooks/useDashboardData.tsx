@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { parseLocalDate, todayLocal } from "@/lib/date-utils";
 
 export interface DashboardStats {
   totalPedidos: number;
