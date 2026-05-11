@@ -2,6 +2,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Users, TrendingUp, Award, TrendingDown } from "lucide-react";
 import { PedidoDetalhado } from "@/hooks/useDashboardData";
+import { parseLocalDate, todayLocal } from "@/lib/date-utils";
 
 interface DashboardPerformanceProps {
   pedidos: PedidoDetalhado[];
