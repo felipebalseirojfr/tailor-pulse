@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { parseLocalDate, todayLocal } from "@/lib/date-utils";
 
 export type NivelAlerta = "atrasado" | "risco" | "ok" | "pendente";
 
@@ -27,13 +28,13 @@ export function calcularNivelAlerta(
   if (status === "concluido") return { nivel: "ok", diasRestantes: null };
   if (!dataTerminoPrevista) return { nivel: "pendente", diasRestantes: null };
 
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-  const prazo = new Date(dataTerminoPrevista);
+  const hoje = todayLocal();
+  const prazo = parseLocalDate(dataTerminoPrevista);
+  if (!prazo) return { nivel: "pendente", diasRestantes: null };
   prazo.setHours(0, 0, 0, 0);
 
   const diffMs = prazo.getTime() - hoje.getTime();
-  const diasRestantes = Math.ceil(diffMs / (1000 * 60 * 60 * 24));
+  const diasRestantes = Math.round(diffMs / (1000 * 60 * 60 * 24));
 
   if (diasRestantes < 0) return { nivel: "atrasado", diasRestantes };
   if (diasRestantes <= 2) return { nivel: "risco", diasRestantes };

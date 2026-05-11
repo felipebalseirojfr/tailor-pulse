@@ -10,6 +10,7 @@ import { DashboardPerformance } from "@/components/dashboard/DashboardPerformanc
 import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
 import { RecentOrders } from "@/components/dashboard/RecentOrders";
 import { Card, CardContent } from "@/components/ui/card";
+import { parseLocalDate, todayLocal } from "@/lib/date-utils";
 
 export default function Dashboard() {
   const { stats, pedidos, atividades, loading, refetch } = useDashboardData();
@@ -40,16 +41,18 @@ export default function Dashboard() {
   }
 
   // Calcular alertas
+  const hoje = todayLocal();
   const pedidosAtrasados = pedidos.filter(p => {
-    const prazoFinal = new Date(p.prazo_final);
-    return prazoFinal < new Date() && p.status_geral !== 'concluido';
+    const prazoFinal = parseLocalDate(p.prazo_final);
+    return prazoFinal && prazoFinal < hoje && p.status_geral !== 'concluido';
   });
 
   const pedidosEmRisco = pedidos.filter(p => {
-    const prazoFinal = new Date(p.prazo_final);
-    const tresDiasAtras = new Date();
-    tresDiasAtras.setDate(tresDiasAtras.getDate() + 3);
-    return prazoFinal <= tresDiasAtras && prazoFinal >= new Date() && p.status_geral !== 'concluido';
+    const prazoFinal = parseLocalDate(p.prazo_final);
+    if (!prazoFinal) return false;
+    const tresDiasAFrente = new Date(hoje);
+    tresDiasAFrente.setDate(tresDiasAFrente.getDate() + 3);
+    return prazoFinal <= tresDiasAFrente && prazoFinal >= hoje && p.status_geral !== 'concluido';
   });
 
   const pedidosMultiplasEtapas = pedidos.filter(p => {

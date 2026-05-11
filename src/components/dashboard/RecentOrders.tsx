@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { Clock, ArrowRight, Package } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PedidoDetalhado } from "@/hooks/useDashboardData";
+import { parseLocalDate, todayLocal } from "@/lib/date-utils";
 
 interface RecentOrdersProps {
   pedidos: PedidoDetalhado[];
@@ -91,10 +92,10 @@ export const RecentOrders = ({ pedidos }: RecentOrdersProps) => {
         ) : (
           <div className="space-y-3">
             {pedidosEmAndamento.map((pedido) => {
-              const dataLimite = new Date(pedido.prazo_final);
-              const hoje = new Date();
+              const dataLimite = parseLocalDate(pedido.prazo_final);
+              const hoje = todayLocal();
               const atrasado =
-                dataLimite < hoje && pedido.status_geral !== "concluido";
+                !!dataLimite && dataLimite < hoje && pedido.status_geral !== "concluido";
 
               return (
                 <div
@@ -132,7 +133,7 @@ export const RecentOrders = ({ pedidos }: RecentOrdersProps) => {
                         <div className="flex flex-col">
                           <span className="text-xs text-muted-foreground font-medium mb-0.5">Prazo</span>
                           <span className={`font-semibold ${atrasado ? 'text-destructive' : 'text-foreground'}`}>
-                            {new Date(pedido.prazo_final).toLocaleDateString('pt-BR')}
+                            {dataLimite ? dataLimite.toLocaleDateString('pt-BR') : '—'}
                           </span>
                         </div>
                       </div>

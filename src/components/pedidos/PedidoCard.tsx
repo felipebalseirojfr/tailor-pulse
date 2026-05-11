@@ -5,6 +5,7 @@ import { Eye, Clock, AlertCircle, AlertTriangle } from "lucide-react";
 import { TimelineEtapas } from "./TimelineEtapas";
 import { differenceInDays, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { parseLocalDate, todayLocal } from "@/lib/date-utils";
 
 interface Etapa {
   id: string;
@@ -40,15 +41,15 @@ interface PedidoCardProps {
 }
 
 export function PedidoCard({ pedido, onViewDetails, onAdvanceStage, isTV = false }: PedidoCardProps) {
-  const hoje = new Date();
-  hoje.setHours(0, 0, 0, 0);
-  const prazoFinal = new Date(pedido.prazo_final);
+  const hoje = todayLocal();
+  const prazoFinal = parseLocalDate(pedido.prazo_final) ?? hoje;
   const diasRestantes = differenceInDays(prazoFinal, hoje);
   const atrasado = diasRestantes < 0 && pedido.status_geral !== "concluido";
 
   const temEtapaEmAtraso = pedido.etapas_producao?.some((etapa) => {
     if (etapa.status === "concluido" || !etapa.data_termino_prevista) return false;
-    const dataTerminoPrevista = new Date(etapa.data_termino_prevista);
+    const dataTerminoPrevista = parseLocalDate(etapa.data_termino_prevista);
+    if (!dataTerminoPrevista) return false;
     dataTerminoPrevista.setHours(0, 0, 0, 0);
     return dataTerminoPrevista < hoje;
   }) || false;
@@ -56,7 +57,8 @@ export function PedidoCard({ pedido, onViewDetails, onAdvanceStage, isTV = false
   // Etapa em risco = prazo da etapa em 1 ou 2 dias
   const temEtapaEmRisco = !temEtapaEmAtraso && (pedido.etapas_producao?.some((etapa) => {
     if (etapa.status === "concluido" || !etapa.data_termino_prevista) return false;
-    const dataTerminoPrevista = new Date(etapa.data_termino_prevista);
+    const dataTerminoPrevista = parseLocalDate(etapa.data_termino_prevista);
+    if (!dataTerminoPrevista) return false;
     dataTerminoPrevista.setHours(0, 0, 0, 0);
     const diasParaEtapa = differenceInDays(dataTerminoPrevista, hoje);
     return diasParaEtapa >= 0 && diasParaEtapa <= 2;
@@ -208,7 +210,7 @@ export function PedidoCard({ pedido, onViewDetails, onAdvanceStage, isTV = false
                     Previsto:
                   </span>
                   <span className={`text-foreground font-semibold ${isTV ? 'text-sm' : 'text-sm'}`}>
-                    {format(new Date(pedido.prazo_final), "dd/MM/yyyy", { locale: ptBR })}
+                    {format(prazoFinal, "dd/MM/yyyy", { locale: ptBR })}
                   </span>
                 </div>
               </div>

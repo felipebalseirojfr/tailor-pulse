@@ -5,6 +5,7 @@ import { PedidoDetalhado } from "@/hooks/useDashboardData";
 import { OcupacaoMensal } from "@/hooks/useCapacidadeOcupacao";
 import { OcupacaoAlertCard } from "./OcupacaoAlertCard";
 import { Link } from "react-router-dom";
+import { parseLocalDate, todayLocal } from "@/lib/date-utils";
 
 interface DashboardAlertsProps {
   pedidos: PedidoDetalhado[];
@@ -19,15 +20,16 @@ export const DashboardAlerts = ({
   alertasOcupacao = [],
   onRefreshOcupacao = () => {}
 }: DashboardAlertsProps) => {
-  const hoje = new Date();
+  const hoje = todayLocal();
 
   // Pedidos em risco de atraso (próximos 3 dias)
-  const tresDiasDepois = new Date();
+  const tresDiasDepois = new Date(hoje);
   tresDiasDepois.setDate(hoje.getDate() + 3);
 
   const pedidosEmRisco = pedidos.filter((p) => {
-    const prazo = new Date(p.prazo_final);
+    const prazo = parseLocalDate(p.prazo_final);
     return (
+      prazo &&
       prazo >= hoje &&
       prazo <= tresDiasDepois &&
       p.status_geral !== "concluido"
@@ -43,9 +45,10 @@ export const DashboardAlerts = ({
   });
 
   // Pedidos atrasados
-  const pedidosAtrasados = pedidos.filter(
-    (p) => new Date(p.prazo_final) < hoje && p.status_geral !== "concluido"
-  );
+  const pedidosAtrasados = pedidos.filter((p) => {
+    const prazo = parseLocalDate(p.prazo_final);
+    return prazo && prazo < hoje && p.status_geral !== "concluido";
+  });
 
   const temAlertas = pedidosEmRisco.length > 0 || pedidosComEtapasAtrasadas.length > 0 || pedidosAtrasados.length > 0;
 
@@ -136,10 +139,10 @@ export const DashboardAlerts = ({
                 </div>
                 <div className="space-y-2 max-h-[200px] overflow-y-auto">
                   {pedidosEmRisco.slice(0, 5).map((pedido) => {
-                    const diasRestantes = Math.ceil(
-                      (new Date(pedido.prazo_final).getTime() - hoje.getTime()) /
-                        (1000 * 60 * 60 * 24)
-                    );
+                    const prazoDate = parseLocalDate(pedido.prazo_final);
+                    const diasRestantes = prazoDate
+                      ? Math.round((prazoDate.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24))
+                      : 0;
                     return (
                       <Link key={pedido.id} to={`/pedidos/${pedido.id}`}>
                         <div className="flex items-start justify-between p-2 rounded-lg bg-warning/5 hover:bg-warning/10 transition-colors cursor-pointer">

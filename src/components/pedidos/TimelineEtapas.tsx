@@ -6,6 +6,7 @@ import {
 } from "@/components/ui/tooltip";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { parseLocalDate, todayLocal } from "@/lib/date-utils";
 
 interface Etapa {
   id: string;
@@ -37,13 +38,10 @@ export function TimelineEtapas({ etapas, statusGeral, isTV = false }: TimelineEt
     if (etapa.status === "concluido" || !etapa.data_termino_prevista) {
       return false;
     }
-    
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    
-    const dataTerminoPrevista = new Date(etapa.data_termino_prevista);
+    const hoje = todayLocal();
+    const dataTerminoPrevista = parseLocalDate(etapa.data_termino_prevista);
+    if (!dataTerminoPrevista) return false;
     dataTerminoPrevista.setHours(0, 0, 0, 0);
-    
     return dataTerminoPrevista < hoje;
   };
 
@@ -88,7 +86,8 @@ export function TimelineEtapas({ etapas, statusGeral, isTV = false }: TimelineEt
 
   const formatDate = (date?: string) => {
     if (!date) return "Não definida";
-    return format(new Date(date), "dd/MM/yyyy", { locale: ptBR });
+    const d = parseLocalDate(date);
+    return d ? format(d, "dd/MM/yyyy", { locale: ptBR }) : "Não definida";
   };
 
   const getTooltipContent = (etapa: Etapa, atrasada: boolean) => {
