@@ -5,6 +5,7 @@ import { Eye, Clock, AlertCircle, AlertTriangle } from "lucide-react";
 import { TimelineEtapas } from "./TimelineEtapas";
 import { differenceInDays, format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { parseLocalDate, todayLocal } from "@/lib/date-utils";
 
 interface Etapa {
   id: string;
