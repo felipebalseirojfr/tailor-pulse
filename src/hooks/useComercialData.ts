@@ -5,6 +5,7 @@ import type { Negociacao, Lead, Interacao, StatusPipeline } from "@/types/comerc
 
 const __toLocalISO=(d: Date)=>{const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,"0");const day=String(d.getDate()).padStart(2,"0");return `${y}-${m}-${day}`;};
 
+
 const STALE_TIME = 5 * 60 * 1000; // 5 min cache
 
 export function useNegociacoes() {
