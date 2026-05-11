@@ -12,16 +12,17 @@ export const DashboardPerformance = ({ pedidos }: DashboardPerformanceProps) => 
   // Calcular dados de clientes
   const clientesMap = new Map<string, { total: number; atrasados: number }>();
   
+  const hoje = todayLocal();
   pedidos.forEach((pedido) => {
     const nomeCliente = pedido.cliente?.nome || "Sem cliente";
     const dados = clientesMap.get(nomeCliente) || { total: 0, atrasados: 0 };
     dados.total += 1;
-    
-    const hoje = new Date();
-    if (new Date(pedido.prazo_final) < hoje && pedido.status_geral !== "concluido") {
+
+    const prazo = parseLocalDate(pedido.prazo_final);
+    if (prazo && prazo < hoje && pedido.status_geral !== "concluido") {
       dados.atrasados += 1;
     }
-    
+
     clientesMap.set(nomeCliente, dados);
   });
 
