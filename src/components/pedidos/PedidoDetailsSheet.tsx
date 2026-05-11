@@ -163,7 +163,7 @@ export function PedidoDetailsSheet({
     const etapaAnterior = etapasOrdenadas[etapaAtualIndex - 1];
     setLoading(true);
     try {
-      await supabase.from("etapas_producao").update({ status: "pendente", data_inicio: null, data_termino: null }).eq("id", etapaAtualObj.id);
+      await supabase.from("etapas_producao").update({ status: "pendente", data_inicio: null, data_termino: null, data_inicio_prevista: null, data_termino_prevista: null }).eq("id", etapaAtualObj.id);
       await supabase.from("etapas_producao").update({ status: "em_andamento", data_termino: null }).eq("id", etapaAnterior.id);
       toast.success("Etapa retrocedida com sucesso!");
       onUpdate();
