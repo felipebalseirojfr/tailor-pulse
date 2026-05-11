@@ -92,10 +92,10 @@ export const RecentOrders = ({ pedidos }: RecentOrdersProps) => {
         ) : (
           <div className="space-y-3">
             {pedidosEmAndamento.map((pedido) => {
-              const dataLimite = new Date(pedido.prazo_final);
-              const hoje = new Date();
+              const dataLimite = parseLocalDate(pedido.prazo_final);
+              const hoje = todayLocal();
               const atrasado =
-                dataLimite < hoje && pedido.status_geral !== "concluido";
+                !!dataLimite && dataLimite < hoje && pedido.status_geral !== "concluido";
 
               return (
                 <div
