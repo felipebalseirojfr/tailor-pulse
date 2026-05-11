@@ -139,10 +139,10 @@ export const DashboardAlerts = ({
                 </div>
                 <div className="space-y-2 max-h-[200px] overflow-y-auto">
                   {pedidosEmRisco.slice(0, 5).map((pedido) => {
-                    const diasRestantes = Math.ceil(
-                      (new Date(pedido.prazo_final).getTime() - hoje.getTime()) /
-                        (1000 * 60 * 60 * 24)
-                    );
+                    const prazoDate = parseLocalDate(pedido.prazo_final);
+                    const diasRestantes = prazoDate
+                      ? Math.round((prazoDate.getTime() - hoje.getTime()) / (1000 * 60 * 60 * 24))
+                      : 0;
                     return (
                       <Link key={pedido.id} to={`/pedidos/${pedido.id}`}>
                         <div className="flex items-start justify-between p-2 rounded-lg bg-warning/5 hover:bg-warning/10 transition-colors cursor-pointer">
