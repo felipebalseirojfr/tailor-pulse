@@ -133,7 +133,7 @@ export const RecentOrders = ({ pedidos }: RecentOrdersProps) => {
                         <div className="flex flex-col">
                           <span className="text-xs text-muted-foreground font-medium mb-0.5">Prazo</span>
                           <span className={`font-semibold ${atrasado ? 'text-destructive' : 'text-foreground'}`}>
-                            {new Date(pedido.prazo_final).toLocaleDateString('pt-BR')}
+                            {dataLimite ? dataLimite.toLocaleDateString('pt-BR') : '—'}
                           </span>
                         </div>
                       </div>
