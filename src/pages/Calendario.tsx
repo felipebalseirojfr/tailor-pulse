@@ -361,7 +361,7 @@ export default function Calendario() {
             ))}
             {dias.map((dia, idx) => {
               if (!dia) return <div key={`empty-${idx}`} />;
-              const diaStr = dia.toISOString().split("T")[0];
+              const diaStr = toLocalISO(dia);
               const marcosDia = getMarcosDoDia(dia);
               const isHoje = diaStr === hoje;
 
