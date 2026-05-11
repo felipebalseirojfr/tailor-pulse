@@ -5,6 +5,7 @@ import { PedidoDetalhado } from "@/hooks/useDashboardData";
 import { OcupacaoMensal } from "@/hooks/useCapacidadeOcupacao";
 import { OcupacaoAlertCard } from "./OcupacaoAlertCard";
 import { Link } from "react-router-dom";
+import { parseLocalDate, todayLocal } from "@/lib/date-utils";
 
 interface DashboardAlertsProps {
   pedidos: PedidoDetalhado[];
