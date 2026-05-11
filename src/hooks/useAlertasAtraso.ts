@@ -28,7 +28,6 @@ export function calcularNivelAlerta(
   if (status === "concluido") return { nivel: "ok", diasRestantes: null };
   if (!dataTerminoPrevista) return { nivel: "pendente", diasRestantes: null };
 
-  const hoje = new Date();
   const hoje = todayLocal();
   const prazo = parseLocalDate(dataTerminoPrevista);
   if (!prazo) return { nivel: "pendente", diasRestantes: null };
