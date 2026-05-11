@@ -45,6 +45,11 @@ const tiposEtapaDisponiveis = [
   { value: "entrega", label: "Entrega" },
 ];
 
+const parseDataLocal = (data?: string | null) => {
+  if (!data) return undefined;
+  return new Date(`${data}T00:00:00`);
+};
+
 export default function EtapasEditorManager({ etapas, onChange }: EtapasEditorManagerProps) {
   const [showAddPanel, setShowAddPanel] = useState(false);
   const [terceiros, setTerceiros] = useState<{ id: string; nome: string; tipo_etapa: string }[]>([]);
@@ -300,14 +305,14 @@ export default function EtapasEditorManager({ etapas, onChange }: EtapasEditorMa
                           >
                             <Calendar className="mr-2 h-4 w-4" />
                             {etapa.data_inicio_prevista
-                              ? format(new Date(etapa.data_inicio_prevista), "dd/MM/yyyy", { locale: ptBR })
+                              ? format(parseDataLocal(etapa.data_inicio_prevista)!, "dd/MM/yyyy", { locale: ptBR })
                               : "Selecionar data"}
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
                           <CalendarComponent
                             mode="single"
-                            selected={etapa.data_inicio_prevista ? new Date(etapa.data_inicio_prevista) : undefined}
+                            selected={parseDataLocal(etapa.data_inicio_prevista)}
                             onSelect={(date) =>
                               atualizarEtapa(etapa.id, "data_inicio_prevista", date ? format(date, "yyyy-MM-dd") : null)
                             }
@@ -334,14 +339,14 @@ export default function EtapasEditorManager({ etapas, onChange }: EtapasEditorMa
                           >
                             <Calendar className="mr-2 h-4 w-4" />
                             {etapa.data_termino_prevista
-                              ? format(new Date(etapa.data_termino_prevista), "dd/MM/yyyy", { locale: ptBR })
+                              ? format(parseDataLocal(etapa.data_termino_prevista)!, "dd/MM/yyyy", { locale: ptBR })
                               : "Selecionar data"}
                           </Button>
                         </PopoverTrigger>
                         <PopoverContent className="w-auto p-0" align="start">
                           <CalendarComponent
                             mode="single"
-                            selected={etapa.data_termino_prevista ? new Date(etapa.data_termino_prevista) : undefined}
+                            selected={parseDataLocal(etapa.data_termino_prevista)}
                             onSelect={(date) =>
                               atualizarEtapa(etapa.id, "data_termino_prevista", date ? format(date, "yyyy-MM-dd") : null)
                             }

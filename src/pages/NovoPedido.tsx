@@ -20,6 +20,14 @@ import { ArrowLeft, Upload, X, FileText, Image as ImageIcon } from "lucide-react
 import EtapasManager, { Etapa } from "@/components/pedidos/EtapasManager";
 import { downloadQRCode, downloadChecklist } from "@/lib/download-utils";
 
+const toLocalISODate = (date?: Date) => {
+  if (!date) return null;
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 interface Cliente {
   id: string;
   nome: string;
@@ -161,8 +169,8 @@ export default function NovoPedido() {
           ordem: etapa.ordem,
           status: 'pendente' as "pendente" | "em_andamento" | "concluido",
           data_inicio: null,
-          data_inicio_prevista: etapa.data_inicio_prevista?.toISOString().split('T')[0] || null,
-          data_termino_prevista: etapa.data_termino_prevista?.toISOString().split('T')[0] || null,
+          data_inicio_prevista: toLocalISODate(etapa.data_inicio_prevista),
+          data_termino_prevista: toLocalISODate(etapa.data_termino_prevista),
           terceiro_id: etapa.terceiro_id || null,
         }));
 
