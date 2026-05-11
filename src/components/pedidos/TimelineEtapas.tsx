@@ -86,7 +86,8 @@ export function TimelineEtapas({ etapas, statusGeral, isTV = false }: TimelineEt
 
   const formatDate = (date?: string) => {
     if (!date) return "Não definida";
-    return format(new Date(date), "dd/MM/yyyy", { locale: ptBR });
+    const d = parseLocalDate(date);
+    return d ? format(d, "dd/MM/yyyy", { locale: ptBR }) : "Não definida";
   };
 
   const getTooltipContent = (etapa: Etapa, atrasada: boolean) => {
