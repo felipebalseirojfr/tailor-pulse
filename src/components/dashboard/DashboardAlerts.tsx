@@ -20,15 +20,16 @@ export const DashboardAlerts = ({
   alertasOcupacao = [],
   onRefreshOcupacao = () => {}
 }: DashboardAlertsProps) => {
-  const hoje = new Date();
+  const hoje = todayLocal();
 
   // Pedidos em risco de atraso (próximos 3 dias)
-  const tresDiasDepois = new Date();
+  const tresDiasDepois = new Date(hoje);
   tresDiasDepois.setDate(hoje.getDate() + 3);
 
   const pedidosEmRisco = pedidos.filter((p) => {
-    const prazo = new Date(p.prazo_final);
+    const prazo = parseLocalDate(p.prazo_final);
     return (
+      prazo &&
       prazo >= hoje &&
       prazo <= tresDiasDepois &&
       p.status_geral !== "concluido"
@@ -44,9 +45,10 @@ export const DashboardAlerts = ({
   });
 
   // Pedidos atrasados
-  const pedidosAtrasados = pedidos.filter(
-    (p) => new Date(p.prazo_final) < hoje && p.status_geral !== "concluido"
-  );
+  const pedidosAtrasados = pedidos.filter((p) => {
+    const prazo = parseLocalDate(p.prazo_final);
+    return prazo && prazo < hoje && p.status_geral !== "concluido";
+  });
 
   const temAlertas = pedidosEmRisco.length > 0 || pedidosComEtapasAtrasadas.length > 0 || pedidosAtrasados.length > 0;
 
