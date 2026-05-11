@@ -229,7 +229,7 @@ export default function Calendario() {
     : etapas.filter((e) => e.nivel_alerta === filtroNivel);
 
   const dias = getDiasDoMes();
-  const hoje = new Date().toISOString().split("T")[0];
+  const hoje = toLocalISO(new Date());
 
   if (loading) {
     return (
