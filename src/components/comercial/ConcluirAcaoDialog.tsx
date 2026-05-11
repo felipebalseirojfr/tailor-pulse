@@ -45,7 +45,7 @@ export default function ConcluirAcaoDialog({ item, open, onClose }: Props) {
     // Update with new action
     if (item.type === "negociacao") {
       upsertNeg.mutate(
-        { id: item.id, proxima_acao: novaAcao, data_proxima_acao: novaData, data_ultima_interacao: new __toLocalISO(Date()) } as any,
+        { id: item.id, proxima_acao: novaAcao, data_proxima_acao: novaData, data_ultima_interacao: __toLocalISO(new Date()) } as any,
         { onSuccess: onClose }
       );
     } else {

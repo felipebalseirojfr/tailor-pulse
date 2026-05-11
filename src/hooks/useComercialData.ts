@@ -143,7 +143,7 @@ export function useAddInteracao() {
         if (error) throw error;
         await supabase
           .from("negociacoes" as any)
-          .update({ data_ultima_interacao: new __toLocalISO(Date()) })
+          .update({ data_ultima_interacao: __toLocalISO(new Date()) })
           .eq("id", params.negociacao_id);
       } else if (params.lead_id) {
         const { error } = await supabase

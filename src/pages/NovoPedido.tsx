@@ -50,7 +50,7 @@ export default function NovoPedido() {
     tecido: "",
     aviamentos: [] as string[],
     quantidade_total: "",
-    data_inicio: new __toLocalISO(Date()),
+    data_inicio: __toLocalISO(new Date()),
     prazo_final: "",
     tem_personalizacao: false,
     tipos_personalizacao: [] as string[],

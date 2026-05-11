@@ -196,7 +196,7 @@ export function ClienteProducaoCard({ cliente, producoes, onViewProducao }: Clie
   };
 
   const temProducaoAtrasada = () => {
-    const hoje = new __toLocalISO(Date());
+    const hoje = __toLocalISO(new Date());
     return producoes.some(
       (p) => p.prazo_final < hoje && p.status_geral !== "concluido"
     );
@@ -256,7 +256,7 @@ export function ClienteProducaoCard({ cliente, producoes, onViewProducao }: Clie
           
           <div className="space-y-3 mt-4">
             {[...producoes].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map((producao) => {
-              const hoje = new __toLocalISO(Date());
+              const hoje = __toLocalISO(new Date());
               const isAtrasado = producao.prazo_final < hoje && producao.status_geral !== "concluido";
               
               return (

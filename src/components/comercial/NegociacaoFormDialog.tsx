@@ -106,7 +106,7 @@ function NegociacaoFormInner({ onClose, negociacao }: Omit<Props, "open">) {
         status_pipeline: form.status_pipeline,
         prioridade: form.prioridade,
         proxima_acao: isFinal ? (proxAcao || "—") : proxAcao,
-        data_proxima_acao: isFinal ? (dataProxAcao || new __toLocalISO(Date())) : dataProxAcao,
+        data_proxima_acao: isFinal ? (dataProxAcao || __toLocalISO(new Date())) : dataProxAcao,
         responsavel_id: form.responsavel_id,
         segmento: form.segmento || null,
         origem: form.origem || null,

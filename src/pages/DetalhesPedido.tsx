@@ -362,7 +362,7 @@ export default function DetalhesPedido() {
     return <div className="flex min-h-screen items-center justify-center"><p>Pedido não encontrado.</p></div>;
   }
 
-  const hoje = new __toLocalISO(Date());
+  const hoje = __toLocalISO(new Date());
   const atrasado = pedido.prazo_final < hoje && pedido.status_geral !== "concluido";
 
   const getStatusIcon = (status: string) => {

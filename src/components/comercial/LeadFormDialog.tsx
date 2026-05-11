@@ -84,7 +84,7 @@ function LeadFormInner({ onClose, lead }: Omit<Props, "open">) {
         lead_nome: form.lead_nome,
         status_prospeccao: form.status_prospeccao,
         proxima_acao: isFinal ? (form.proxima_acao || "—") : form.proxima_acao,
-        data_proxima_acao: isFinal ? (form.data_proxima_acao || new __toLocalISO(Date())) : form.data_proxima_acao,
+        data_proxima_acao: isFinal ? (form.data_proxima_acao || __toLocalISO(new Date())) : form.data_proxima_acao,
         responsavel_id: form.responsavel_id,
         segmento: form.segmento || null,
         origem: form.origem || null,
