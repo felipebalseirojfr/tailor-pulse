@@ -423,6 +423,13 @@ export function PedidoDetailsSheet({
                         </div>
                         {etapa.data_inicio && <p className="text-xs text-muted-foreground mt-1">Início: {format(new Date(etapa.data_inicio), "dd/MM/yyyy HH:mm", { locale: ptBR })}</p>}
                         {etapa.data_termino && <p className="text-xs text-muted-foreground">Término: {format(new Date(etapa.data_termino), "dd/MM/yyyy HH:mm", { locale: ptBR })}</p>}
+                        {etapa.status !== "concluido" && (
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Previsão de finalização: {(etapa as any).data_termino_prevista
+                              ? format(new Date((etapa as any).data_termino_prevista + 'T00:00:00'), "dd/MM/yyyy", { locale: ptBR })
+                              : "Não definido"}
+                          </p>
+                        )}
                         {etapa.observacoes && <p className="text-sm text-muted-foreground mt-1">{etapa.observacoes}</p>}
 
                         {/* Seletor de terceiro — só aparece se houver terceiros cadastrados para essa etapa */}
