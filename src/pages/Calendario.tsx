@@ -48,6 +48,7 @@ interface EtapaComPedido {
   pedido_id: string;
   tipo_etapa: string;
   status: string;
+  data_inicio: string | null;
   data_inicio_prevista: string | null;
   data_termino_prevista: string | null;
   nivel_alerta: NivelAlerta;
@@ -140,6 +141,7 @@ export default function Calendario() {
             pedido_id,
             tipo_etapa,
             status,
+            data_inicio,
             data_inicio_prevista,
             data_termino_prevista,
             pedidos (
@@ -197,12 +199,20 @@ export default function Calendario() {
     return `${y}-${m}-${day}`;
   };
 
+  const toLocalDateFromDb = (value: string | null) => {
+    if (!value) return null;
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) return value.slice(0, 10);
+    return toLocalISO(parsed);
+  };
+
   const getMarcosDoDia = (dia: Date): MarcoCalendario[] => {
     const diaStr = toLocalISO(dia);
     const marcos: MarcoCalendario[] = [];
     etapas.forEach((e) => {
       if (filtroNivel !== "todos" && e.nivel_alerta !== filtroNivel) return;
-      if (e.data_inicio_prevista === diaStr) {
+      const dataInicio = toLocalDateFromDb(e.data_inicio) || e.data_inicio_prevista;
+      if (dataInicio === diaStr) {
         marcos.push({ key: `${e.id}-inicio`, etapa: e, tipo: "inicio", data: diaStr, nivel_alerta: e.nivel_alerta });
       }
       if (e.data_termino_prevista === diaStr) {
