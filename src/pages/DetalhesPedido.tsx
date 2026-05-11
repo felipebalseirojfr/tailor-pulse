@@ -295,9 +295,24 @@ export default function DetalhesPedido() {
 
   const atualizarEtapa = async (etapaId: string, campo: string, valor: any) => {
     try {
+      const etapaAlvo = etapas.find((e) => e.id === etapaId);
+      if (!etapaAlvo) return;
       const updates: any = { [campo]: valor };
       if (campo === "status") {
-        if (valor === "em_andamento" && !etapas.find((e) => e.id === etapaId)?.data_inicio) {
+        if (valor === "em_andamento" || valor === "concluido") {
+          const anteriorPendente = etapas.find(
+            (e) => e.ordem < etapaAlvo.ordem && e.status !== "concluido"
+          );
+          if (anteriorPendente) {
+            toast({
+              title: "Sequência inválida",
+              description: `A etapa "${anteriorPendente.tipo_etapa}" (anterior) ainda não foi concluída.`,
+              variant: "destructive",
+            });
+            return;
+          }
+        }
+        if (valor === "em_andamento" && !etapaAlvo.data_inicio) {
           updates.data_inicio = new Date().toISOString();
         } else if (valor === "concluido") {
           updates.data_termino = new Date().toISOString();
