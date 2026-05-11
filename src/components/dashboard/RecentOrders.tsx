@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { Clock, ArrowRight, Package } from "lucide-react";
 import { Link } from "react-router-dom";
 import { PedidoDetalhado } from "@/hooks/useDashboardData";
+import { parseLocalDate, todayLocal } from "@/lib/date-utils";
 
 interface RecentOrdersProps {
   pedidos: PedidoDetalhado[];
