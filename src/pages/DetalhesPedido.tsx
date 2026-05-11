@@ -92,6 +92,8 @@ interface Etapa {
   status: "pendente" | "em_andamento" | "concluido";
   data_inicio: string | null;
   data_termino: string | null;
+  data_inicio_prevista: string | null;
+  data_termino_prevista: string | null;
   observacoes: string | null;
   responsavel_id: string | null;
   terceiro_id: string | null;
