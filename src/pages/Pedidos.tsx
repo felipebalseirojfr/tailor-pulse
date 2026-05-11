@@ -211,6 +211,11 @@ export default function Pedidos() {
       });
 
       setPedidos(sortedData);
+      setSelectedPedido((pedidoAtual) => {
+        if (!pedidoAtual) return pedidoAtual;
+        const pedidoAtualizado = sortedData.find((pedido) => pedido.id === pedidoAtual.id);
+        return pedidoAtualizado || pedidoAtual;
+      });
     } catch (error) {
       console.error("Erro ao buscar pedidos:", error);
       if (isMountedRef.current) {
