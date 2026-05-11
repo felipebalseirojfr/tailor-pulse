@@ -346,8 +346,8 @@ export function PedidoDetailsSheet({
                   <div><p className="text-sm text-muted-foreground">Progresso</p><p className="text-lg font-semibold">{pedido.progresso_percentual}%</p></div>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <div><p className="text-sm text-muted-foreground">Data de Início</p><p className="font-medium">{format(new Date(pedido.data_inicio), "dd/MM/yyyy", { locale: ptBR })}</p></div>
-                  <div><p className="text-sm text-muted-foreground">Prazo de Entrega</p><p className="font-medium">{format(new Date(pedido.prazo_final), "dd/MM/yyyy", { locale: ptBR })}</p></div>
+                  <div><p className="text-sm text-muted-foreground">Data de Início</p><p className="font-medium">{(() => { const d = parseLocalDate(pedido.data_inicio); return d ? format(d, "dd/MM/yyyy", { locale: ptBR }) : "—"; })()}</p></div>
+                  <div><p className="text-sm text-muted-foreground">Prazo de Entrega</p><p className="font-medium">{(() => { const d = parseLocalDate(pedido.prazo_final); return d ? format(d, "dd/MM/yyyy", { locale: ptBR }) : "—"; })()}</p></div>
                 </div>
               </div>
               <Separator />
