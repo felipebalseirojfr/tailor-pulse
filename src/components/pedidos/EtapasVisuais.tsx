@@ -23,12 +23,10 @@ export function EtapasVisuais({ etapas, statusGeral }: EtapasVisuaisProps) {
       return false;
     }
     
-    const hoje = new Date();
-    hoje.setHours(0, 0, 0, 0);
-    
-    const dataTerminoPrevista = new Date(etapa.data_termino_prevista);
+    const hoje = todayLocal();
+    const dataTerminoPrevista = parseLocalDate(etapa.data_termino_prevista);
+    if (!dataTerminoPrevista) return false;
     dataTerminoPrevista.setHours(0, 0, 0, 0);
-    
     return dataTerminoPrevista < hoje;
   };
 
