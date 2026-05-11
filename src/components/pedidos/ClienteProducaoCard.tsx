@@ -51,6 +51,8 @@ interface Pedido {
 
 import { calcularQuantidadeReal } from "@/lib/quantidade-utils";
 
+const __toLocalISO=(d)=>{const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,"0");const day=String(d.getDate()).padStart(2,"0");return `${y}-${m}-${day}`;};
+
 const calcularQuantidadeTotal = (pedido: Pedido): number => {
   return calcularQuantidadeReal(pedido.grade_tamanhos, pedido.quantidade_total);
 };
@@ -121,8 +123,8 @@ export function ClienteProducaoCard({ cliente, producoes, onViewProducao }: Clie
           .update({ 
             status: "em_andamento", 
             data_inicio: dataInicio.toISOString(),
-            data_inicio_prevista: dataInicio.toISOString().split('T')[0],
-            data_termino_prevista: dataTerminoPrevista.toISOString().split('T')[0],
+            data_inicio_prevista: __toLocalISO(dataInicio),
+            data_termino_prevista: __toLocalISO(dataTerminoPrevista),
           })
           .eq("id", confirmData.proximaEtapaId);
         if (errIniciar) throw errIniciar;
@@ -194,7 +196,7 @@ export function ClienteProducaoCard({ cliente, producoes, onViewProducao }: Clie
   };
 
   const temProducaoAtrasada = () => {
-    const hoje = new Date().toISOString().split("T")[0];
+    const hoje = new __toLocalISO(Date());
     return producoes.some(
       (p) => p.prazo_final < hoje && p.status_geral !== "concluido"
     );
@@ -254,7 +256,7 @@ export function ClienteProducaoCard({ cliente, producoes, onViewProducao }: Clie
           
           <div className="space-y-3 mt-4">
             {[...producoes].sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()).map((producao) => {
-              const hoje = new Date().toISOString().split("T")[0];
+              const hoje = new __toLocalISO(Date());
               const isAtrasado = producao.prazo_final < hoje && producao.status_geral !== "concluido";
               
               return (

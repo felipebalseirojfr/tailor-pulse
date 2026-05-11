@@ -21,6 +21,8 @@ import {
 } from "@/types/comercial";
 import { Loader2 } from "lucide-react";
 
+const __toLocalISO=(d)=>{const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,"0");const day=String(d.getDate()).padStart(2,"0");return `${y}-${m}-${day}`;};
+
 interface Props {
   open: boolean;
   onClose: () => void;
@@ -87,13 +89,13 @@ function NegociacaoFormInner({ onClose, negociacao }: Omit<Props, "open">) {
         proxAcao = "Cobrar retorno do cliente sobre piloto";
         const d = new Date();
         d.setDate(d.getDate() + 3);
-        dataProxAcao = d.toISOString().split("T")[0];
+        dataProxAcao = __toLocalISO(d);
       }
       if (form.status_pipeline === "proposta_comercial" && !proxAcao) {
         proxAcao = "Follow-up de proposta";
         const d = new Date();
         d.setDate(d.getDate() + 2);
-        dataProxAcao = d.toISOString().split("T")[0];
+        dataProxAcao = __toLocalISO(d);
       }
     }
 
@@ -104,7 +106,7 @@ function NegociacaoFormInner({ onClose, negociacao }: Omit<Props, "open">) {
         status_pipeline: form.status_pipeline,
         prioridade: form.prioridade,
         proxima_acao: isFinal ? (proxAcao || "—") : proxAcao,
-        data_proxima_acao: isFinal ? (dataProxAcao || new Date().toISOString().split("T")[0]) : dataProxAcao,
+        data_proxima_acao: isFinal ? (dataProxAcao || new __toLocalISO(Date())) : dataProxAcao,
         responsavel_id: form.responsavel_id,
         segmento: form.segmento || null,
         origem: form.origem || null,

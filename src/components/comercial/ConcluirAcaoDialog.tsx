@@ -7,6 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useUpsertNegociacao, useUpsertLead, useAddInteracao } from "@/hooks/useComercialData";
 import { Loader2 } from "lucide-react";
 
+const __toLocalISO=(d)=>{const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,"0");const day=String(d.getDate()).padStart(2,"0");return `${y}-${m}-${day}`;};
+
 interface AcaoItem {
   type: "negociacao" | "lead";
   id: string;
@@ -43,7 +45,7 @@ export default function ConcluirAcaoDialog({ item, open, onClose }: Props) {
     // Update with new action
     if (item.type === "negociacao") {
       upsertNeg.mutate(
-        { id: item.id, proxima_acao: novaAcao, data_proxima_acao: novaData, data_ultima_interacao: new Date().toISOString().split("T")[0] } as any,
+        { id: item.id, proxima_acao: novaAcao, data_proxima_acao: novaData, data_ultima_interacao: new __toLocalISO(Date()) } as any,
         { onSuccess: onClose }
       );
     } else {

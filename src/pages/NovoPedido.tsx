@@ -20,6 +20,8 @@ import { ArrowLeft, Upload, X, FileText, Image as ImageIcon } from "lucide-react
 import EtapasManager, { Etapa } from "@/components/pedidos/EtapasManager";
 import { downloadQRCode, downloadChecklist } from "@/lib/download-utils";
 
+const __toLocalISO=(d)=>{const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,"0");const day=String(d.getDate()).padStart(2,"0");return `${y}-${m}-${day}`;};
+
 const toLocalISODate = (date?: Date) => {
   if (!date) return null;
   const year = date.getFullYear();
@@ -48,7 +50,7 @@ export default function NovoPedido() {
     tecido: "",
     aviamentos: [] as string[],
     quantidade_total: "",
-    data_inicio: new Date().toISOString().split("T")[0],
+    data_inicio: new __toLocalISO(Date()),
     prazo_final: "",
     tem_personalizacao: false,
     tipos_personalizacao: [] as string[],
