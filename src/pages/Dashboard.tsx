@@ -10,6 +10,7 @@ import { DashboardPerformance } from "@/components/dashboard/DashboardPerformanc
 import { DashboardAlerts } from "@/components/dashboard/DashboardAlerts";
 import { RecentOrders } from "@/components/dashboard/RecentOrders";
 import { Card, CardContent } from "@/components/ui/card";
+import { parseLocalDate, todayLocal } from "@/lib/date-utils";
 
 export default function Dashboard() {
   const { stats, pedidos, atividades, loading, refetch } = useDashboardData();
