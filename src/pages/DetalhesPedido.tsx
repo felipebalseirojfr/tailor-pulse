@@ -92,6 +92,8 @@ interface Etapa {
   status: "pendente" | "em_andamento" | "concluido";
   data_inicio: string | null;
   data_termino: string | null;
+  data_inicio_prevista: string | null;
+  data_termino_prevista: string | null;
   observacoes: string | null;
   responsavel_id: string | null;
   terceiro_id: string | null;
@@ -519,6 +521,14 @@ export default function DetalhesPedido() {
                           <h3 className="font-semibold">{ETAPAS_NOMES[etapa.tipo_etapa] || etapa.tipo_etapa}</h3>
                           {etapa.data_inicio && <p className="text-sm text-muted-foreground">Início: {new Date(etapa.data_inicio).toLocaleString("pt-BR")}</p>}
                           {etapa.data_termino && <p className="text-sm text-muted-foreground">Término: {new Date(etapa.data_termino).toLocaleString("pt-BR")}</p>}
+                          <p className="text-sm text-muted-foreground">
+                            Previsão de finalização:{" "}
+                            <span className="font-medium text-foreground">
+                              {etapa.data_termino_prevista
+                                ? new Date(`${etapa.data_termino_prevista}T00:00:00`).toLocaleDateString("pt-BR")
+                                : "Não definido"}
+                            </span>
+                          </p>
                         </div>
                         <div className="flex items-center gap-2">
                           {getStatusBadge(etapa.status)}
