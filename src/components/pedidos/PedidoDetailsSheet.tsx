@@ -26,6 +26,7 @@ import { CheckCircle2, ChevronRight, Edit2, Save, X, ChevronLeft, ExternalLink, 
 import { AvancarEtapaDialog } from "./AvancarEtapaDialog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { parseLocalDate } from "@/lib/date-utils";
 import { QRCodeDisplay } from "./QRCodeDisplay";
 import { FichaCorte } from "./FichaCorte";
 import {
