@@ -1,3 +1,5 @@
+import { parseLocalDate, todayLocal } from "@/lib/date-utils";
+
 interface EtapasVisuaisProps {
   etapas: Array<{
     tipo_etapa: string;
