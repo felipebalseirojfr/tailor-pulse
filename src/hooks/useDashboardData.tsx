@@ -93,18 +93,19 @@ export const useDashboardData = () => {
 
       if (atividadesError) throw atividadesError;
 
-      const hoje = new Date();
-      const tresDiasDepois = new Date();
+      const hoje = todayLocal();
+      const tresDiasDepois = new Date(hoje);
       tresDiasDepois.setDate(hoje.getDate() + 3);
 
-      const atrasados = pedidosData?.filter(
-        (p: any) =>
-          new Date(p.prazo_final) < hoje && p.status_geral !== "concluido"
-      ).length || 0;
+      const atrasados = pedidosData?.filter((p: any) => {
+        const prazo = parseLocalDate(p.prazo_final);
+        return prazo && prazo < hoje && p.status_geral !== "concluido";
+      }).length || 0;
 
       const proximosPrazo = pedidosData?.filter((p: any) => {
-        const prazo = new Date(p.prazo_final);
+        const prazo = parseLocalDate(p.prazo_final);
         return (
+          prazo &&
           prazo >= hoje &&
           prazo <= tresDiasDepois &&
           p.status_geral !== "concluido"
@@ -124,12 +125,13 @@ export const useDashboardData = () => {
       const pedidosConcluidos = pedidosData?.filter(
         (p: any) => p.status_geral === "concluido"
       ) || [];
-      
+
       let tempoMedio = 0;
       if (pedidosConcluidos.length > 0) {
         const tempoTotal = pedidosConcluidos.reduce((acc: number, p: any) => {
-          const inicio = new Date(p.data_inicio);
+          const inicio = parseLocalDate(p.data_inicio);
           const fim = new Date(p.updated_at);
+          if (!inicio) return acc;
           const dias = Math.floor((fim.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24));
           return acc + dias;
         }, 0);
