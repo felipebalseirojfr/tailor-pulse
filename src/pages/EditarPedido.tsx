@@ -266,22 +266,30 @@ export default function EditarPedido() {
       // Atualizar pedido
       const updatePedido: any = {
         produto_modelo: formData.produto_modelo,
-          tipo_peca: formData.tipo_peca,
-          codigo_produto_cliente: formData.codigo_produto_cliente || null,
-          tecido: formData.tecido,
-          aviamentos: formData.aviamentos,
-          quantidade_total: parseInt(formData.quantidade_total),
-          data_inicio: formData.data_inicio,
-          prazo_final: formData.prazo_final,
-          tem_personalizacao: formData.tipos_personalizacao.length > 0,
-          tipos_personalizacao: formData.tipos_personalizacao,
-          grade_tamanhos: formData.grade_tamanhos,
-          arquivos: arquivosFinais,
-          observacoes_pedido: formData.observacoes_pedido,
-          preco_venda: formData.preco_venda ? parseFloat(formData.preco_venda) : null,
-          composicao_tecido: formData.composicao_tecido || null,
-          updated_at: new Date().toISOString(),
-        })
+        tipo_peca: formData.tipo_peca,
+        codigo_produto_cliente: formData.codigo_produto_cliente || null,
+        tecido: formData.tecido,
+        aviamentos: formData.aviamentos,
+        quantidade_total: parseInt(formData.quantidade_total),
+        data_inicio: formData.data_inicio,
+        prazo_final: formData.prazo_final,
+        tem_personalizacao: formData.tipos_personalizacao.length > 0,
+        tipos_personalizacao: formData.tipos_personalizacao,
+        grade_tamanhos: formData.grade_tamanhos,
+        arquivos: arquivosFinais,
+        observacoes_pedido: formData.observacoes_pedido,
+        preco_venda: formData.preco_venda ? parseFloat(formData.preco_venda) : null,
+        composicao_tecido: formData.composicao_tecido || null,
+        updated_at: new Date().toISOString(),
+      };
+      // Só incluir cliente_id se for um UUID válido (evita erro 22P02 quando o select fica vazio)
+      if (formData.cliente_id && formData.cliente_id.trim() !== "") {
+        updatePedido.cliente_id = formData.cliente_id;
+      }
+
+      const { error } = await supabase
+        .from("pedidos")
+        .update(updatePedido)
         .eq("id", id);
 
       if (error) throw error;
