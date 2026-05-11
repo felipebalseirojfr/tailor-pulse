@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { parseLocalDate, todayLocal } from "@/lib/date-utils";
 
 export type NivelAlerta = "atrasado" | "risco" | "ok" | "pendente";
 
