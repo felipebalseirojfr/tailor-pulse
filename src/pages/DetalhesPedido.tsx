@@ -295,9 +295,24 @@ export default function DetalhesPedido() {
 
   const atualizarEtapa = async (etapaId: string, campo: string, valor: any) => {
     try {
+      const etapaAlvo = etapas.find((e) => e.id === etapaId);
+      if (!etapaAlvo) return;
       const updates: any = { [campo]: valor };
       if (campo === "status") {
-        if (valor === "em_andamento" && !etapas.find((e) => e.id === etapaId)?.data_inicio) {
+        if (valor === "em_andamento" || valor === "concluido") {
+          const anteriorPendente = etapas.find(
+            (e) => e.ordem < etapaAlvo.ordem && e.status !== "concluido"
+          );
+          if (anteriorPendente) {
+            toast({
+              title: "Sequência inválida",
+              description: `A etapa "${anteriorPendente.tipo_etapa}" (anterior) ainda não foi concluída.`,
+              variant: "destructive",
+            });
+            return;
+          }
+        }
+        if (valor === "em_andamento" && !etapaAlvo.data_inicio) {
           updates.data_inicio = new Date().toISOString();
         } else if (valor === "concluido") {
           updates.data_termino = new Date().toISOString();
@@ -316,6 +331,19 @@ export default function DetalhesPedido() {
     try {
       const etapaAtual = etapas.find((e) => e.id === etapaId);
       if (!etapaAtual) return;
+
+      const anteriorPendente = etapas.find(
+        (e) => e.ordem < etapaAtual.ordem && e.status !== "concluido"
+      );
+      if (anteriorPendente) {
+        toast({
+          title: "Sequência inválida",
+          description: `Conclua a etapa "${anteriorPendente.tipo_etapa}" antes de avançar esta.`,
+          variant: "destructive",
+        });
+        setAvancarEtapaId(null);
+        return;
+      }
 
       const { error } = await supabase.from("etapas_producao").update({
         status: "concluido",
