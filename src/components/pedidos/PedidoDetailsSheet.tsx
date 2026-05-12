@@ -71,6 +71,8 @@ export function PedidoDetailsSheet({
   const [showAvancarDialog, setShowAvancarDialog] = useState(false);
   const [showFichaCorte, setShowFichaCorte] = useState(false);
   const [terceiros, setTerceiros] = useState<Terceiro[]>([]);
+  const [editingEtapaId, setEditingEtapaId] = useState<string | null>(null);
+  const [etapaEditData, setEtapaEditData] = useState<{ data_inicio: string; data_termino: string; data_termino_prevista: string }>({ data_inicio: "", data_termino: "", data_termino_prevista: "" });
   const fichaCorteRef = useRef<HTMLDivElement>(null);
   const [editData, setEditData] = useState({
     produto_modelo: "",
@@ -121,6 +123,40 @@ export function PedidoDetailsSheet({
       onUpdate();
     } catch (error: any) {
       toast.error("Erro ao atualizar terceiro");
+    }
+  };
+
+  const toDatetimeLocal = (iso?: string | null) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return "";
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
+  const iniciarEdicaoEtapa = (etapa: any) => {
+    setEditingEtapaId(etapa.id);
+    setEtapaEditData({
+      data_inicio: toDatetimeLocal(etapa.data_inicio),
+      data_termino: toDatetimeLocal(etapa.data_termino),
+      data_termino_prevista: etapa.data_termino_prevista || "",
+    });
+  };
+
+  const salvarEdicaoEtapa = async (etapaId: string) => {
+    try {
+      const payload: any = {
+        data_inicio: etapaEditData.data_inicio ? new Date(etapaEditData.data_inicio).toISOString() : null,
+        data_termino: etapaEditData.data_termino ? new Date(etapaEditData.data_termino).toISOString() : null,
+        data_termino_prevista: etapaEditData.data_termino_prevista || null,
+      };
+      const { error } = await (supabase.from("etapas_producao") as any).update(payload).eq("id", etapaId);
+      if (error) throw error;
+      toast.success("Datas da etapa atualizadas!");
+      setEditingEtapaId(null);
+      onUpdate();
+    } catch (e: any) {
+      toast.error("Erro ao salvar datas: " + (e.message || ""));
     }
   };
 
@@ -420,16 +456,51 @@ export function PedidoDetailsSheet({
                       <div className="flex-1 pb-4">
                         <div className="flex items-center justify-between">
                           <p className="font-medium">{getEtapaLabel(etapa.tipo_etapa)}</p>
-                          {getStatusBadge(etapa.status)}
+                          <div className="flex items-center gap-2">
+                            {getStatusBadge(etapa.status)}
+                            {editingEtapaId === etapa.id ? (
+                              <>
+                                <Button size="sm" variant="ghost" className="h-6 px-2" onClick={() => setEditingEtapaId(null)}>
+                                  <X className="h-3 w-3" />
+                                </Button>
+                                <Button size="sm" className="h-6 px-2" onClick={() => salvarEdicaoEtapa(etapa.id)}>
+                                  <Save className="h-3 w-3" />
+                                </Button>
+                              </>
+                            ) : (
+                              <Button size="sm" variant="ghost" className="h-6 px-2" onClick={() => iniciarEdicaoEtapa(etapa)} title="Editar datas">
+                                <Edit2 className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
                         </div>
-                        {etapa.data_inicio && <p className="text-xs text-muted-foreground mt-1">Início: {format(new Date(etapa.data_inicio), "dd/MM/yyyy HH:mm", { locale: ptBR })}</p>}
-                        {etapa.data_termino && <p className="text-xs text-muted-foreground">Término: {format(new Date(etapa.data_termino), "dd/MM/yyyy HH:mm", { locale: ptBR })}</p>}
-                        {etapa.status !== "concluido" && (
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Previsão de finalização: {(etapa as any).data_termino_prevista
-                              ? format(new Date((etapa as any).data_termino_prevista + 'T00:00:00'), "dd/MM/yyyy", { locale: ptBR })
-                              : "Não definido"}
-                          </p>
+                        {editingEtapaId === etapa.id ? (
+                          <div className="mt-2 space-y-2">
+                            <div>
+                              <Label className="text-xs">Início</Label>
+                              <Input type="datetime-local" className="h-8 text-xs" value={etapaEditData.data_inicio} onChange={(e) => setEtapaEditData({ ...etapaEditData, data_inicio: e.target.value })} />
+                            </div>
+                            <div>
+                              <Label className="text-xs">Término</Label>
+                              <Input type="datetime-local" className="h-8 text-xs" value={etapaEditData.data_termino} onChange={(e) => setEtapaEditData({ ...etapaEditData, data_termino: e.target.value })} />
+                            </div>
+                            <div>
+                              <Label className="text-xs">Previsão de finalização</Label>
+                              <Input type="date" className="h-8 text-xs" value={etapaEditData.data_termino_prevista} onChange={(e) => setEtapaEditData({ ...etapaEditData, data_termino_prevista: e.target.value })} />
+                            </div>
+                          </div>
+                        ) : (
+                          <>
+                            {etapa.data_inicio && <p className="text-xs text-muted-foreground mt-1">Início: {format(new Date(etapa.data_inicio), "dd/MM/yyyy HH:mm", { locale: ptBR })}</p>}
+                            {etapa.data_termino && <p className="text-xs text-muted-foreground">Término: {format(new Date(etapa.data_termino), "dd/MM/yyyy HH:mm", { locale: ptBR })}</p>}
+                            {etapa.status !== "concluido" && (
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Previsão de finalização: {(etapa as any).data_termino_prevista
+                                  ? format(new Date((etapa as any).data_termino_prevista + 'T00:00:00'), "dd/MM/yyyy", { locale: ptBR })
+                                  : "Não definido"}
+                              </p>
+                            )}
+                          </>
                         )}
                         {etapa.observacoes && <p className="text-sm text-muted-foreground mt-1">{etapa.observacoes}</p>}
 
