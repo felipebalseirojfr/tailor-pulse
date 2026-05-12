@@ -71,6 +71,8 @@ export function PedidoDetailsSheet({
   const [showAvancarDialog, setShowAvancarDialog] = useState(false);
   const [showFichaCorte, setShowFichaCorte] = useState(false);
   const [terceiros, setTerceiros] = useState<Terceiro[]>([]);
+  const [editingEtapaId, setEditingEtapaId] = useState<string | null>(null);
+  const [etapaEditData, setEtapaEditData] = useState<{ data_inicio: string; data_termino: string; data_termino_prevista: string }>({ data_inicio: "", data_termino: "", data_termino_prevista: "" });
   const fichaCorteRef = useRef<HTMLDivElement>(null);
   const [editData, setEditData] = useState({
     produto_modelo: "",
