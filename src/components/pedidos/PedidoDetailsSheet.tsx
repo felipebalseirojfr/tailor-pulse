@@ -126,7 +126,39 @@ export function PedidoDetailsSheet({
     }
   };
 
-  const handleEditClick = () => {
+  const toDatetimeLocal = (iso?: string | null) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return "";
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
+  const iniciarEdicaoEtapa = (etapa: any) => {
+    setEditingEtapaId(etapa.id);
+    setEtapaEditData({
+      data_inicio: toDatetimeLocal(etapa.data_inicio),
+      data_termino: toDatetimeLocal(etapa.data_termino),
+      data_termino_prevista: etapa.data_termino_prevista || "",
+    });
+  };
+
+  const salvarEdicaoEtapa = async (etapaId: string) => {
+    try {
+      const payload: any = {
+        data_inicio: etapaEditData.data_inicio ? new Date(etapaEditData.data_inicio).toISOString() : null,
+        data_termino: etapaEditData.data_termino ? new Date(etapaEditData.data_termino).toISOString() : null,
+        data_termino_prevista: etapaEditData.data_termino_prevista || null,
+      };
+      const { error } = await (supabase.from("etapas_producao") as any).update(payload).eq("id", etapaId);
+      if (error) throw error;
+      toast.success("Datas da etapa atualizadas!");
+      setEditingEtapaId(null);
+      onUpdate();
+    } catch (e: any) {
+      toast.error("Erro ao salvar datas: " + (e.message || ""));
+    }
+  };
     setEditData({
       produto_modelo: pedido.produto_modelo,
       tipo_peca: pedido.tipo_peca,
