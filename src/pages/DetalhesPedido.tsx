@@ -48,6 +48,8 @@ import { useUserRoles } from "@/hooks/useUserRoles";
 import { ChecklistProducao } from "@/components/pedidos/ChecklistProducao";
 import { FichaCorte } from "@/components/pedidos/FichaCorte";
 import { AvancarEtapaDialog } from "@/components/pedidos/AvancarEtapaDialog";
+import { Input } from "@/components/ui/input";
+import { Save, X as XIcon, Edit2 } from "lucide-react";
 
 const __toLocalISO=(d: Date)=>{const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,"0");const day=String(d.getDate()).padStart(2,"0");return `${y}-${m}-${day}`;};
 
