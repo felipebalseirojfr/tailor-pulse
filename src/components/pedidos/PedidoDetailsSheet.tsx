@@ -159,6 +159,8 @@ export function PedidoDetailsSheet({
       toast.error("Erro ao salvar datas: " + (e.message || ""));
     }
   };
+
+  const handleEditClick = () => {
     setEditData({
       produto_modelo: pedido.produto_modelo,
       tipo_peca: pedido.tipo_peca,
