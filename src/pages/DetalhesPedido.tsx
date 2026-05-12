@@ -585,26 +585,60 @@ export default function DetalhesPedido() {
                       <div className="flex items-start justify-between gap-4">
                         <div className="flex-1">
                           <h3 className="font-semibold">{ETAPAS_NOMES[etapa.tipo_etapa] || etapa.tipo_etapa}</h3>
-                          {etapa.data_inicio && <p className="text-sm text-muted-foreground">Início: {new Date(etapa.data_inicio).toLocaleString("pt-BR")}</p>}
-                          {etapa.data_termino && <p className="text-sm text-muted-foreground">Término: {new Date(etapa.data_termino).toLocaleString("pt-BR")}</p>}
-                          <p className="text-sm text-muted-foreground">
-                            Previsão de finalização:{" "}
-                            <span className="font-medium text-foreground">
-                              {etapa.data_termino_prevista
-                                ? new Date(`${etapa.data_termino_prevista}T00:00:00`).toLocaleDateString("pt-BR")
-                                : "Não definido"}
-                            </span>
-                          </p>
+                          {editingEtapaId === etapa.id ? (
+                            <div className="mt-2 grid gap-2 md:grid-cols-3">
+                              <div>
+                                <label className="text-xs text-muted-foreground">Início</label>
+                                <Input type="datetime-local" value={etapaEditData.data_inicio} onChange={(e) => setEtapaEditData({ ...etapaEditData, data_inicio: e.target.value })} />
+                              </div>
+                              <div>
+                                <label className="text-xs text-muted-foreground">Término</label>
+                                <Input type="datetime-local" value={etapaEditData.data_termino} onChange={(e) => setEtapaEditData({ ...etapaEditData, data_termino: e.target.value })} />
+                              </div>
+                              <div>
+                                <label className="text-xs text-muted-foreground">Previsão de finalização</label>
+                                <Input type="date" value={etapaEditData.data_termino_prevista} onChange={(e) => setEtapaEditData({ ...etapaEditData, data_termino_prevista: e.target.value })} />
+                              </div>
+                            </div>
+                          ) : (
+                            <>
+                              {etapa.data_inicio && <p className="text-sm text-muted-foreground">Início: {new Date(etapa.data_inicio).toLocaleString("pt-BR")}</p>}
+                              {etapa.data_termino && <p className="text-sm text-muted-foreground">Término: {new Date(etapa.data_termino).toLocaleString("pt-BR")}</p>}
+                              <p className="text-sm text-muted-foreground">
+                                Previsão de finalização:{" "}
+                                <span className="font-medium text-foreground">
+                                  {etapa.data_termino_prevista
+                                    ? new Date(`${etapa.data_termino_prevista}T00:00:00`).toLocaleDateString("pt-BR")
+                                    : "Não definido"}
+                                </span>
+                              </p>
+                            </>
+                          )}
                         </div>
                         <div className="flex items-center gap-2">
                           {getStatusBadge(etapa.status)}
-                          {etapa.status !== "concluido" && (
+                          {editingEtapaId === etapa.id ? (
+                            <>
+                              <Button size="sm" variant="outline" onClick={() => salvarEdicaoEtapa(etapa.id)}>
+                                <Save className="h-4 w-4" />
+                              </Button>
+                              <Button size="sm" variant="ghost" onClick={() => setEditingEtapaId(null)}>
+                                <XIcon className="h-4 w-4" />
+                              </Button>
+                            </>
+                          ) : (
+                            <Button size="sm" variant="outline" onClick={() => iniciarEdicaoEtapa(etapa)}>
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                          )}
+                          {etapa.status !== "concluido" && editingEtapaId !== etapa.id && (
                             <Button size="sm" onClick={() => setAvancarEtapaId(etapa.id)} className="whitespace-nowrap">
                               Avançar Etapa
                             </Button>
                           )}
                         </div>
                       </div>
+
 
                       <div className="grid gap-4 md:grid-cols-2">
                         <div className="space-y-2">
