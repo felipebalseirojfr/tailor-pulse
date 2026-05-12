@@ -144,8 +144,44 @@ export default function DetalhesPedido() {
   const [showChecklist, setShowChecklist] = useState(false);
   const [showFichaCorte, setShowFichaCorte] = useState(false);
   const [avancarEtapaId, setAvancarEtapaId] = useState<string | null>(null);
+  const [editingEtapaId, setEditingEtapaId] = useState<string | null>(null);
+  const [etapaEditData, setEtapaEditData] = useState<{ data_inicio: string; data_termino: string; data_termino_prevista: string }>({ data_inicio: "", data_termino: "", data_termino_prevista: "" });
   const checklistRef = useRef<HTMLDivElement>(null);
   const fichaCorteRef = useRef<HTMLDivElement>(null);
+
+  const toDatetimeLocal = (iso: string | null) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (isNaN(d.getTime())) return "";
+    const pad = (n: number) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
+  const iniciarEdicaoEtapa = (etapa: Etapa) => {
+    setEditingEtapaId(etapa.id);
+    setEtapaEditData({
+      data_inicio: toDatetimeLocal(etapa.data_inicio),
+      data_termino: toDatetimeLocal(etapa.data_termino),
+      data_termino_prevista: etapa.data_termino_prevista || "",
+    });
+  };
+
+  const salvarEdicaoEtapa = async (etapaId: string) => {
+    try {
+      const updates: any = {
+        data_inicio: etapaEditData.data_inicio ? new Date(etapaEditData.data_inicio).toISOString() : null,
+        data_termino: etapaEditData.data_termino ? new Date(etapaEditData.data_termino).toISOString() : null,
+        data_termino_prevista: etapaEditData.data_termino_prevista || null,
+      };
+      const { error } = await supabase.from("etapas_producao").update(updates).eq("id", etapaId);
+      if (error) throw error;
+      toast({ title: "Datas atualizadas", description: "As alterações foram salvas." });
+      setEditingEtapaId(null);
+      fetchPedidoDetails();
+    } catch (error: any) {
+      toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" });
+    }
+  };
 
   const podeEditar = hasAnyRole(['admin', 'commercial']);
 
