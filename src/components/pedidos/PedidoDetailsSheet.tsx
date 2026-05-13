@@ -126,6 +126,30 @@ export function PedidoDetailsSheet({
     }
   };
 
+  const atualizarStatusEtapa = async (etapa: any, novoStatus: string) => {
+    try {
+      const payload: any = { status: novoStatus };
+      if (novoStatus === "concluido" && !etapa.data_termino) {
+        payload.data_termino = new Date().toISOString();
+        if (!etapa.data_inicio) payload.data_inicio = new Date().toISOString();
+      }
+      if (novoStatus === "em_andamento") {
+        if (!etapa.data_inicio) payload.data_inicio = new Date().toISOString();
+        payload.data_termino = null;
+      }
+      if (novoStatus === "pendente") {
+        payload.data_inicio = null;
+        payload.data_termino = null;
+      }
+      const { error } = await (supabase.from("etapas_producao") as any).update(payload).eq("id", etapa.id);
+      if (error) throw error;
+      toast.success("Status atualizado!");
+      onUpdate();
+    } catch (e: any) {
+      toast.error("Erro ao atualizar status: " + (e.message || ""));
+    }
+  };
+
   const toDatetimeLocal = (iso?: string | null) => {
     if (!iso) return "";
     const d = new Date(iso);
@@ -472,7 +496,20 @@ export function PedidoDetailsSheet({
                         <div className="flex items-center justify-between">
                           <p className="font-medium">{getEtapaLabel(etapa.tipo_etapa)}</p>
                           <div className="flex items-center gap-2">
-                            {editingEtapaId !== etapa.id && getStatusBadge(etapa.status)}
+                            {editingEtapaId !== etapa.id && (
+                              <Select value={etapa.status} onValueChange={(v) => atualizarStatusEtapa(etapa, v)}>
+                                <SelectTrigger className="h-7 w-auto gap-1 border-0 bg-transparent p-0 hover:bg-muted/50 [&>svg]:hidden focus:ring-0">
+                                  <SelectValue asChild>
+                                    <span>{getStatusBadge(etapa.status)}</span>
+                                  </SelectValue>
+                                </SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="pendente">Pendente</SelectItem>
+                                  <SelectItem value="em_andamento">Em Andamento</SelectItem>
+                                  <SelectItem value="concluido">Concluída</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            )}
                             {editingEtapaId === etapa.id ? (
                               <>
                                 <Button size="sm" variant="ghost" className="h-6 px-2" onClick={() => setEditingEtapaId(null)}>
