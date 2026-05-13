@@ -145,7 +145,7 @@ export default function DetalhesPedido() {
   const [showFichaCorte, setShowFichaCorte] = useState(false);
   const [avancarEtapaId, setAvancarEtapaId] = useState<string | null>(null);
   const [editingEtapaId, setEditingEtapaId] = useState<string | null>(null);
-  const [etapaEditData, setEtapaEditData] = useState<{ data_inicio: string; data_termino: string; data_termino_prevista: string }>({ data_inicio: "", data_termino: "", data_termino_prevista: "" });
+  const [etapaEditData, setEtapaEditData] = useState<{ data_inicio: string; data_termino: string; data_termino_prevista: string; status: string }>({ data_inicio: "", data_termino: "", data_termino_prevista: "", status: "pendente" });
   const checklistRef = useRef<HTMLDivElement>(null);
   const fichaCorteRef = useRef<HTMLDivElement>(null);
 
@@ -163,6 +163,7 @@ export default function DetalhesPedido() {
       data_inicio: toDatetimeLocal(etapa.data_inicio),
       data_termino: toDatetimeLocal(etapa.data_termino),
       data_termino_prevista: etapa.data_termino_prevista || "",
+      status: (etapa as any).status || "pendente",
     });
   };
 
@@ -172,10 +173,13 @@ export default function DetalhesPedido() {
         data_inicio: etapaEditData.data_inicio ? new Date(etapaEditData.data_inicio).toISOString() : null,
         data_termino: etapaEditData.data_termino ? new Date(etapaEditData.data_termino).toISOString() : null,
         data_termino_prevista: etapaEditData.data_termino_prevista || null,
+        status: etapaEditData.status,
       };
+      if (etapaEditData.status === "concluido" && !updates.data_termino) updates.data_termino = new Date().toISOString();
+      if (etapaEditData.status === "em_andamento" && !updates.data_inicio) updates.data_inicio = new Date().toISOString();
       const { error } = await supabase.from("etapas_producao").update(updates).eq("id", etapaId);
       if (error) throw error;
-      toast({ title: "Datas atualizadas", description: "As alterações foram salvas." });
+      toast({ title: "Etapa atualizada", description: "As alterações foram salvas." });
       setEditingEtapaId(null);
       fetchPedidoDetails();
     } catch (error: any) {
