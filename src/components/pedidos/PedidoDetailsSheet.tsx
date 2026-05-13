@@ -492,6 +492,17 @@ export function PedidoDetailsSheet({
                         {editingEtapaId === etapa.id ? (
                           <div className="mt-2 space-y-2">
                             <div>
+                              <Label className="text-xs">Status</Label>
+                              <Select value={etapaEditData.status} onValueChange={(v) => setEtapaEditData({ ...etapaEditData, status: v })}>
+                                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="pendente">Pendente</SelectItem>
+                                  <SelectItem value="em_andamento">Em Andamento</SelectItem>
+                                  <SelectItem value="concluido">Concluída</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            <div>
                               <Label className="text-xs">Início</Label>
                               <Input type="datetime-local" className="h-8 text-xs" value={etapaEditData.data_inicio} onChange={(e) => setEtapaEditData({ ...etapaEditData, data_inicio: e.target.value })} />
                             </div>
