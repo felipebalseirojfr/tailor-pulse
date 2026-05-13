@@ -666,7 +666,7 @@ export function PedidoDetailsSheet({
                   try {
                     await downloadFichaCortePDF(fichaCorteRef.current, pedido.codigo_pedido || pedido.id.slice(0, 8));
                   } catch {
-                    toast({ title: "Erro ao baixar", description: "Não foi possível gerar o PDF.", variant: "destructive" });
+                    toast.error("Não foi possível gerar o PDF.");
                   }
                 }
               }}
