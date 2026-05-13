@@ -351,6 +351,14 @@ export default function Pedidos() {
       return getEtapaLabel(etapaEmAndamento.tipo_etapa);
     }
 
+    const proximaPendente = [...(pedido.etapas_producao || [])]
+      .sort((a, b) => a.ordem - b.ordem)
+      .find((e) => e.status === "pendente");
+
+    if (proximaPendente) {
+      return `Aguardando: ${getEtapaLabel(proximaPendente.tipo_etapa)}`;
+    }
+
     return "Aguardando início";
   };
 
