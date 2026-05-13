@@ -282,6 +282,7 @@ export default function EditarPedido() {
         observacoes_pedido: formData.observacoes_pedido,
         preco_venda: formData.preco_venda ? parseFloat(formData.preco_venda) : null,
         composicao_tecido: formData.composicao_tecido || null,
+        foto_modelo_url: formData.foto_modelo_url || null,
         updated_at: new Date().toISOString(),
       };
       // Só incluir cliente_id se for um UUID válido (evita erro 22P02 quando o select fica vazio)
