@@ -274,6 +274,7 @@ export default function EditarPedido() {
         tipo_peca: formData.tipo_peca,
         codigo_produto_cliente: formData.codigo_produto_cliente || null,
         tecido: formData.tecido,
+        cor_tecido: formData.cor_tecido || null,
         aviamentos: formData.aviamentos,
         quantidade_total: parseInt(formData.quantidade_total),
         data_inicio: formData.data_inicio,
