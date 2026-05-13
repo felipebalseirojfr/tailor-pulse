@@ -193,6 +193,14 @@ export function ClienteProducaoCard({ cliente, producoes, onViewProducao }: Clie
       return getEtapaLabel(etapaEmAndamento.tipo_etapa);
     }
 
+    const proximaPendente = [...(producao.etapas_producao || [])]
+      .sort((a: any, b: any) => a.ordem - b.ordem)
+      .find((e: any) => e.status === "pendente");
+
+    if (proximaPendente) {
+      return `Aguardando: ${getEtapaLabel(proximaPendente.tipo_etapa)}`;
+    }
+
     return "Aguardando";
   };
 
