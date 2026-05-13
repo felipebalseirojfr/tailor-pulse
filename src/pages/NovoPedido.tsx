@@ -423,7 +423,7 @@ export default function NovoPedido() {
               />
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
                 <Label htmlFor="tecido">Tecido</Label>
                 <Input
@@ -432,6 +432,17 @@ export default function NovoPedido() {
                   value={formData.tecido}
                   onChange={handleChange}
                   placeholder="Ex: Algodão, Poliéster"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="cor_tecido">Cor do Tecido</Label>
+                <Input
+                  id="cor_tecido"
+                  name="cor_tecido"
+                  value={formData.cor_tecido}
+                  onChange={handleChange}
+                  placeholder="Ex: Azul Marinho, Branco"
                 />
               </div>
 
