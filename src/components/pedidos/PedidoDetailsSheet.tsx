@@ -659,16 +659,20 @@ export function PedidoDetailsSheet({
           </div>
           <AlertDialogFooter className="print:hidden">
             <AlertDialogCancel>Fechar</AlertDialogCancel>
-            <AlertDialogAction
+            <Button
               onClick={async () => {
                 const { downloadFichaCortePDF } = await import("@/lib/ficha-corte-download");
                 if (fichaCorteRef.current) {
-                  await downloadFichaCortePDF(fichaCorteRef.current, pedido.codigo_pedido || pedido.id.slice(0, 8));
+                  try {
+                    await downloadFichaCortePDF(fichaCorteRef.current, pedido.codigo_pedido || pedido.id.slice(0, 8));
+                  } catch {
+                    toast({ title: "Erro ao baixar", description: "Não foi possível gerar o PDF.", variant: "destructive" });
+                  }
                 }
               }}
             >
               <Download className="mr-2 h-4 w-4" />Baixar PDF
-            </AlertDialogAction>
+            </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
