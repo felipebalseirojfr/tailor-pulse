@@ -72,7 +72,7 @@ export function PedidoDetailsSheet({
   const [showFichaCorte, setShowFichaCorte] = useState(false);
   const [terceiros, setTerceiros] = useState<Terceiro[]>([]);
   const [editingEtapaId, setEditingEtapaId] = useState<string | null>(null);
-  const [etapaEditData, setEtapaEditData] = useState<{ data_inicio: string; data_termino: string; data_termino_prevista: string }>({ data_inicio: "", data_termino: "", data_termino_prevista: "" });
+  const [etapaEditData, setEtapaEditData] = useState<{ data_inicio: string; data_termino: string; data_termino_prevista: string; status: string }>({ data_inicio: "", data_termino: "", data_termino_prevista: "", status: "pendente" });
   const fichaCorteRef = useRef<HTMLDivElement>(null);
   const [editData, setEditData] = useState({
     produto_modelo: "",
@@ -140,6 +140,7 @@ export function PedidoDetailsSheet({
       data_inicio: toDatetimeLocal(etapa.data_inicio),
       data_termino: toDatetimeLocal(etapa.data_termino),
       data_termino_prevista: etapa.data_termino_prevista || "",
+      status: etapa.status || "pendente",
     });
   };
 
@@ -149,7 +150,14 @@ export function PedidoDetailsSheet({
         data_inicio: etapaEditData.data_inicio ? new Date(etapaEditData.data_inicio).toISOString() : null,
         data_termino: etapaEditData.data_termino ? new Date(etapaEditData.data_termino).toISOString() : null,
         data_termino_prevista: etapaEditData.data_termino_prevista || null,
+        status: etapaEditData.status,
       };
+      if (etapaEditData.status === "concluido" && !payload.data_termino) {
+        payload.data_termino = new Date().toISOString();
+      }
+      if (etapaEditData.status === "em_andamento" && !payload.data_inicio) {
+        payload.data_inicio = new Date().toISOString();
+      }
       const { error } = await (supabase.from("etapas_producao") as any).update(payload).eq("id", etapaId);
       if (error) throw error;
       toast.success("Datas da etapa atualizadas!");
@@ -464,7 +472,7 @@ export function PedidoDetailsSheet({
                         <div className="flex items-center justify-between">
                           <p className="font-medium">{getEtapaLabel(etapa.tipo_etapa)}</p>
                           <div className="flex items-center gap-2">
-                            {getStatusBadge(etapa.status)}
+                            {editingEtapaId !== etapa.id && getStatusBadge(etapa.status)}
                             {editingEtapaId === etapa.id ? (
                               <>
                                 <Button size="sm" variant="ghost" className="h-6 px-2" onClick={() => setEditingEtapaId(null)}>
@@ -483,6 +491,17 @@ export function PedidoDetailsSheet({
                         </div>
                         {editingEtapaId === etapa.id ? (
                           <div className="mt-2 space-y-2">
+                            <div>
+                              <Label className="text-xs">Status</Label>
+                              <Select value={etapaEditData.status} onValueChange={(v) => setEtapaEditData({ ...etapaEditData, status: v })}>
+                                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                                <SelectContent>
+                                  <SelectItem value="pendente">Pendente</SelectItem>
+                                  <SelectItem value="em_andamento">Em Andamento</SelectItem>
+                                  <SelectItem value="concluido">Concluída</SelectItem>
+                                </SelectContent>
+                              </Select>
+                            </div>
                             <div>
                               <Label className="text-xs">Início</Label>
                               <Input type="datetime-local" className="h-8 text-xs" value={etapaEditData.data_inicio} onChange={(e) => setEtapaEditData({ ...etapaEditData, data_inicio: e.target.value })} />

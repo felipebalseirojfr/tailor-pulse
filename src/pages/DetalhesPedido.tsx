@@ -145,7 +145,7 @@ export default function DetalhesPedido() {
   const [showFichaCorte, setShowFichaCorte] = useState(false);
   const [avancarEtapaId, setAvancarEtapaId] = useState<string | null>(null);
   const [editingEtapaId, setEditingEtapaId] = useState<string | null>(null);
-  const [etapaEditData, setEtapaEditData] = useState<{ data_inicio: string; data_termino: string; data_termino_prevista: string }>({ data_inicio: "", data_termino: "", data_termino_prevista: "" });
+  const [etapaEditData, setEtapaEditData] = useState<{ data_inicio: string; data_termino: string; data_termino_prevista: string; status: string }>({ data_inicio: "", data_termino: "", data_termino_prevista: "", status: "pendente" });
   const checklistRef = useRef<HTMLDivElement>(null);
   const fichaCorteRef = useRef<HTMLDivElement>(null);
 
@@ -163,6 +163,7 @@ export default function DetalhesPedido() {
       data_inicio: toDatetimeLocal(etapa.data_inicio),
       data_termino: toDatetimeLocal(etapa.data_termino),
       data_termino_prevista: etapa.data_termino_prevista || "",
+      status: (etapa as any).status || "pendente",
     });
   };
 
@@ -172,10 +173,13 @@ export default function DetalhesPedido() {
         data_inicio: etapaEditData.data_inicio ? new Date(etapaEditData.data_inicio).toISOString() : null,
         data_termino: etapaEditData.data_termino ? new Date(etapaEditData.data_termino).toISOString() : null,
         data_termino_prevista: etapaEditData.data_termino_prevista || null,
+        status: etapaEditData.status,
       };
+      if (etapaEditData.status === "concluido" && !updates.data_termino) updates.data_termino = new Date().toISOString();
+      if (etapaEditData.status === "em_andamento" && !updates.data_inicio) updates.data_inicio = new Date().toISOString();
       const { error } = await supabase.from("etapas_producao").update(updates).eq("id", etapaId);
       if (error) throw error;
-      toast({ title: "Datas atualizadas", description: "As alterações foram salvas." });
+      toast({ title: "Etapa atualizada", description: "As alterações foram salvas." });
       setEditingEtapaId(null);
       fetchPedidoDetails();
     } catch (error: any) {
@@ -595,7 +599,18 @@ export default function DetalhesPedido() {
                         <div className="flex-1">
                           <h3 className="font-semibold">{ETAPAS_NOMES[etapa.tipo_etapa] || etapa.tipo_etapa}</h3>
                           {editingEtapaId === etapa.id ? (
-                            <div className="mt-2 grid gap-2 md:grid-cols-3">
+                            <div className="mt-2 grid gap-2 md:grid-cols-2">
+                              <div className="md:col-span-2">
+                                <label className="text-xs text-muted-foreground">Status</label>
+                                <Select value={etapaEditData.status} onValueChange={(v) => setEtapaEditData({ ...etapaEditData, status: v })}>
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="pendente">Pendente</SelectItem>
+                                    <SelectItem value="em_andamento">Em Andamento</SelectItem>
+                                    <SelectItem value="concluido">Concluída</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
                               <div>
                                 <label className="text-xs text-muted-foreground">Início</label>
                                 <Input type="datetime-local" value={etapaEditData.data_inicio} onChange={(e) => setEtapaEditData({ ...etapaEditData, data_inicio: e.target.value })} />
@@ -604,7 +619,7 @@ export default function DetalhesPedido() {
                                 <label className="text-xs text-muted-foreground">Término</label>
                                 <Input type="datetime-local" value={etapaEditData.data_termino} onChange={(e) => setEtapaEditData({ ...etapaEditData, data_termino: e.target.value })} />
                               </div>
-                              <div>
+                              <div className="md:col-span-2">
                                 <label className="text-xs text-muted-foreground">Previsão de finalização</label>
                                 <Input type="date" value={etapaEditData.data_termino_prevista} onChange={(e) => setEtapaEditData({ ...etapaEditData, data_termino_prevista: e.target.value })} />
                               </div>
