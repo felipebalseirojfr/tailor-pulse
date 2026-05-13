@@ -30,6 +30,7 @@ interface PedidoCardProps {
     data_inicio: string;
     status_geral: string;
     prioridade: string;
+    foto_modelo_url?: string | null;
     clientes: {
       nome: string;
     };
