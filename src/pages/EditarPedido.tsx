@@ -124,6 +124,7 @@ export default function EditarPedido() {
         observacoes_pedido: data.observacoes_pedido || "",
         preco_venda: data.preco_venda?.toString() || "",
         composicao_tecido: data.composicao_tecido || "",
+        foto_modelo_url: (data as any).foto_modelo_url || "",
       });
 
       // Carregar arquivos existentes
