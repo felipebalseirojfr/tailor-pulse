@@ -116,6 +116,7 @@ export default function EditarPedido() {
         tipo_peca: data.tipo_peca || "",
         codigo_produto_cliente: (data as any).codigo_produto_cliente || "",
         tecido: data.tecido || "",
+        cor_tecido: (data as any).cor_tecido || "",
         aviamentos: data.aviamentos || [],
         quantidade_total: data.quantidade_total?.toString() || "",
         data_inicio: data.data_inicio || "",
