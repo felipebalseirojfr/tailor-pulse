@@ -281,9 +281,19 @@ export function ClienteProducaoCard({ cliente, producoes, onViewProducao }: Clie
                   <CardContent className="pt-6">
                     <div className="space-y-3">
                       <div className="flex items-start justify-between">
-                        <div className="space-y-1 flex-1">
-                          <h4 className="font-semibold">{producao.produto_modelo}</h4>
-                          <p className="text-sm text-muted-foreground">{producao.tipo_peca}</p>
+                        <div className="flex items-start gap-3 flex-1">
+                          {producao.foto_modelo_url && (
+                            <img
+                              src={producao.foto_modelo_url}
+                              alt={producao.produto_modelo}
+                              className="w-12 h-12 object-cover rounded-md border border-border flex-shrink-0"
+                              loading="lazy"
+                            />
+                          )}
+                          <div className="space-y-1 flex-1 min-w-0">
+                            <h4 className="font-semibold">{producao.produto_modelo}</h4>
+                            <p className="text-sm text-muted-foreground">{producao.tipo_peca}</p>
+                          </div>
                         </div>
                         <div className="flex flex-col items-end gap-2">
                           {isAtrasado && (
