@@ -57,6 +57,7 @@ export default function NovoPedido() {
     prazo_final: "",
     tem_personalizacao: false,
     tipos_personalizacao: [] as string[],
+    observacoes_personalizacao: {} as Record<string, string>,
     grade_tamanhos: {} as Record<string, number>,
     preco_venda: "",
     composicao_tecido: "",
