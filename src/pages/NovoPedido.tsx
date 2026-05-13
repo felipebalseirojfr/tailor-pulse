@@ -57,6 +57,7 @@ export default function NovoPedido() {
     prazo_final: "",
     tem_personalizacao: false,
     tipos_personalizacao: [] as string[],
+    observacoes_personalizacao: {} as Record<string, string>,
     grade_tamanhos: {} as Record<string, number>,
     preco_venda: "",
     composicao_tecido: "",
@@ -154,6 +155,7 @@ export default function NovoPedido() {
           responsavel_comercial_id: user.id,
           tem_personalizacao: formData.tipos_personalizacao.length > 0,
           tipos_personalizacao: formData.tipos_personalizacao,
+          observacoes_personalizacao: formData.observacoes_personalizacao,
           grade_tamanhos: formData.grade_tamanhos,
           arquivos: arquivosUpload,
           status_geral: 'aguardando_inicio',
@@ -541,46 +543,44 @@ export default function NovoPedido() {
                 Selecione os tipos de personalização necessários
               </p>
               <div className="grid gap-3 md:grid-cols-2">
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="estamparia"
-                    checked={formData.tipos_personalizacao.includes("estamparia")}
-                    onCheckedChange={() => handlePersonalizacaoToggle("estamparia")}
-                  />
-                  <Label htmlFor="estamparia" className="font-normal cursor-pointer">
-                    Estamparia
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="bordado"
-                    checked={formData.tipos_personalizacao.includes("bordado")}
-                    onCheckedChange={() => handlePersonalizacaoToggle("bordado")}
-                  />
-                  <Label htmlFor="bordado" className="font-normal cursor-pointer">
-                    Bordado
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="caseado"
-                    checked={formData.tipos_personalizacao.includes("caseado")}
-                    onCheckedChange={() => handlePersonalizacaoToggle("caseado")}
-                  />
-                  <Label htmlFor="caseado" className="font-normal cursor-pointer">
-                    Caseado
-                  </Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox
-                    id="lavanderia"
-                    checked={formData.tipos_personalizacao.includes("lavanderia")}
-                    onCheckedChange={() => handlePersonalizacaoToggle("lavanderia")}
-                  />
-                  <Label htmlFor="lavanderia" className="font-normal cursor-pointer">
-                    Lavanderia
-                  </Label>
-                </div>
+                {[
+                  { id: "estamparia", label: "Estamparia", hasObs: true },
+                  { id: "bordado", label: "Bordado", hasObs: true },
+                  { id: "caseado", label: "Caseado", hasObs: false },
+                  { id: "lavanderia", label: "Lavanderia", hasObs: false },
+                ].map((item) => {
+                  const checked = formData.tipos_personalizacao.includes(item.id);
+                  return (
+                    <div key={item.id} className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id={item.id}
+                          checked={checked}
+                          onCheckedChange={() => handlePersonalizacaoToggle(item.id)}
+                        />
+                        <Label htmlFor={item.id} className="font-normal cursor-pointer">
+                          {item.label}
+                        </Label>
+                      </div>
+                      {checked && item.hasObs && (
+                        <Input
+                          placeholder={`Observação para ${item.label.toLowerCase()} (ex: separar frente para estamparia)`}
+                          value={formData.observacoes_personalizacao[item.id] || ""}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              observacoes_personalizacao: {
+                                ...formData.observacoes_personalizacao,
+                                [item.id]: e.target.value,
+                              },
+                            })
+                          }
+                          className="ml-6"
+                        />
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
