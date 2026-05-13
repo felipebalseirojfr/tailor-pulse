@@ -17,6 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Upload, X, FileText, ImageIcon, Save, Loader2 } from "lucide-react";
 import EtapasEditorManager, { EtapaEditavel } from "@/components/pedidos/EtapasEditorManager";
+import { ModeloFotoUpload } from "@/components/pedidos/ModeloFotoUpload";
 
 interface Cliente {
   id: string;
