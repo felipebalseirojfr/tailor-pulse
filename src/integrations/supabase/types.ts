@@ -678,6 +678,7 @@ export type Database = {
           codigo_pedido: string | null
           codigo_produto_cliente: string | null
           composicao_tecido: string | null
+          cor_tecido: string | null
           created_at: string | null
           data_inicio: string
           foto_modelo_url: string | null
@@ -710,6 +711,7 @@ export type Database = {
           codigo_pedido?: string | null
           codigo_produto_cliente?: string | null
           composicao_tecido?: string | null
+          cor_tecido?: string | null
           created_at?: string | null
           data_inicio: string
           foto_modelo_url?: string | null
@@ -742,6 +744,7 @@ export type Database = {
           codigo_pedido?: string | null
           codigo_produto_cliente?: string | null
           composicao_tecido?: string | null
+          cor_tecido?: string | null
           created_at?: string | null
           data_inicio?: string
           foto_modelo_url?: string | null

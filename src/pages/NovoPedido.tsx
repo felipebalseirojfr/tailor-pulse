@@ -50,6 +50,7 @@ export default function NovoPedido() {
     tipo_peca: "",
     codigo_produto_cliente: "",
     tecido: "",
+    cor_tecido: "",
     aviamentos: [] as string[],
     quantidade_total: "",
     data_inicio: __toLocalISO(new Date()),
@@ -145,6 +146,7 @@ export default function NovoPedido() {
           tipo_peca: formData.tipo_peca,
           codigo_produto_cliente: formData.codigo_produto_cliente,
           tecido: formData.tecido,
+          cor_tecido: formData.cor_tecido || null,
           aviamentos: formData.aviamentos,
           quantidade_total: parseInt(formData.quantidade_total),
           data_inicio: formData.data_inicio,
@@ -423,7 +425,7 @@ export default function NovoPedido() {
               />
             </div>
 
-            <div className="grid gap-4 md:grid-cols-2">
+            <div className="grid gap-4 md:grid-cols-3">
               <div className="space-y-2">
                 <Label htmlFor="tecido">Tecido</Label>
                 <Input
@@ -432,6 +434,17 @@ export default function NovoPedido() {
                   value={formData.tecido}
                   onChange={handleChange}
                   placeholder="Ex: Algodão, Poliéster"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="cor_tecido">Cor do Tecido</Label>
+                <Input
+                  id="cor_tecido"
+                  name="cor_tecido"
+                  value={formData.cor_tecido}
+                  onChange={handleChange}
+                  placeholder="Ex: Azul Marinho, Branco"
                 />
               </div>
 

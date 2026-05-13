@@ -51,6 +51,7 @@ export default function EditarPedido() {
     tipo_peca: "",
     codigo_produto_cliente: "",
     tecido: "",
+    cor_tecido: "",
     aviamentos: [] as string[],
     quantidade_total: "",
     data_inicio: "",
@@ -115,6 +116,7 @@ export default function EditarPedido() {
         tipo_peca: data.tipo_peca || "",
         codigo_produto_cliente: (data as any).codigo_produto_cliente || "",
         tecido: data.tecido || "",
+        cor_tecido: (data as any).cor_tecido || "",
         aviamentos: data.aviamentos || [],
         quantidade_total: data.quantidade_total?.toString() || "",
         data_inicio: data.data_inicio || "",
@@ -272,6 +274,7 @@ export default function EditarPedido() {
         tipo_peca: formData.tipo_peca,
         codigo_produto_cliente: formData.codigo_produto_cliente || null,
         tecido: formData.tecido,
+        cor_tecido: formData.cor_tecido || null,
         aviamentos: formData.aviamentos,
         quantidade_total: parseInt(formData.quantidade_total),
         data_inicio: formData.data_inicio,
@@ -525,6 +528,18 @@ export default function EditarPedido() {
                     onChange={(e) =>
                       setFormData({ ...formData, tecido: e.target.value })
                     }
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="cor_tecido">Cor do Tecido</Label>
+                  <Input
+                    id="cor_tecido"
+                    value={formData.cor_tecido}
+                    onChange={(e) =>
+                      setFormData({ ...formData, cor_tecido: e.target.value })
+                    }
+                    placeholder="Ex: Azul Marinho, Branco"
                   />
                 </div>
               </div>
