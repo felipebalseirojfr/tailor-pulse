@@ -59,6 +59,7 @@ export default function NovoPedido() {
     preco_venda: "",
     composicao_tecido: "",
     observacoes_pedido: "",
+    foto_modelo_url: "" as string | null | "",
   });
 
   const composicoesComuns = [
