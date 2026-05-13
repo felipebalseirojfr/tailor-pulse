@@ -599,7 +599,18 @@ export default function DetalhesPedido() {
                         <div className="flex-1">
                           <h3 className="font-semibold">{ETAPAS_NOMES[etapa.tipo_etapa] || etapa.tipo_etapa}</h3>
                           {editingEtapaId === etapa.id ? (
-                            <div className="mt-2 grid gap-2 md:grid-cols-3">
+                            <div className="mt-2 grid gap-2 md:grid-cols-2">
+                              <div className="md:col-span-2">
+                                <label className="text-xs text-muted-foreground">Status</label>
+                                <Select value={etapaEditData.status} onValueChange={(v) => setEtapaEditData({ ...etapaEditData, status: v })}>
+                                  <SelectTrigger><SelectValue /></SelectTrigger>
+                                  <SelectContent>
+                                    <SelectItem value="pendente">Pendente</SelectItem>
+                                    <SelectItem value="em_andamento">Em Andamento</SelectItem>
+                                    <SelectItem value="concluido">Concluída</SelectItem>
+                                  </SelectContent>
+                                </Select>
+                              </div>
                               <div>
                                 <label className="text-xs text-muted-foreground">Início</label>
                                 <Input type="datetime-local" value={etapaEditData.data_inicio} onChange={(e) => setEtapaEditData({ ...etapaEditData, data_inicio: e.target.value })} />
@@ -608,7 +619,7 @@ export default function DetalhesPedido() {
                                 <label className="text-xs text-muted-foreground">Término</label>
                                 <Input type="datetime-local" value={etapaEditData.data_termino} onChange={(e) => setEtapaEditData({ ...etapaEditData, data_termino: e.target.value })} />
                               </div>
-                              <div>
+                              <div className="md:col-span-2">
                                 <label className="text-xs text-muted-foreground">Previsão de finalização</label>
                                 <Input type="date" value={etapaEditData.data_termino_prevista} onChange={(e) => setEtapaEditData({ ...etapaEditData, data_termino_prevista: e.target.value })} />
                               </div>
