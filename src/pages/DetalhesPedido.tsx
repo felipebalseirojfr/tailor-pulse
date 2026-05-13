@@ -777,6 +777,7 @@ export default function DetalhesPedido() {
             quantidadeTotal={pedido.quantidade_total}
             observacoes={pedido.observacoes_pedido}
             clienteNome={pedido.clientes?.nome || "Cliente não identificado"}
+            fotoModeloUrl={(pedido as any).foto_modelo_url}
           />
           <AlertDialogFooter className="print:hidden">
             <AlertDialogCancel>Fechar</AlertDialogCancel>

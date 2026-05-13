@@ -655,7 +655,7 @@ export function PedidoDetailsSheet({
             <AlertDialogDescription>Visualize e imprima a ficha de corte do pedido.</AlertDialogDescription>
           </AlertDialogHeader>
           <div className="overflow-auto">
-            <FichaCorte ref={fichaCorteRef} produtoModelo={pedido.produto_modelo} tipoPeca={pedido.tipo_peca} tecido={pedido.tecido || ""} codigoPedido={pedido.codigo_pedido || pedido.id.slice(0, 8)} gradeTamanhos={pedido.grade_tamanhos || {}} quantidadeTotal={pedido.quantidade_total} observacoes={pedido.observacoes_pedido} clienteNome={pedido.clientes?.nome || ""} />
+            <FichaCorte ref={fichaCorteRef} produtoModelo={pedido.produto_modelo} tipoPeca={pedido.tipo_peca} tecido={pedido.tecido || ""} codigoPedido={pedido.codigo_pedido || pedido.id.slice(0, 8)} gradeTamanhos={pedido.grade_tamanhos || {}} quantidadeTotal={pedido.quantidade_total} observacoes={pedido.observacoes_pedido} clienteNome={pedido.clientes?.nome || ""} fotoModeloUrl={(pedido as any).foto_modelo_url} />
           </div>
           <AlertDialogFooter className="print:hidden">
             <AlertDialogCancel>Fechar</AlertDialogCancel>
