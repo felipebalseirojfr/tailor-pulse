@@ -685,6 +685,7 @@ export type Database = {
           grade_tamanhos: Json | null
           id: string
           observacoes_pedido: string | null
+          observacoes_personalizacao: Json | null
           prazo_final: string
           preco_venda: number | null
           prioridade: Database["public"]["Enums"]["prioridade_pedido"] | null
@@ -718,6 +719,7 @@ export type Database = {
           grade_tamanhos?: Json | null
           id?: string
           observacoes_pedido?: string | null
+          observacoes_personalizacao?: Json | null
           prazo_final: string
           preco_venda?: number | null
           prioridade?: Database["public"]["Enums"]["prioridade_pedido"] | null
@@ -751,6 +753,7 @@ export type Database = {
           grade_tamanhos?: Json | null
           id?: string
           observacoes_pedido?: string | null
+          observacoes_personalizacao?: Json | null
           prazo_final?: string
           preco_venda?: number | null
           prioridade?: Database["public"]["Enums"]["prioridade_pedido"] | null

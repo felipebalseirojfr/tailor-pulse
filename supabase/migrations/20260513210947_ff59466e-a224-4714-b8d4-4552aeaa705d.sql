@@ -1,0 +1,1 @@
+ALTER TABLE public.pedidos ADD COLUMN IF NOT EXISTS observacoes_personalizacao jsonb DEFAULT '{}'::jsonb;
