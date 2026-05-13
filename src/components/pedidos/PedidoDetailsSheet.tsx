@@ -140,6 +140,7 @@ export function PedidoDetailsSheet({
       data_inicio: toDatetimeLocal(etapa.data_inicio),
       data_termino: toDatetimeLocal(etapa.data_termino),
       data_termino_prevista: etapa.data_termino_prevista || "",
+      status: etapa.status || "pendente",
     });
   };
 
@@ -149,7 +150,14 @@ export function PedidoDetailsSheet({
         data_inicio: etapaEditData.data_inicio ? new Date(etapaEditData.data_inicio).toISOString() : null,
         data_termino: etapaEditData.data_termino ? new Date(etapaEditData.data_termino).toISOString() : null,
         data_termino_prevista: etapaEditData.data_termino_prevista || null,
+        status: etapaEditData.status,
       };
+      if (etapaEditData.status === "concluido" && !payload.data_termino) {
+        payload.data_termino = new Date().toISOString();
+      }
+      if (etapaEditData.status === "em_andamento" && !payload.data_inicio) {
+        payload.data_inicio = new Date().toISOString();
+      }
       const { error } = await (supabase.from("etapas_producao") as any).update(payload).eq("id", etapaId);
       if (error) throw error;
       toast.success("Datas da etapa atualizadas!");
