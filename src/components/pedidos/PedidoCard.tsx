@@ -144,21 +144,31 @@ export function PedidoCard({ pedido, onViewDetails, onAdvanceStage, isTV = false
     >
       <CardHeader className={`${isTV ? 'pb-2 px-4 pt-4' : 'pb-4 px-5 pt-5'}`}>
         <div className="flex items-start justify-between gap-3">
-          <div className="flex-1 min-w-0 space-y-0.5">
-            <h3 className={`font-bold text-foreground leading-tight ${isTV ? 'text-lg' : 'text-base'}`}>
-              {pedido.produto_modelo}
-            </h3>
-            <p className={`text-muted-foreground font-medium ${isTV ? 'text-sm' : 'text-sm'}`}>
-              {pedido.clientes?.nome}
-            </p>
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className={`font-mono text-muted-foreground ${isTV ? 'text-xs' : 'text-xs'}`}>
-                #{pedido.id.slice(0, 8)}
-              </span>
-              <span className="text-muted-foreground">•</span>
-              <span className={`text-muted-foreground ${isTV ? 'text-xs' : 'text-xs'}`}>
-                {pedido.tipo_peca}
-              </span>
+          <div className="flex items-start gap-3 flex-1 min-w-0">
+            {pedido.foto_modelo_url && (
+              <img
+                src={pedido.foto_modelo_url}
+                alt={pedido.produto_modelo}
+                className={`${isTV ? 'w-12 h-12' : 'w-14 h-14'} object-cover rounded-md border border-border flex-shrink-0`}
+                loading="lazy"
+              />
+            )}
+            <div className="flex-1 min-w-0 space-y-0.5">
+              <h3 className={`font-bold text-foreground leading-tight ${isTV ? 'text-lg' : 'text-base'}`}>
+                {pedido.produto_modelo}
+              </h3>
+              <p className={`text-muted-foreground font-medium ${isTV ? 'text-sm' : 'text-sm'}`}>
+                {pedido.clientes?.nome}
+              </p>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={`font-mono text-muted-foreground ${isTV ? 'text-xs' : 'text-xs'}`}>
+                  #{pedido.id.slice(0, 8)}
+                </span>
+                <span className="text-muted-foreground">•</span>
+                <span className={`text-muted-foreground ${isTV ? 'text-xs' : 'text-xs'}`}>
+                  {pedido.tipo_peca}
+                </span>
+              </div>
             </div>
           </div>
           <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
