@@ -157,6 +157,7 @@ export default function NovoPedido() {
           preco_venda: formData.preco_venda ? parseFloat(formData.preco_venda) : null,
           composicao_tecido: formData.composicao_tecido || null,
           observacoes_pedido: formData.observacoes_pedido || null,
+          foto_modelo_url: formData.foto_modelo_url || null,
         },
       ]).select();
 
