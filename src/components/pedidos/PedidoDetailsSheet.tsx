@@ -655,7 +655,16 @@ export function PedidoDetailsSheet({
             <AlertDialogDescription>Visualize e imprima a ficha de corte do pedido.</AlertDialogDescription>
           </AlertDialogHeader>
           <div className="overflow-auto">
-            <FichaCorte ref={fichaCorteRef} produtoModelo={pedido.produto_modelo} tipoPeca={pedido.tipo_peca} tecido={pedido.tecido || ""} codigoPedido={pedido.codigo_pedido || pedido.id.slice(0, 8)} gradeTamanhos={pedido.grade_tamanhos || {}} quantidadeTotal={pedido.quantidade_total} observacoes={pedido.observacoes_pedido} clienteNome={pedido.clientes?.nome || ""} fotoModeloUrl={(pedido as any).foto_modelo_url} />
+            <FichaCorte ref={fichaCorteRef} produtoModelo={pedido.produto_modelo} tipoPeca={pedido.tipo_peca} tecido={pedido.tecido || ""} codigoPedido={pedido.codigo_pedido || pedido.id.slice(0, 8)} gradeTamanhos={pedido.grade_tamanhos || {}} quantidadeTotal={pedido.quantidade_total} observacoes={(() => {
+              const base = pedido.observacoes_pedido || "";
+              const obsPers = ((pedido as any).observacoes_personalizacao || {}) as Record<string, string>;
+              const linhas = Object.entries(obsPers)
+                .filter(([_, v]) => v && String(v).trim())
+                .map(([k, v]) => `• ${k.charAt(0).toUpperCase() + k.slice(1)}: ${v}`);
+              if (!linhas.length) return base;
+              const header = "Separação para personalização:";
+              return [base, base ? "" : null, header, ...linhas].filter(Boolean).join("\n");
+            })()} clienteNome={pedido.clientes?.nome || ""} fotoModeloUrl={(pedido as any).foto_modelo_url} />
           </div>
           <AlertDialogFooter className="print:hidden">
             <AlertDialogCancel>Fechar</AlertDialogCancel>
