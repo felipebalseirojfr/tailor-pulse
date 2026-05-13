@@ -155,6 +155,7 @@ export default function NovoPedido() {
           responsavel_comercial_id: user.id,
           tem_personalizacao: formData.tipos_personalizacao.length > 0,
           tipos_personalizacao: formData.tipos_personalizacao,
+          observacoes_personalizacao: formData.observacoes_personalizacao,
           grade_tamanhos: formData.grade_tamanhos,
           arquivos: arquivosUpload,
           status_geral: 'aguardando_inicio',
