@@ -472,7 +472,7 @@ export function PedidoDetailsSheet({
                         <div className="flex items-center justify-between">
                           <p className="font-medium">{getEtapaLabel(etapa.tipo_etapa)}</p>
                           <div className="flex items-center gap-2">
-                            {getStatusBadge(etapa.status)}
+                            {editingEtapaId !== etapa.id && getStatusBadge(etapa.status)}
                             {editingEtapaId === etapa.id ? (
                               <>
                                 <Button size="sm" variant="ghost" className="h-6 px-2" onClick={() => setEditingEtapaId(null)}>
