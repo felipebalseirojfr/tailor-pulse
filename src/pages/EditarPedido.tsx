@@ -17,6 +17,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Upload, X, FileText, ImageIcon, Save, Loader2 } from "lucide-react";
 import EtapasEditorManager, { EtapaEditavel } from "@/components/pedidos/EtapasEditorManager";
+import { ModeloFotoUpload } from "@/components/pedidos/ModeloFotoUpload";
 
 interface Cliente {
   id: string;
@@ -60,6 +61,7 @@ export default function EditarPedido() {
     observacoes_pedido: "",
     preco_venda: "",
     composicao_tecido: "",
+    foto_modelo_url: "" as string | null | "",
   });
 
   const composicoesComuns = [
@@ -123,6 +125,7 @@ export default function EditarPedido() {
         observacoes_pedido: data.observacoes_pedido || "",
         preco_venda: data.preco_venda?.toString() || "",
         composicao_tecido: data.composicao_tecido || "",
+        foto_modelo_url: (data as any).foto_modelo_url || "",
       });
 
       // Carregar arquivos existentes
@@ -280,6 +283,7 @@ export default function EditarPedido() {
         observacoes_pedido: formData.observacoes_pedido,
         preco_venda: formData.preco_venda ? parseFloat(formData.preco_venda) : null,
         composicao_tecido: formData.composicao_tecido || null,
+        foto_modelo_url: formData.foto_modelo_url || null,
         updated_at: new Date().toISOString(),
       };
       // Só incluir cliente_id se for um UUID válido (evita erro 22P02 quando o select fica vazio)
@@ -482,6 +486,11 @@ export default function EditarPedido() {
                     required
                   />
                 </div>
+
+                <ModeloFotoUpload
+                  value={formData.foto_modelo_url}
+                  onChange={(url) => setFormData({ ...formData, foto_modelo_url: url || "" })}
+                />
 
                 <div>
                   <Label htmlFor="tipo_peca">Tipo de Peça *</Label>

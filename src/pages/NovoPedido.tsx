@@ -19,6 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Upload, X, FileText, Image as ImageIcon } from "lucide-react";
 import EtapasManager, { Etapa } from "@/components/pedidos/EtapasManager";
 import { downloadQRCode, downloadChecklist } from "@/lib/download-utils";
+import { ModeloFotoUpload } from "@/components/pedidos/ModeloFotoUpload";
 
 const __toLocalISO=(d: Date)=>{const y=d.getFullYear();const m=String(d.getMonth()+1).padStart(2,"0");const day=String(d.getDate()).padStart(2,"0");return `${y}-${m}-${day}`;};
 
@@ -59,6 +60,7 @@ export default function NovoPedido() {
     preco_venda: "",
     composicao_tecido: "",
     observacoes_pedido: "",
+    foto_modelo_url: "" as string | null | "",
   });
 
   const composicoesComuns = [
@@ -156,6 +158,7 @@ export default function NovoPedido() {
           preco_venda: formData.preco_venda ? parseFloat(formData.preco_venda) : null,
           composicao_tecido: formData.composicao_tecido || null,
           observacoes_pedido: formData.observacoes_pedido || null,
+          foto_modelo_url: formData.foto_modelo_url || null,
         },
       ]).select();
 
@@ -403,6 +406,11 @@ export default function NovoPedido() {
                 />
               </div>
             </div>
+
+            <ModeloFotoUpload
+              value={formData.foto_modelo_url}
+              onChange={(url) => setFormData({ ...formData, foto_modelo_url: url || "" })}
+            />
 
             <div className="space-y-2">
               <Label htmlFor="codigo_produto_cliente">Código do Produto do Cliente</Label>

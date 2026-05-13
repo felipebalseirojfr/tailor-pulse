@@ -366,6 +366,13 @@ export function PedidoDetailsSheet({
           {!isEditing ? (
             <>
               <div className="space-y-3">
+                {(pedido as any).foto_modelo_url && (
+                  <img
+                    src={(pedido as any).foto_modelo_url}
+                    alt={pedido.produto_modelo}
+                    className="w-full max-h-64 object-cover rounded-md border border-border"
+                  />
+                )}
                 <div>
                   <p className="text-sm text-muted-foreground">Produto</p>
                   <p className="text-lg font-semibold">{pedido.produto_modelo}</p>

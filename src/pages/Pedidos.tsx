@@ -926,7 +926,17 @@ export default function Pedidos() {
                         className="hover:bg-muted/50"
                       >
                         <TableCell onClick={() => handleRowClick(pedido)} className="cursor-pointer font-medium">
-                          {pedido.produto_modelo}
+                          <div className="flex items-center gap-2">
+                            {(pedido as any).foto_modelo_url && (
+                              <img
+                                src={(pedido as any).foto_modelo_url}
+                                alt={pedido.produto_modelo}
+                                className="w-10 h-10 object-cover rounded-md border border-border flex-shrink-0"
+                                loading="lazy"
+                              />
+                            )}
+                            <span>{pedido.produto_modelo}</span>
+                          </div>
                           {temEtapaEmAtraso(pedido) && (
                             <div className="flex items-center gap-1 mt-1">
                               <AlertCircle className="h-3 w-3 text-destructive" />
