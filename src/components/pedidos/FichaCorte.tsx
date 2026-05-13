@@ -13,6 +13,7 @@ interface FichaCorteProps {
   quantidadeTotal: number;
   observacoes?: string;
   clienteNome: string;
+  fotoModeloUrl?: string | null;
 }
 
 export const FichaCorte = forwardRef<HTMLDivElement, FichaCorteProps>(
@@ -26,6 +27,7 @@ export const FichaCorte = forwardRef<HTMLDivElement, FichaCorteProps>(
       quantidadeTotal,
       observacoes,
       clienteNome,
+      fotoModeloUrl,
     },
     ref
   ) => {
