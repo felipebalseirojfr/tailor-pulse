@@ -659,7 +659,16 @@ export function PedidoDetailsSheet({
           </div>
           <AlertDialogFooter className="print:hidden">
             <AlertDialogCancel>Fechar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => window.print()}><Printer className="mr-2 h-4 w-4" />Imprimir</AlertDialogAction>
+            <AlertDialogAction
+              onClick={async () => {
+                const { downloadFichaCortePDF } = await import("@/lib/ficha-corte-download");
+                if (fichaCorteRef.current) {
+                  await downloadFichaCortePDF(fichaCorteRef.current, pedido.codigo_pedido || pedido.id.slice(0, 8));
+                }
+              }}
+            >
+              <Download className="mr-2 h-4 w-4" />Baixar PDF
+            </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
