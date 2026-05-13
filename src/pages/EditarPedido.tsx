@@ -487,6 +487,11 @@ export default function EditarPedido() {
                   />
                 </div>
 
+                <ModeloFotoUpload
+                  value={formData.foto_modelo_url}
+                  onChange={(url) => setFormData({ ...formData, foto_modelo_url: url || "" })}
+                />
+
                 <div>
                   <Label htmlFor="tipo_peca">Tipo de Peça *</Label>
                   <Input
