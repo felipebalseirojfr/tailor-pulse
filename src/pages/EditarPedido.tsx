@@ -527,6 +527,18 @@ export default function EditarPedido() {
                     }
                   />
                 </div>
+
+                <div>
+                  <Label htmlFor="cor_tecido">Cor do Tecido</Label>
+                  <Input
+                    id="cor_tecido"
+                    value={formData.cor_tecido}
+                    onChange={(e) =>
+                      setFormData({ ...formData, cor_tecido: e.target.value })
+                    }
+                    placeholder="Ex: Azul Marinho, Branco"
+                  />
+                </div>
               </div>
 
               <div>
