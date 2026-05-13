@@ -126,6 +126,30 @@ export function PedidoDetailsSheet({
     }
   };
 
+  const atualizarStatusEtapa = async (etapa: any, novoStatus: string) => {
+    try {
+      const payload: any = { status: novoStatus };
+      if (novoStatus === "concluido" && !etapa.data_termino) {
+        payload.data_termino = new Date().toISOString();
+        if (!etapa.data_inicio) payload.data_inicio = new Date().toISOString();
+      }
+      if (novoStatus === "em_andamento") {
+        if (!etapa.data_inicio) payload.data_inicio = new Date().toISOString();
+        payload.data_termino = null;
+      }
+      if (novoStatus === "pendente") {
+        payload.data_inicio = null;
+        payload.data_termino = null;
+      }
+      const { error } = await (supabase.from("etapas_producao") as any).update(payload).eq("id", etapa.id);
+      if (error) throw error;
+      toast.success("Status atualizado!");
+      onUpdate();
+    } catch (e: any) {
+      toast.error("Erro ao atualizar status: " + (e.message || ""));
+    }
+  };
+
   const toDatetimeLocal = (iso?: string | null) => {
     if (!iso) return "";
     const d = new Date(iso);
