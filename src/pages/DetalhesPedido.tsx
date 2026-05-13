@@ -458,9 +458,18 @@ export default function DetalhesPedido() {
           Voltar
         </Button>
         <div className="flex items-start justify-between">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">{pedido.produto_modelo}</h1>
-            <p className="text-muted-foreground">Cliente: {pedido.clientes?.nome}</p>
+          <div className="flex items-start gap-4">
+            {(pedido as any).foto_modelo_url && (
+              <img
+                src={(pedido as any).foto_modelo_url}
+                alt={pedido.produto_modelo}
+                className="w-20 h-20 object-cover rounded-md border border-border flex-shrink-0"
+              />
+            )}
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">{pedido.produto_modelo}</h1>
+              <p className="text-muted-foreground">Cliente: {pedido.clientes?.nome}</p>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             {atrasado && (
