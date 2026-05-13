@@ -680,6 +680,7 @@ export type Database = {
           composicao_tecido: string | null
           created_at: string | null
           data_inicio: string
+          foto_modelo_url: string | null
           grade_tamanhos: Json | null
           id: string
           observacoes_pedido: string | null
@@ -711,6 +712,7 @@ export type Database = {
           composicao_tecido?: string | null
           created_at?: string | null
           data_inicio: string
+          foto_modelo_url?: string | null
           grade_tamanhos?: Json | null
           id?: string
           observacoes_pedido?: string | null
@@ -742,6 +744,7 @@ export type Database = {
           composicao_tecido?: string | null
           created_at?: string | null
           data_inicio?: string
+          foto_modelo_url?: string | null
           grade_tamanhos?: Json | null
           id?: string
           observacoes_pedido?: string | null
