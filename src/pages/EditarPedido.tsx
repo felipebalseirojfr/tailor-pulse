@@ -60,6 +60,7 @@ export default function EditarPedido() {
     observacoes_pedido: "",
     preco_venda: "",
     composicao_tecido: "",
+    foto_modelo_url: "" as string | null | "",
   });
 
   const composicoesComuns = [
