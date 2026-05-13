@@ -28,6 +28,7 @@ interface Pedido {
   updated_at: string;
   tecido?: string;
   aviamentos?: string[];
+  foto_modelo_url?: string | null;
   grade_tamanhos?: Record<string, number> | null;
   codigo_pedido?: string | null;
   clientes: {
