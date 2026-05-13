@@ -407,6 +407,11 @@ export default function NovoPedido() {
               </div>
             </div>
 
+            <ModeloFotoUpload
+              value={formData.foto_modelo_url}
+              onChange={(url) => setFormData({ ...formData, foto_modelo_url: url || "" })}
+            />
+
             <div className="space-y-2">
               <Label htmlFor="codigo_produto_cliente">Código do Produto do Cliente</Label>
               <Input
