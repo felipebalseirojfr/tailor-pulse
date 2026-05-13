@@ -99,18 +99,28 @@ export const FichaCorte = forwardRef<HTMLDivElement, FichaCorteProps>(
           <div className="bg-gray-200 px-4 py-2 border-b border-black">
             <h2 className="font-bold text-lg">INFORMAÇÕES DO PRODUTO</h2>
           </div>
-          <div className="p-4 grid grid-cols-2 gap-4">
-            <div className="flex">
-              <span className="font-bold w-32">Nome do Produto:</span>
-              <span className="flex-1">{produtoModelo}</span>
-            </div>
-            <div className="flex">
-              <span className="font-bold w-32">Qtd. Total:</span>
-              <span className="flex-1 font-bold text-lg">{totalCalculado} peças</span>
-            </div>
-            <div className="flex col-span-2">
-              <span className="font-bold w-32">Tecido(s):</span>
-              <span className="flex-1">{tecido || "Não especificado"}</span>
+          <div className="p-4 flex gap-4">
+            {fotoModeloUrl && (
+              <img
+                src={fotoModeloUrl}
+                alt={produtoModelo}
+                crossOrigin="anonymous"
+                className="w-40 h-40 object-cover border-2 border-black flex-shrink-0"
+              />
+            )}
+            <div className="flex-1 grid grid-cols-2 gap-4 content-start">
+              <div className="flex">
+                <span className="font-bold w-32">Nome do Produto:</span>
+                <span className="flex-1">{produtoModelo}</span>
+              </div>
+              <div className="flex">
+                <span className="font-bold w-32">Qtd. Total:</span>
+                <span className="flex-1 font-bold text-lg">{totalCalculado} peças</span>
+              </div>
+              <div className="flex col-span-2">
+                <span className="font-bold w-32">Tecido(s):</span>
+                <span className="flex-1">{tecido || "Não especificado"}</span>
+              </div>
             </div>
           </div>
         </div>
