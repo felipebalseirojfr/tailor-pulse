@@ -553,6 +553,10 @@ export function PedidoDetailsSheet({
                               <Label className="text-xs">Previsão de finalização</Label>
                               <Input type="date" className="h-8 text-xs" value={etapaEditData.data_termino_prevista} onChange={(e) => setEtapaEditData({ ...etapaEditData, data_termino_prevista: e.target.value })} />
                             </div>
+                            <div>
+                              <Label className="text-xs">Observação</Label>
+                              <Textarea className="text-xs min-h-[60px]" placeholder="Adicione uma observação para esta etapa..." value={etapaEditData.observacoes} onChange={(e) => setEtapaEditData({ ...etapaEditData, observacoes: e.target.value })} />
+                            </div>
                           </div>
                         ) : (
                           <>
