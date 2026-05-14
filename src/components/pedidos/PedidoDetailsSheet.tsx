@@ -72,7 +72,7 @@ export function PedidoDetailsSheet({
   const [showFichaCorte, setShowFichaCorte] = useState(false);
   const [terceiros, setTerceiros] = useState<Terceiro[]>([]);
   const [editingEtapaId, setEditingEtapaId] = useState<string | null>(null);
-  const [etapaEditData, setEtapaEditData] = useState<{ data_inicio: string; data_termino: string; data_termino_prevista: string; status: string }>({ data_inicio: "", data_termino: "", data_termino_prevista: "", status: "pendente" });
+  const [etapaEditData, setEtapaEditData] = useState<{ data_inicio: string; data_termino: string; data_termino_prevista: string; status: string; observacoes: string }>({ data_inicio: "", data_termino: "", data_termino_prevista: "", status: "pendente", observacoes: "" });
   const fichaCorteRef = useRef<HTMLDivElement>(null);
   const [editData, setEditData] = useState({
     produto_modelo: "",
