@@ -165,6 +165,7 @@ export function PedidoDetailsSheet({
       data_termino: toDatetimeLocal(etapa.data_termino),
       data_termino_prevista: etapa.data_termino_prevista || "",
       status: etapa.status || "pendente",
+      observacoes: etapa.observacoes || "",
     });
   };
 
