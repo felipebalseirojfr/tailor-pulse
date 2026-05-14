@@ -176,6 +176,7 @@ export function PedidoDetailsSheet({
         data_termino: etapaEditData.data_termino ? new Date(etapaEditData.data_termino).toISOString() : null,
         data_termino_prevista: etapaEditData.data_termino_prevista || null,
         status: etapaEditData.status,
+        observacoes: etapaEditData.observacoes || null,
       };
       if (etapaEditData.status === "concluido" && !payload.data_termino) {
         payload.data_termino = new Date().toISOString();
