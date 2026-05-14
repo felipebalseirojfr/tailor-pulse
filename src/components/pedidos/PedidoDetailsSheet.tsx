@@ -72,7 +72,7 @@ export function PedidoDetailsSheet({
   const [showFichaCorte, setShowFichaCorte] = useState(false);
   const [terceiros, setTerceiros] = useState<Terceiro[]>([]);
   const [editingEtapaId, setEditingEtapaId] = useState<string | null>(null);
-  const [etapaEditData, setEtapaEditData] = useState<{ data_inicio: string; data_termino: string; data_termino_prevista: string; status: string }>({ data_inicio: "", data_termino: "", data_termino_prevista: "", status: "pendente" });
+  const [etapaEditData, setEtapaEditData] = useState<{ data_inicio: string; data_termino: string; data_termino_prevista: string; status: string; observacoes: string }>({ data_inicio: "", data_termino: "", data_termino_prevista: "", status: "pendente", observacoes: "" });
   const fichaCorteRef = useRef<HTMLDivElement>(null);
   const [editData, setEditData] = useState({
     produto_modelo: "",
@@ -165,6 +165,7 @@ export function PedidoDetailsSheet({
       data_termino: toDatetimeLocal(etapa.data_termino),
       data_termino_prevista: etapa.data_termino_prevista || "",
       status: etapa.status || "pendente",
+      observacoes: etapa.observacoes || "",
     });
   };
 
@@ -175,6 +176,7 @@ export function PedidoDetailsSheet({
         data_termino: etapaEditData.data_termino ? new Date(etapaEditData.data_termino).toISOString() : null,
         data_termino_prevista: etapaEditData.data_termino_prevista || null,
         status: etapaEditData.status,
+        observacoes: etapaEditData.observacoes || null,
       };
       if (etapaEditData.status === "concluido" && !payload.data_termino) {
         payload.data_termino = new Date().toISOString();
@@ -550,6 +552,10 @@ export function PedidoDetailsSheet({
                             <div>
                               <Label className="text-xs">Previsão de finalização</Label>
                               <Input type="date" className="h-8 text-xs" value={etapaEditData.data_termino_prevista} onChange={(e) => setEtapaEditData({ ...etapaEditData, data_termino_prevista: e.target.value })} />
+                            </div>
+                            <div>
+                              <Label className="text-xs">Observação</Label>
+                              <Textarea className="text-xs min-h-[60px]" placeholder="Adicione uma observação para esta etapa..." value={etapaEditData.observacoes} onChange={(e) => setEtapaEditData({ ...etapaEditData, observacoes: e.target.value })} />
                             </div>
                           </div>
                         ) : (
