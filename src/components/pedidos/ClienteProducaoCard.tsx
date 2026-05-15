@@ -47,6 +47,8 @@ interface Pedido {
     data_inicio_prevista?: string;
     data_termino_prevista?: string;
     observacoes?: string;
+    terceiro_id?: string | null;
+    terceiros?: { nome: string } | null;
   }>;
 }
 
