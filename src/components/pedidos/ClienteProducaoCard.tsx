@@ -207,6 +207,15 @@ export function ClienteProducaoCard({ cliente, producoes, onViewProducao }: Clie
     return "Aguardando";
   };
 
+  const getOficinaAtual = (producao: Pedido): string | null => {
+    const etapa =
+      producao.etapas_producao?.find((e: any) => e.status === "em_andamento") ||
+      [...(producao.etapas_producao || [])]
+        .sort((a: any, b: any) => a.ordem - b.ordem)
+        .find((e: any) => e.status === "pendente");
+    return (etapa as any)?.terceiros?.nome || null;
+  };
+
   const temProducaoAtrasada = () => {
     const hoje = __toLocalISO(new Date());
     return producoes.some(
