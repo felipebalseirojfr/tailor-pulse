@@ -47,6 +47,8 @@ interface Pedido {
     data_inicio_prevista?: string;
     data_termino_prevista?: string;
     observacoes?: string;
+    terceiro_id?: string | null;
+    terceiros?: { nome: string } | null;
   }>;
 }
 
@@ -205,6 +207,15 @@ export function ClienteProducaoCard({ cliente, producoes, onViewProducao }: Clie
     return "Aguardando";
   };
 
+  const getOficinaAtual = (producao: Pedido): string | null => {
+    const etapa =
+      producao.etapas_producao?.find((e: any) => e.status === "em_andamento") ||
+      [...(producao.etapas_producao || [])]
+        .sort((a: any, b: any) => a.ordem - b.ordem)
+        .find((e: any) => e.status === "pendente");
+    return (etapa as any)?.terceiros?.nome || null;
+  };
+
   const temProducaoAtrasada = () => {
     const hoje = __toLocalISO(new Date());
     return producoes.some(
@@ -323,6 +334,11 @@ export function ClienteProducaoCard({ cliente, producoes, onViewProducao }: Clie
                         <div>
                           <p className="text-muted-foreground text-xs">Etapa Atual</p>
                           <p className="font-medium">{getEtapaAtual(producao)}</p>
+                          {getOficinaAtual(producao) && (
+                            <p className="text-xs text-muted-foreground truncate" title={getOficinaAtual(producao) || ""}>
+                              📍 {getOficinaAtual(producao)}
+                            </p>
+                          )}
                         </div>
                         <div>
                           <p className="text-muted-foreground text-xs">Prazo</p>
