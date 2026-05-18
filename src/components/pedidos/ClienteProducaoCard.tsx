@@ -350,6 +350,11 @@ export function ClienteProducaoCard({ cliente, producoes, onViewProducao }: Clie
                               📍 {getOficinaAtual(producao)}
                             </p>
                           )}
+                          {getObservacaoAtual(producao) && (
+                            <p className="text-xs text-muted-foreground italic mt-1 line-clamp-2" title={getObservacaoAtual(producao) || ""}>
+                              📝 {getObservacaoAtual(producao)}
+                            </p>
+                          )}
                         </div>
                         <div>
                           <p className="text-muted-foreground text-xs">Prazo</p>
