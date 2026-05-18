@@ -207,13 +207,24 @@ export function ClienteProducaoCard({ cliente, producoes, onViewProducao }: Clie
     return "Aguardando";
   };
 
-  const getOficinaAtual = (producao: Pedido): string | null => {
-    const etapa =
+  const getEtapaAtualObj = (producao: Pedido) => {
+    return (
       producao.etapas_producao?.find((e: any) => e.status === "em_andamento") ||
       [...(producao.etapas_producao || [])]
         .sort((a: any, b: any) => a.ordem - b.ordem)
-        .find((e: any) => e.status === "pendente");
+        .find((e: any) => e.status === "pendente")
+    );
+  };
+
+  const getOficinaAtual = (producao: Pedido): string | null => {
+    const etapa = getEtapaAtualObj(producao);
     return (etapa as any)?.terceiros?.nome || null;
+  };
+
+  const getObservacaoAtual = (producao: Pedido): string | null => {
+    const etapa = getEtapaAtualObj(producao);
+    const obs = (etapa as any)?.observacoes;
+    return obs && String(obs).trim() ? String(obs).trim() : null;
   };
 
   const temProducaoAtrasada = () => {
