@@ -226,14 +226,29 @@ export function PedidoDetailsSheet({
   const handleVoltarEtapa = async () => {
     const etapasOrdenadas = [...etapas].sort((a: any, b: any) => a.ordem - b.ordem);
     const etapaAtualIndex = etapasOrdenadas.findIndex((e: any) => e.status === "em_andamento");
-    if (etapaAtualIndex <= 0) {
-      toast.error("Não é possível voltar. Esta é a primeira etapa ou não há etapa em andamento.");
-      return;
-    }
-    const etapaAtualObj = etapasOrdenadas[etapaAtualIndex];
-    const etapaAnterior = etapasOrdenadas[etapaAtualIndex - 1];
     setLoading(true);
     try {
+      if (etapaAtualIndex === -1) {
+        // Nenhuma em andamento: pode ser que todas estejam concluídas, ou todas pendentes
+        const ultimaConcluidaIndex = [...etapasOrdenadas].map((e: any) => e.status).lastIndexOf("concluido");
+        if (ultimaConcluidaIndex === -1) {
+          toast.error("Não é possível voltar. Nenhuma etapa foi iniciada.");
+          return;
+        }
+        const etapaParaReabrir = etapasOrdenadas[ultimaConcluidaIndex];
+        await supabase.from("etapas_producao").update({ status: "em_andamento", data_termino: null }).eq("id", etapaParaReabrir.id);
+        // Se pedido estava concluído, voltar para em_producao
+        await supabase.from("pedidos").update({ status_geral: "em_producao" }).eq("id", pedido.id);
+        toast.success("Etapa retrocedida com sucesso!");
+        onUpdate();
+        return;
+      }
+      if (etapaAtualIndex === 0) {
+        toast.error("Não é possível voltar. Esta é a primeira etapa.");
+        return;
+      }
+      const etapaAtualObj = etapasOrdenadas[etapaAtualIndex];
+      const etapaAnterior = etapasOrdenadas[etapaAtualIndex - 1];
       await supabase.from("etapas_producao").update({ status: "pendente", data_inicio: null, data_termino: null, data_inicio_prevista: null, data_termino_prevista: null }).eq("id", etapaAtualObj.id);
       await supabase.from("etapas_producao").update({ status: "em_andamento", data_termino: null }).eq("id", etapaAnterior.id);
       toast.success("Etapa retrocedida com sucesso!");
