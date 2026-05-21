@@ -175,6 +175,8 @@ export const useDashboardData = () => {
           nome: p.clientes?.nome || "Cliente não identificado",
         },
         etapas_producao: p.etapas_producao || [],
+        created_at: p.created_at,
+        updated_at: p.updated_at,
       })) || [];
 
       setPedidos(pedidosMapeados);
