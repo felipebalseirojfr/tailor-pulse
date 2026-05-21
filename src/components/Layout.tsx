@@ -151,8 +151,7 @@ export default function Layout({ children }: LayoutProps) {
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Pedidos", href: "/pedidos", icon: Package },
     { name: "Fila das Etapas", href: "/fila-etapas", icon: ListOrdered, roles: ["admin", "commercial", "production"] },
-    { name: "Comercial", href: "/comercial", icon: Handshake, roles: ["admin", "commercial"] },
-    { name: "Carteira", href: "/carteira", icon: Wallet, roles: ["admin", "commercial"] },
+    
     
     { name: "Clientes / Terceiros", href: "/clientes", icon: Users, roles: ["admin", "commercial"] },
     { name: "Calendário", href: "/calendario", icon: CalendarIcon },
