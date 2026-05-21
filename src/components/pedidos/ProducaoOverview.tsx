@@ -118,7 +118,54 @@ export function ProducaoOverview({ pedidos, onPedidoClick }: Props) {
 
   return (
     <div className="space-y-6">
-      {/* Bloco 1 — Alertas Críticos */}
+      {/* Bloco 1 — Volumetria do Mês */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Calendar className="h-5 w-5 text-success" />
+          <h2 className="text-xl font-bold tracking-tight text-foreground">Volumetria do Mês</h2>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+          <VolumetriaCard icon={CheckCircle2} color="text-success" label="Pedidos entregues no mês" value={volumetria.entregues} />
+          <VolumetriaCard icon={Package} color="text-primary" label="Peças produzidas no mês" value={volumetria.pecas.toLocaleString("pt-BR")} />
+          <VolumetriaCard icon={Plus} color="text-info" label="Novos no mês" value={volumetria.novos} />
+          <VolumetriaCard icon={CheckCircle2} color="text-success" label="Concluídos no mês" value={volumetria.concluidos} />
+        </div>
+      </section>
+
+      {/* Bloco 2 — Produção por Etapa */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Layers className="h-5 w-5 text-primary" />
+          <h2 className="text-xl font-bold tracking-tight text-foreground">Produção por Etapa</h2>
+          <span className="text-xs text-muted-foreground ml-2">clique para ver pedidos</span>
+        </div>
+        <div className="grid gap-3 grid-cols-2 md:grid-cols-4 lg:grid-cols-7">
+          {ETAPAS.map((e) => {
+            const list = producaoPorEtapa.get(e.key) || [];
+            return (
+              <button
+                key={e.key}
+                onClick={() => setEtapaSelecionada(e.key)}
+                className="text-left"
+              >
+                <Card className="h-full hover:border-primary transition-all">
+                  <CardContent className="p-4">
+                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
+                      {e.label}
+                    </p>
+                    <p className="text-3xl font-bold text-foreground">{list.length}</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {list.length === 1 ? "pedido" : "pedidos"}
+                    </p>
+                  </CardContent>
+                </Card>
+              </button>
+            );
+          })}
+        </div>
+      </section>
+
+      {/* Bloco 3 — Alertas Críticos */}
       <section className="space-y-3">
         <div className="flex items-center gap-2">
           <Flame className="h-5 w-5 text-destructive" />
@@ -157,53 +204,6 @@ export function ProducaoOverview({ pedidos, onPedidoClick }: Props) {
             items={alertas.semMovimentacao}
             onClick={() => setAlertaSelecionado({ titulo: "Sem movimentação há mais de 2 dias", items: alertas.semMovimentacao })}
           />
-        </div>
-      </section>
-
-      {/* Bloco 2 — Produção por Etapa */}
-      <section className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Layers className="h-5 w-5 text-primary" />
-          <h2 className="text-xl font-bold tracking-tight text-foreground">Produção por Etapa</h2>
-          <span className="text-xs text-muted-foreground ml-2">clique para ver pedidos</span>
-        </div>
-        <div className="grid gap-3 grid-cols-2 md:grid-cols-4 lg:grid-cols-7">
-          {ETAPAS.map((e) => {
-            const list = producaoPorEtapa.get(e.key) || [];
-            return (
-              <button
-                key={e.key}
-                onClick={() => setEtapaSelecionada(e.key)}
-                className="text-left"
-              >
-                <Card className="h-full hover:border-primary transition-all">
-                  <CardContent className="p-4">
-                    <p className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2">
-                      {e.label}
-                    </p>
-                    <p className="text-3xl font-bold text-foreground">{list.length}</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      {list.length === 1 ? "pedido" : "pedidos"}
-                    </p>
-                  </CardContent>
-                </Card>
-              </button>
-            );
-          })}
-        </div>
-      </section>
-
-      {/* Bloco 3 — Volumetria do Mês */}
-      <section className="space-y-3">
-        <div className="flex items-center gap-2">
-          <Calendar className="h-5 w-5 text-success" />
-          <h2 className="text-xl font-bold tracking-tight text-foreground">Volumetria do Mês</h2>
-        </div>
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-          <VolumetriaCard icon={CheckCircle2} color="text-success" label="Pedidos entregues no mês" value={volumetria.entregues} />
-          <VolumetriaCard icon={Package} color="text-primary" label="Peças produzidas no mês" value={volumetria.pecas.toLocaleString("pt-BR")} />
-          <VolumetriaCard icon={Plus} color="text-info" label="Novos no mês" value={volumetria.novos} />
-          <VolumetriaCard icon={CheckCircle2} color="text-success" label="Concluídos no mês" value={volumetria.concluidos} />
         </div>
       </section>
 
