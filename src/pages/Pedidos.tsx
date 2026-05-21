@@ -23,7 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Plus, Search, Package as PackageIcon, ChevronRight, Filter, ChevronDown, AlertCircle, Maximize2, X } from "lucide-react";
-import { PedidosSummaryCards } from "@/components/pedidos/PedidosSummaryCards";
+import { ProducaoOverview } from "@/components/pedidos/ProducaoOverview";
 import { EtapasSummaryCards } from "@/components/pedidos/EtapasSummaryCards";
 import { PedidoDetailsSheet } from "@/components/pedidos/PedidoDetailsSheet";
 import { EtapasVisuais } from "@/components/pedidos/EtapasVisuais";
@@ -197,7 +197,7 @@ export default function Pedidos() {
           *,
           clientes(nome),
           profiles(nome),
-          etapas_producao(id, tipo_etapa, status, ordem, data_inicio, data_termino, data_inicio_prevista, data_termino_prevista, observacoes, terceiro_id, terceiros(nome))
+          etapas_producao(id, tipo_etapa, status, ordem, data_inicio, data_termino, data_inicio_prevista, data_termino_prevista, observacoes, updated_at, terceiro_id, terceiros(nome))
         `);
 
       if (error) throw error;
@@ -542,19 +542,21 @@ export default function Pedidos() {
         </div>
       )}
 
-      {/* Cards de Resumo */}
-      <div className={modoTV ? 'px-6' : ''}>
-        <PedidosSummaryCards
-          total={summaryData.total}
-          aguardandoInicio={summaryData.aguardandoInicio}
-          emProducao={summaryData.emProducao}
-          concluidos={summaryData.concluidos}
-          atrasados={summaryData.atrasados}
-          onFilterClick={setStatusFilter}
-          activeFilter={statusFilter}
-        />
-        
-      </div>
+      {/* Visão de Produção: Alertas, Etapas e Volumetria */}
+      {!modoTV && (
+        <div>
+          <ProducaoOverview
+            pedidos={pedidos}
+            onPedidoClick={(p) => {
+              const pedidoCompleto = pedidos.find((x) => x.id === p.id);
+              if (pedidoCompleto) {
+                setSelectedPedido(pedidoCompleto);
+                setSheetOpen(true);
+              }
+            }}
+          />
+        </div>
+      )}
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className={`space-y-6 ${modoTV ? 'px-6' : ''}`}>
         {!modoTV && (
