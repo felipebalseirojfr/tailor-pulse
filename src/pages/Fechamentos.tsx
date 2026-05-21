@@ -25,6 +25,8 @@ const monthOptions = (() => {
   return arr;
 })();
 
+type Row = FechamentoRow & { created_at?: string };
+
 export default function Fechamentos() {
   const [rows, setRows] = useState<FechamentoRow[]>([]);
   const [loading, setLoading] = useState(true);
