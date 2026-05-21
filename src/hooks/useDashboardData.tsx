@@ -30,7 +30,11 @@ export interface PedidoDetalhado {
     tipo_etapa: string;
     status: string;
     ordem: number;
+    updated_at?: string;
+    data_inicio?: string | null;
   }>;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface AtividadeRecente {
