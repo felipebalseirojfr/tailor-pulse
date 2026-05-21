@@ -151,9 +151,8 @@ export default function Layout({ children }: LayoutProps) {
   const allNavigation: NavItem[] = [
     { name: "Dashboard", href: "/", icon: LayoutDashboard },
     { name: "Pedidos", href: "/pedidos", icon: Package },
+    { name: "Fechamento", href: "/pcp/fechamentos", icon: PackageCheck, roles: ["admin", "commercial", "production", "pcp_closer", "backoffice_fiscal"] },
     { name: "Fila das Etapas", href: "/fila-etapas", icon: ListOrdered, roles: ["admin", "commercial", "production"] },
-    
-    
     { name: "Clientes / Terceiros", href: "/clientes", icon: Users, roles: ["admin", "commercial"] },
     { name: "Calendário", href: "/calendario", icon: CalendarIcon },
     { name: "Usuários", href: "/usuarios", icon: UserCog, roles: ["admin"] },
