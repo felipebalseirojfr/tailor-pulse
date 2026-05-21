@@ -75,7 +75,7 @@ export const useDashboardData = () => {
         .select(`
           *,
           clientes(nome),
-          etapas_producao(tipo_etapa, status, ordem)
+          etapas_producao(tipo_etapa, status, ordem, updated_at, data_inicio)
         `)
         .order("created_at", { ascending: false });
 
