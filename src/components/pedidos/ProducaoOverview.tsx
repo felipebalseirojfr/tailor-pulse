@@ -118,45 +118,17 @@ export function ProducaoOverview({ pedidos, onPedidoClick }: Props) {
 
   return (
     <div className="space-y-6">
-      {/* Bloco 1 — Alertas Críticos */}
+      {/* Bloco 1 — Volumetria do Mês */}
       <section className="space-y-3">
         <div className="flex items-center gap-2">
-          <Flame className="h-5 w-5 text-destructive" />
-          <h2 className="text-xl font-bold tracking-tight text-foreground">Alertas Críticos</h2>
+          <Calendar className="h-5 w-5 text-success" />
+          <h2 className="text-xl font-bold tracking-tight text-foreground">Volumetria do Mês</h2>
         </div>
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
-          <AlertaCard
-            icon={AlertTriangle}
-            label="Prazo vencido"
-            count={alertas.atrasados.length}
-            tone="destructive"
-            items={alertas.atrasados}
-            onClick={() => setAlertaSelecionado({ titulo: "Pedidos com prazo vencido", items: alertas.atrasados })}
-          />
-          <AlertaCard
-            icon={Clock}
-            label="Entrega em 3 dias"
-            count={alertas.entregaProxima.length}
-            tone="warning"
-            items={alertas.entregaProxima}
-            onClick={() => setAlertaSelecionado({ titulo: "Entrega nos próximos 3 dias", items: alertas.entregaProxima })}
-          />
-          <AlertaCard
-            icon={PauseCircle}
-            label="Parados em estamparia/bordado >3d"
-            count={alertas.paradosEstamparia.length}
-            tone="destructive"
-            items={alertas.paradosEstamparia}
-            onClick={() => setAlertaSelecionado({ titulo: "Parados em estamparia/bordado", items: alertas.paradosEstamparia })}
-          />
-          <AlertaCard
-            icon={Timer}
-            label="Sem movimentação >2d"
-            count={alertas.semMovimentacao.length}
-            tone="warning"
-            items={alertas.semMovimentacao}
-            onClick={() => setAlertaSelecionado({ titulo: "Sem movimentação há mais de 2 dias", items: alertas.semMovimentacao })}
-          />
+          <VolumetriaCard icon={CheckCircle2} color="text-success" label="Pedidos entregues no mês" value={volumetria.entregues} />
+          <VolumetriaCard icon={Package} color="text-primary" label="Peças produzidas no mês" value={volumetria.pecas.toLocaleString("pt-BR")} />
+          <VolumetriaCard icon={Plus} color="text-info" label="Novos no mês" value={volumetria.novos} />
+          <VolumetriaCard icon={CheckCircle2} color="text-success" label="Concluídos no mês" value={volumetria.concluidos} />
         </div>
       </section>
 
