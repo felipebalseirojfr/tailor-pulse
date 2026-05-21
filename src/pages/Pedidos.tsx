@@ -23,7 +23,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Plus, Search, Package as PackageIcon, ChevronRight, Filter, ChevronDown, AlertCircle, Maximize2, X } from "lucide-react";
-import { PedidosSummaryCards } from "@/components/pedidos/PedidosSummaryCards";
+import { ProducaoOverview } from "@/components/pedidos/ProducaoOverview";
 import { EtapasSummaryCards } from "@/components/pedidos/EtapasSummaryCards";
 import { PedidoDetailsSheet } from "@/components/pedidos/PedidoDetailsSheet";
 import { EtapasVisuais } from "@/components/pedidos/EtapasVisuais";
