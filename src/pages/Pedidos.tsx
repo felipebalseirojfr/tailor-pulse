@@ -586,83 +586,74 @@ export default function Pedidos() {
           </div>
         )}
 
-        <TabsContent value={activeTab} className="space-y-6">
-          {/* Filtros */}
+        <TabsContent value={activeTab} className="space-y-4">
+          {/* Filtros + Contador */}
           {!modoTV && (
-            <Card>
-              <CardContent className="pt-6">
-                <Collapsible open={filtrosAbertos} onOpenChange={setFiltrosAbertos}>
-                  <div className="flex items-center justify-between mb-4">
-                    <CollapsibleTrigger asChild>
-                      <Button variant="outline" className="w-full justify-between">
-                        <div className="flex items-center gap-2">
-                          <Filter className="h-4 w-4" />
-                          <span>Filtros</span>
-                        </div>
-                        <ChevronDown className={`h-4 w-4 transition-transform ${filtrosAbertos ? 'rotate-180' : ''}`} />
-                      </Button>
-                    </CollapsibleTrigger>
+            <div className="flex items-center justify-between gap-3">
+              <div className="text-sm text-muted-foreground">
+                <span className="font-semibold text-foreground">
+                  {pedidos.filter((p) => p.status_geral !== "concluido").length}
+                </span>{" "}
+                pedidos sendo produzidos
+              </div>
+
+              <Popover open={filtrosAbertos} onOpenChange={setFiltrosAbertos}>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" size="icon" aria-label="Filtros">
+                    <Filter className="h-4 w-4" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent align="end" className="w-[min(92vw,520px)] space-y-4 bg-background z-50">
+                  <div className="flex flex-col gap-3 md:flex-row">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                      <Input
+                        placeholder="Buscar cliente, produto, referência ou OP..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        className="pl-9"
+                      />
+                    </div>
+                    {activeTab === "controle" && (
+                      <Select value={statusFilter} onValueChange={setStatusFilter}>
+                        <SelectTrigger className="w-full md:w-[180px]">
+                          <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="todos">Todos os status</SelectItem>
+                          <SelectItem value="aguardando_inicio">Aguardando Início</SelectItem>
+                          <SelectItem value="em_producao">Em Produção</SelectItem>
+                          <SelectItem value="atrasado">Atrasados</SelectItem>
+                          <SelectItem value="concluido">Concluídos</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
                   </div>
-                  
-                  <CollapsibleContent className="space-y-4">
-                    <div className="flex flex-col gap-4 md:flex-row">
-                      <div className="relative flex-1">
-                        <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                        <Input
-                          placeholder="Buscar cliente, produto, referência ou OP..."
-                          value={searchTerm}
-                          onChange={(e) => setSearchTerm(e.target.value)}
-                          className="pl-9"
-                        />
-                      </div>
-                      {activeTab === "controle" && (
-                        <Select value={statusFilter} onValueChange={setStatusFilter}>
-                          <SelectTrigger className="w-full md:w-[200px]">
-                            <SelectValue placeholder="Status" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="todos">Todos os status</SelectItem>
-                            <SelectItem value="aguardando_inicio">Aguardando Início</SelectItem>
-                            <SelectItem value="em_producao">Em Produção</SelectItem>
-                            <SelectItem value="atrasado">Atrasados</SelectItem>
-                            <SelectItem value="concluido">Concluídos</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      )}
-                    </div>
-                    <div className="grid gap-4 md:grid-cols-3">
-                      <FiltroAvancado
-                        tipo="marca"
-                        opcoes={Array.from(new Set(pedidos.map((p) => p.clientes?.nome).filter(Boolean)))}
-                        valor={marcaFilter}
-                        onChange={setMarcaFilter}
-                        placeholder="Filtrar por marca"
-                      />
-                      <FiltroAvancado
-                        tipo="referencia"
-                        opcoes={Array.from(new Set(pedidos.map((p) => p.tipo_peca).filter(Boolean)))}
-                        valor={referenciaFilter}
-                        onChange={setReferenciaFilter}
-                        placeholder="Filtrar por referência"
-                      />
-                      <FiltroAvancado
-                        tipo="op"
-                        opcoes={Array.from(new Set(pedidos.map((p) => `#${p.id.slice(0, 8)}`)))}
-                        valor={opFilter}
-                        onChange={setOpFilter}
-                        placeholder="Filtrar por #OP"
-                      />
-                    </div>
-                  </CollapsibleContent>
-                </Collapsible>
-              </CardContent>
-            </Card>
-          )}
-          
-          {/* Contador de Resultados */}
-          {filteredPedidos.length > 0 && (
-            <div className="text-sm text-muted-foreground">
-              Exibindo {filteredPedidos.length} de {pedidos.length} pedidos
+                  <div className="grid gap-3 md:grid-cols-3">
+                    <FiltroAvancado
+                      tipo="marca"
+                      opcoes={Array.from(new Set(pedidos.map((p) => p.clientes?.nome).filter(Boolean)))}
+                      valor={marcaFilter}
+                      onChange={setMarcaFilter}
+                      placeholder="Filtrar por marca"
+                    />
+                    <FiltroAvancado
+                      tipo="referencia"
+                      opcoes={Array.from(new Set(pedidos.map((p) => p.tipo_peca).filter(Boolean)))}
+                      valor={referenciaFilter}
+                      onChange={setReferenciaFilter}
+                      placeholder="Filtrar por referência"
+                    />
+                    <FiltroAvancado
+                      tipo="op"
+                      opcoes={Array.from(new Set(pedidos.map((p) => `#${p.id.slice(0, 8)}`)))}
+                      valor={opFilter}
+                      onChange={setOpFilter}
+                      placeholder="Filtrar por #OP"
+                    />
+                  </div>
+                </PopoverContent>
+              </Popover>
             </div>
           )}
 
