@@ -30,7 +30,11 @@ export interface PedidoDetalhado {
     tipo_etapa: string;
     status: string;
     ordem: number;
+    updated_at?: string;
+    data_inicio?: string | null;
   }>;
+  created_at?: string;
+  updated_at?: string;
 }
 
 export interface AtividadeRecente {
@@ -71,7 +75,7 @@ export const useDashboardData = () => {
         .select(`
           *,
           clientes(nome),
-          etapas_producao(tipo_etapa, status, ordem)
+          etapas_producao(tipo_etapa, status, ordem, updated_at, data_inicio)
         `)
         .order("created_at", { ascending: false });
 
@@ -171,6 +175,8 @@ export const useDashboardData = () => {
           nome: p.clientes?.nome || "Cliente não identificado",
         },
         etapas_producao: p.etapas_producao || [],
+        created_at: p.created_at,
+        updated_at: p.updated_at,
       })) || [];
 
       setPedidos(pedidosMapeados);
