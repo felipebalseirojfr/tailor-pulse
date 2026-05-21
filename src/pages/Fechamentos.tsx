@@ -79,7 +79,7 @@ export default function Fechamentos() {
 
   const filtered = useMemo(() => {
     return rows.filter((r) => {
-      const ref = parseLocalDate(r.data_fechamento) ?? parseLocalDate(r.created_at as any);
+      const ref = parseLocalDate(r.data_fechamento) ?? parseLocalDate((r as Row).created_at as any);
       if (ref) {
         const key = `${ref.getFullYear()}-${String(ref.getMonth() + 1).padStart(2, "0")}`;
         if (key !== mes) return false;
