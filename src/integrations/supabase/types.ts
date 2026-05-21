@@ -254,177 +254,62 @@ export type Database = {
           },
         ]
       }
-      fechamento_itens: {
-        Row: {
-          caixas: number | null
-          cor: string
-          created_at: string | null
-          fechamento_id: string
-          id: string
-          modelo: string
-          saldo_a_fechar: number
-          sku: string
-          tamanho: string
-          total_calculado: number | null
-          unidades: number | null
-          updated_at: string | null
-        }
-        Insert: {
-          caixas?: number | null
-          cor: string
-          created_at?: string | null
-          fechamento_id: string
-          id?: string
-          modelo: string
-          saldo_a_fechar?: number
-          sku: string
-          tamanho: string
-          total_calculado?: number | null
-          unidades?: number | null
-          updated_at?: string | null
-        }
-        Update: {
-          caixas?: number | null
-          cor?: string
-          created_at?: string | null
-          fechamento_id?: string
-          id?: string
-          modelo?: string
-          saldo_a_fechar?: number
-          sku?: string
-          tamanho?: string
-          total_calculado?: number | null
-          unidades?: number | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fechamento_itens_fechamento_id_fkey"
-            columns: ["fechamento_id"]
-            isOneToOne: false
-            referencedRelation: "fechamentos"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      fechamento_logs: {
-        Row: {
-          acao: string
-          created_at: string | null
-          dados_antes: Json | null
-          dados_depois: Json | null
-          fechamento_id: string
-          id: string
-          ip_address: string | null
-          user_agent: string | null
-          usuario_id: string | null
-        }
-        Insert: {
-          acao: string
-          created_at?: string | null
-          dados_antes?: Json | null
-          dados_depois?: Json | null
-          fechamento_id: string
-          id?: string
-          ip_address?: string | null
-          user_agent?: string | null
-          usuario_id?: string | null
-        }
-        Update: {
-          acao?: string
-          created_at?: string | null
-          dados_antes?: Json | null
-          dados_depois?: Json | null
-          fechamento_id?: string
-          id?: string
-          ip_address?: string | null
-          user_agent?: string | null
-          usuario_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fechamento_logs_fechamento_id_fkey"
-            columns: ["fechamento_id"]
-            isOneToOne: false
-            referencedRelation: "fechamentos"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       fechamentos: {
         Row: {
-          atribuido_para: string | null
-          created_at: string | null
+          arquivo_nf_url: string | null
+          cliente_id: string
+          created_at: string
           data_emissao_nf: string | null
-          fechado_em: string | null
-          fechado_por: string | null
-          foto_caderno_url: string | null
+          data_fechamento: string | null
           id: string
-          link_arquivo_nf: string | null
-          lote_of: string
           numero_nf: string | null
-          observacoes: string | null
+          observacao_perda: string | null
           pedido_id: string
-          referencia_id: string | null
-          status: string
-          status_nf: string | null
-          updated_at: string | null
-          valor_total_nf: number | null
+          quantidade_caixas: number | null
+          quantidade_entrada: number | null
+          quantidade_prevista: number
+          quantidade_saida: number | null
+          referencia_id: string
+          status_nf: Database["public"]["Enums"]["status_nf_fechamento"]
+          updated_at: string
         }
         Insert: {
-          atribuido_para?: string | null
-          created_at?: string | null
+          arquivo_nf_url?: string | null
+          cliente_id: string
+          created_at?: string
           data_emissao_nf?: string | null
-          fechado_em?: string | null
-          fechado_por?: string | null
-          foto_caderno_url?: string | null
+          data_fechamento?: string | null
           id?: string
-          link_arquivo_nf?: string | null
-          lote_of: string
           numero_nf?: string | null
-          observacoes?: string | null
+          observacao_perda?: string | null
           pedido_id: string
-          referencia_id?: string | null
-          status?: string
-          status_nf?: string | null
-          updated_at?: string | null
-          valor_total_nf?: number | null
+          quantidade_caixas?: number | null
+          quantidade_entrada?: number | null
+          quantidade_prevista?: number
+          quantidade_saida?: number | null
+          referencia_id: string
+          status_nf?: Database["public"]["Enums"]["status_nf_fechamento"]
+          updated_at?: string
         }
         Update: {
-          atribuido_para?: string | null
-          created_at?: string | null
+          arquivo_nf_url?: string | null
+          cliente_id?: string
+          created_at?: string
           data_emissao_nf?: string | null
-          fechado_em?: string | null
-          fechado_por?: string | null
-          foto_caderno_url?: string | null
+          data_fechamento?: string | null
           id?: string
-          link_arquivo_nf?: string | null
-          lote_of?: string
           numero_nf?: string | null
-          observacoes?: string | null
+          observacao_perda?: string | null
           pedido_id?: string
-          referencia_id?: string | null
-          status?: string
-          status_nf?: string | null
-          updated_at?: string | null
-          valor_total_nf?: number | null
+          quantidade_caixas?: number | null
+          quantidade_entrada?: number | null
+          quantidade_prevista?: number
+          quantidade_saida?: number | null
+          referencia_id?: string
+          status_nf?: Database["public"]["Enums"]["status_nf_fechamento"]
+          updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "fechamentos_pedido_id_fkey"
-            columns: ["pedido_id"]
-            isOneToOne: false
-            referencedRelation: "pedidos"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "fechamentos_referencia_id_fkey"
-            columns: ["referencia_id"]
-            isOneToOne: false
-            referencedRelation: "referencias"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       lead_interacoes: {
         Row: {
@@ -1029,6 +914,7 @@ export type Database = {
         | "esportivo"
         | "outros"
       status_etapa: "pendente" | "em_andamento" | "concluido"
+      status_nf_fechamento: "pendente" | "emitida"
       status_pipeline:
         | "lead_qualificado"
         | "reuniao_realizada"
@@ -1221,6 +1107,7 @@ export const Constants = {
         "outros",
       ],
       status_etapa: ["pendente", "em_andamento", "concluido"],
+      status_nf_fechamento: ["pendente", "emitida"],
       status_pipeline: [
         "lead_qualificado",
         "reuniao_realizada",
