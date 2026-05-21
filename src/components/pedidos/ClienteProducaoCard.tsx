@@ -357,7 +357,7 @@ export function ClienteProducaoCard({ cliente, producoes, onViewProducao }: Clie
                           )}
                         </div>
                         <div>
-                          <p className="text-muted-foreground text-xs">Prazo</p>
+                          <p className="text-muted-foreground text-xs">Prazo de entrega</p>
                           <p className="font-medium">
                             {new Date(producao.prazo_final + 'T00:00:00').toLocaleDateString("pt-BR")}
                           </p>
