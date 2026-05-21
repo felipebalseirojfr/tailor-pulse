@@ -14,8 +14,6 @@ import {
   Shield,
   FileCheck,
   PackageCheck,
-  Wallet,
-  Handshake,
   ListOrdered,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
