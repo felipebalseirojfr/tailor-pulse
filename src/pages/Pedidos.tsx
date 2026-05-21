@@ -197,7 +197,7 @@ export default function Pedidos() {
           *,
           clientes(nome),
           profiles(nome),
-          etapas_producao(id, tipo_etapa, status, ordem, data_inicio, data_termino, data_inicio_prevista, data_termino_prevista, observacoes, terceiro_id, terceiros(nome))
+          etapas_producao(id, tipo_etapa, status, ordem, data_inicio, data_termino, data_inicio_prevista, data_termino_prevista, observacoes, updated_at, terceiro_id, terceiros(nome))
         `);
 
       if (error) throw error;
