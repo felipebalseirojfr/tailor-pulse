@@ -13,6 +13,7 @@ import {
   UserCog,
   Shield,
   FileCheck,
+  PackageCheck,
   Wallet,
   Handshake,
   ListOrdered,
