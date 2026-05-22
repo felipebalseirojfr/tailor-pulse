@@ -590,13 +590,14 @@ export default function Pedidos() {
         <TabsContent value={activeTab} className="space-y-4">
           {/* Filtros + Contador */}
           {!modoTV && (
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="text-3xl font-bold tracking-tight text-foreground">
+            <div className="relative flex items-center justify-center gap-3">
+              <h2 className="text-3xl font-bold tracking-tight text-foreground text-center">
                 Pedidos em produção
                 <span className="ml-3 text-2xl font-semibold text-muted-foreground">
                   ({pedidos.filter((p) => p.status_geral !== "concluido").length})
                 </span>
               </h2>
+
 
 
               <Popover open={filtrosAbertos} onOpenChange={setFiltrosAbertos}>
