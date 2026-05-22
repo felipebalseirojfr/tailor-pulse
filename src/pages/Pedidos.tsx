@@ -618,22 +618,6 @@ export default function Pedidos() {
                       />
                     </div>
 
-                <PopoverTrigger asChild>
-                  <Button variant="outline" size="icon" aria-label="Filtros">
-                    <Filter className="h-4 w-4" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent align="end" className="w-[min(92vw,520px)] space-y-4 bg-background z-50">
-                  <div className="flex flex-col gap-3 md:flex-row">
-                    <div className="relative flex-1">
-                      <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                      <Input
-                        placeholder="Buscar cliente, produto, referência ou OP..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="pl-9"
-                      />
-                    </div>
                     {activeTab === "controle" && (
                       <Select value={statusFilter} onValueChange={setStatusFilter}>
                         <SelectTrigger className="w-full md:w-[180px]">
