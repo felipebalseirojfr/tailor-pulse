@@ -122,9 +122,10 @@ export function FechamentoSheet({ open, onOpenChange, fechamento, onSaved }: Pro
         const path = `${fechamento.id}/${Date.now()}.${ext}`;
         const { error: upErr } = await supabase.storage.from("nf-files").upload(path, arquivo, { upsert: true });
         if (upErr) throw upErr;
-        const { data: pub } = supabase.storage.from("nf-files").getPublicUrl(path);
-        arquivoUrl = pub.publicUrl;
+        // Store storage path (private bucket); signed URL is generated on demand
+        arquivoUrl = path;
       }
+
 
       const { error } = await supabase
         .from("fechamentos")
@@ -215,10 +216,33 @@ export function FechamentoSheet({ open, onOpenChange, fechamento, onSaved }: Pro
                 <div className="flex justify-between"><span className="text-muted-foreground">Número</span><span className="font-medium">{fechamento.numero_nf}</span></div>
                 <div className="flex justify-between"><span className="text-muted-foreground">Data emissão</span><span className="font-medium">{fechamento.data_emissao_nf ? format(parseLocalDate(fechamento.data_emissao_nf)!, "dd/MM/yyyy") : "—"}</span></div>
                 {fechamento.arquivo_nf_url && (
-                  <a href={fechamento.arquivo_nf_url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-primary hover:underline">
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      const url = fechamento.arquivo_nf_url!;
+                      // Backward compat: legacy public URLs were stored fully; new format stores the path.
+                      const path = url.startsWith("http")
+                        ? url.split("/nf-files/")[1] ?? null
+                        : url;
+                      if (!path) {
+                        toast.error("Arquivo indisponível");
+                        return;
+                      }
+                      const { data, error } = await supabase.storage
+                        .from("nf-files")
+                        .createSignedUrl(path, 60);
+                      if (error || !data) {
+                        toast.error("Não foi possível gerar link de download");
+                        return;
+                      }
+                      window.open(data.signedUrl, "_blank", "noopener,noreferrer");
+                    }}
+                    className="inline-flex items-center gap-2 text-primary hover:underline"
+                  >
                     <Download className="h-4 w-4" /> Baixar arquivo da NF
-                  </a>
+                  </button>
                 )}
+
               </div>
             ) : canEmitNf ? (
               <Button onClick={() => setNfDialogOpen(true)} variant="default" className="w-full">
