@@ -122,9 +122,10 @@ export function FechamentoSheet({ open, onOpenChange, fechamento, onSaved }: Pro
         const path = `${fechamento.id}/${Date.now()}.${ext}`;
         const { error: upErr } = await supabase.storage.from("nf-files").upload(path, arquivo, { upsert: true });
         if (upErr) throw upErr;
-        const { data: pub } = supabase.storage.from("nf-files").getPublicUrl(path);
-        arquivoUrl = pub.publicUrl;
+        // Store storage path (private bucket); signed URL is generated on demand
+        arquivoUrl = path;
       }
+
 
       const { error } = await supabase
         .from("fechamentos")
