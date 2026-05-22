@@ -591,12 +591,13 @@ export default function Pedidos() {
           {/* Filtros + Contador */}
           {!modoTV && (
             <div className="flex items-center justify-between gap-3">
-              <div className="text-sm text-muted-foreground">
-                <span className="font-semibold text-foreground">
-                  {pedidos.filter((p) => p.status_geral !== "concluido").length}
-                </span>{" "}
-                pedidos sendo produzidos
-              </div>
+              <h2 className="text-3xl font-bold tracking-tight text-foreground">
+                Pedidos em produção
+                <span className="ml-3 text-2xl font-semibold text-muted-foreground">
+                  ({pedidos.filter((p) => p.status_geral !== "concluido").length})
+                </span>
+              </h2>
+
 
               <Popover open={filtrosAbertos} onOpenChange={setFiltrosAbertos}>
                 <PopoverTrigger asChild>
