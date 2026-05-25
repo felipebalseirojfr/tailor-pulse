@@ -17,6 +17,21 @@ import { useUserRoles } from "@/hooks/useUserRoles";
 import { parseLocalDate, toLocalISO, todayLocal } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 
+// Ordem canônica de tamanhos do romaneio físico da JFR
+const TAMANHO_ORDEM = [
+  "1","2","3","4","6","8","10","12","14","16",
+  "PP","P","M","G","GG","XG","XXG","XGG","XGG2","XGG3","UNICO"
+];
+const sortTamanhos = (arr: string[]) =>
+  [...arr].sort((a, b) => {
+    const ia = TAMANHO_ORDEM.indexOf(a.toUpperCase());
+    const ib = TAMANHO_ORDEM.indexOf(b.toUpperCase());
+    if (ia === -1 && ib === -1) return a.localeCompare(b);
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
+  });
+
 export interface FechamentoRow {
   id: string;
   pedido_id: string;
