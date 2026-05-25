@@ -152,6 +152,10 @@ export function FechamentoSheet({ open, onOpenChange, fechamento, onSaved }: Pro
           quantidade_saida: hasSaida ? sai : null,
           quantidade_caixas: caixas === "" ? null : parseInt(caixas),
           observacao_perda: obs.trim() || null,
+          data_entrada: dataEntrada ? toLocalISO(dataEntrada) : null,
+          responsavel_entrada: respEntrada.trim() || null,
+          data_saida: dataSaida ? toLocalISO(dataSaida) : null,
+          responsavel_saida: respSaida.trim() || null,
           data_fechamento: new Date().toISOString(),
         })
         .eq("id", fechamento.id);
