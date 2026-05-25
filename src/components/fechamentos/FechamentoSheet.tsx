@@ -201,37 +201,101 @@ export function FechamentoSheet({ open, onOpenChange, fechamento, onSaved }: Pro
             <div className="flex justify-between"><span className="text-muted-foreground">Qtd prevista</span><span className="font-medium">{fechamento.quantidade_prevista}</span></div>
           </div>
 
-          {/* Contagens */}
-          <div className="space-y-3">
-            <h3 className="font-semibold">Contagens</h3>
+          {/* Contagens por tamanho */}
+          <div className="space-y-4">
+            <h3 className="font-semibold">Contagem por tamanho</h3>
+
+            {tamanhos.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                Este pedido não tem grade de tamanhos definida. Edite o pedido para registrar a grade.
+              </p>
+            ) : (
+              <>
+                {/* Etapa 1 — Entrada (chegada na passadoria) */}
+                <div className="rounded-md border border-border p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium">1. Entrada na passadoria</p>
+                      <p className="text-xs text-muted-foreground">O que chegou para a passadeira</p>
+                    </div>
+                    <Badge variant="secondary">Total: {ent}</Badge>
+                  </div>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                    {tamanhos.map((t) => (
+                      <div key={`ent-${t}`}>
+                        <Label className="text-[10px] uppercase text-muted-foreground">{t}</Label>
+                        <Input
+                          type="number"
+                          min={0}
+                          value={gradeEntrada[t] ?? ""}
+                          onChange={(e) => setGradeEntrada({ ...gradeEntrada, [t]: e.target.value })}
+                          className="h-9 text-center"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Etapa 2 — Saída (já revisado / nas caixas) */}
+                <div className="rounded-md border border-border p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium">2. Saída para caixas</p>
+                      <p className="text-xs text-muted-foreground">O que já foi revisado e embalado</p>
+                    </div>
+                    <Badge variant="secondary">Total: {sai}</Badge>
+                  </div>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                    {tamanhos.map((t) => (
+                      <div key={`sai-${t}`}>
+                        <Label className="text-[10px] uppercase text-muted-foreground">{t}</Label>
+                        <Input
+                          type="number"
+                          min={0}
+                          value={gradeSaida[t] ?? ""}
+                          onChange={(e) => setGradeSaida({ ...gradeSaida, [t]: e.target.value })}
+                          className="h-9 text-center"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
             <div className="grid grid-cols-2 gap-3">
-              <div><Label>Entrada</Label><Input type="number" value={entrada} onChange={(e) => setEntrada(e.target.value)} /></div>
-              <div><Label>Saída</Label><Input type="number" value={saida} onChange={(e) => setSaida(e.target.value)} /></div>
-              <div><Label>Caixas</Label><Input type="number" value={caixas} onChange={(e) => setCaixas(e.target.value)} /></div>
               <div>
-                <Label>Diferença</Label>
+                <Label>Caixas</Label>
+                <Input type="number" value={caixas} onChange={(e) => setCaixas(e.target.value)} />
+              </div>
+              <div>
+                <Label>Diferença (entrada − saída)</Label>
                 <div className={cn(
                   "h-10 flex items-center px-3 rounded-md border text-sm font-medium",
-                  diferenca == null ? "text-muted-foreground" :
+                  !hasEntrada || !hasSaida ? "text-muted-foreground" :
                   diferenca > 0 ? "text-destructive border-destructive/40" :
                   diferenca < 0 ? "text-orange-500 border-orange-500/40" :
                   "text-muted-foreground"
                 )}>
-                  {diferenca == null ? "—" : diferenca}
+                  {!hasEntrada || !hasSaida ? "—" : diferenca}
                 </div>
               </div>
             </div>
-            {diferenca != null && diferenca < 0 && (
+            {hasEntrada && hasSaida && diferenca < 0 && (
               <p className="text-xs text-orange-500">⚠ Saída maior que entrada — verifique a contagem</p>
             )}
             <div>
-              <Label>Observação de perda {diferenca !== 0 && diferenca != null && <span className="text-destructive">*</span>}</Label>
+              <Label>
+                Observação de perda{" "}
+                {hasEntrada && hasSaida && diferenca !== 0 && <span className="text-destructive">*</span>}
+              </Label>
               <Textarea value={obs} onChange={(e) => setObs(e.target.value)} rows={3} placeholder="Justifique a diferença..." />
             </div>
             <Button onClick={handleSalvarContagem} disabled={saving} className="w-full">
               {saving && <Loader2 className="h-4 w-4 animate-spin" />} Salvar contagem
             </Button>
           </div>
+
 
           {/* NF */}
           <div className="space-y-3 border-t pt-6">
