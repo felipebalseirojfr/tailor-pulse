@@ -243,15 +243,35 @@ export function FechamentoSheet({ open, onOpenChange, fechamento, onSaved }: Pro
             ) : (
               <>
                 {/* Etapa 1 — Entrada (chegada na passadoria) */}
-                <div className="rounded-md border border-border p-3 space-y-2">
+                <div className="rounded-md border border-border p-3 space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium">1. Entrada na passadoria</p>
-                      <p className="text-xs text-muted-foreground">O que chegou para a passadeira</p>
+                      <p className="text-xs text-muted-foreground">Preencher quando as peças chegarem</p>
                     </div>
                     <Badge variant="secondary">Total: {ent}</Badge>
                   </div>
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs">Data de entrada</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" size="sm" className="w-full justify-start font-normal">
+                            <CalendarIcon className="mr-2 h-3 w-3" />
+                            {dataEntrada ? format(dataEntrada, "dd/MM/yyyy") : "Selecionar"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar mode="single" selected={dataEntrada ?? undefined} onSelect={(d) => setDataEntrada(d ?? null)} initialFocus className="p-3 pointer-events-auto" />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Contagem feita por</Label>
+                      <Input value={respEntrada} onChange={(e) => setRespEntrada(e.target.value)} placeholder="Nome" className="h-9" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
                     {tamanhos.map((t) => (
                       <div key={`ent-${t}`}>
                         <Label className="text-[10px] uppercase text-muted-foreground">{t}</Label>
@@ -268,15 +288,35 @@ export function FechamentoSheet({ open, onOpenChange, fechamento, onSaved }: Pro
                 </div>
 
                 {/* Etapa 2 — Saída (já revisado / nas caixas) */}
-                <div className="rounded-md border border-border p-3 space-y-2">
+                <div className="rounded-md border border-border p-3 space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium">2. Saída para caixas</p>
-                      <p className="text-xs text-muted-foreground">O que já foi revisado e embalado</p>
+                      <p className="text-sm font-medium">2. Saída — pronto para retirada</p>
+                      <p className="text-xs text-muted-foreground">Preencher quando estiver embalado</p>
                     </div>
                     <Badge variant="secondary">Total: {sai}</Badge>
                   </div>
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs">Data de saída</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" size="sm" className="w-full justify-start font-normal">
+                            <CalendarIcon className="mr-2 h-3 w-3" />
+                            {dataSaida ? format(dataSaida, "dd/MM/yyyy") : "Selecionar"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar mode="single" selected={dataSaida ?? undefined} onSelect={(d) => setDataSaida(d ?? null)} initialFocus className="p-3 pointer-events-auto" />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Contagem feita por</Label>
+                      <Input value={respSaida} onChange={(e) => setRespSaida(e.target.value)} placeholder="Nome" className="h-9" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
                     {tamanhos.map((t) => (
                       <div key={`sai-${t}`}>
                         <Label className="text-[10px] uppercase text-muted-foreground">{t}</Label>
@@ -291,6 +331,7 @@ export function FechamentoSheet({ open, onOpenChange, fechamento, onSaved }: Pro
                     ))}
                   </div>
                 </div>
+
               </>
             )}
 
