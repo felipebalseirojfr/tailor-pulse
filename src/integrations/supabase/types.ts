@@ -269,7 +269,7 @@ export type Database = {
           quantidade_entrada: number | null
           quantidade_prevista: number
           quantidade_saida: number | null
-          referencia_id: string
+          referencia_id: string | null
           status_nf: Database["public"]["Enums"]["status_nf_fechamento"]
           updated_at: string
         }
@@ -287,7 +287,7 @@ export type Database = {
           quantidade_entrada?: number | null
           quantidade_prevista?: number
           quantidade_saida?: number | null
-          referencia_id: string
+          referencia_id?: string | null
           status_nf?: Database["public"]["Enums"]["status_nf_fechamento"]
           updated_at?: string
         }
@@ -305,7 +305,7 @@ export type Database = {
           quantidade_entrada?: number | null
           quantidade_prevista?: number
           quantidade_saida?: number | null
-          referencia_id?: string
+          referencia_id?: string | null
           status_nf?: Database["public"]["Enums"]["status_nf_fechamento"]
           updated_at?: string
         }
