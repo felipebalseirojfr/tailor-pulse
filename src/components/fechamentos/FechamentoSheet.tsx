@@ -32,6 +32,8 @@ export interface FechamentoRow {
   data_emissao_nf: string | null;
   arquivo_nf_url: string | null;
   data_fechamento: string | null;
+  grade_entrada?: Record<string, number> | null;
+  grade_saida?: Record<string, number> | null;
   cliente_nome?: string;
   pedido_codigo?: string;
   referencia_codigo?: string;
