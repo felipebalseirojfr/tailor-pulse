@@ -17,6 +17,21 @@ import { useUserRoles } from "@/hooks/useUserRoles";
 import { parseLocalDate, toLocalISO, todayLocal } from "@/lib/date-utils";
 import { cn } from "@/lib/utils";
 
+// Ordem canônica de tamanhos do romaneio físico da JFR
+const TAMANHO_ORDEM = [
+  "1","2","3","4","6","8","10","12","14","16",
+  "PP","P","M","G","GG","XG","XXG","XGG","XGG2","XGG3","UNICO"
+];
+const sortTamanhos = (arr: string[]) =>
+  [...arr].sort((a, b) => {
+    const ia = TAMANHO_ORDEM.indexOf(a.toUpperCase());
+    const ib = TAMANHO_ORDEM.indexOf(b.toUpperCase());
+    if (ia === -1 && ib === -1) return a.localeCompare(b);
+    if (ia === -1) return 1;
+    if (ib === -1) return -1;
+    return ia - ib;
+  });
+
 export interface FechamentoRow {
   id: string;
   pedido_id: string;
@@ -34,6 +49,10 @@ export interface FechamentoRow {
   data_fechamento: string | null;
   grade_entrada?: Record<string, number> | null;
   grade_saida?: Record<string, number> | null;
+  data_entrada?: string | null;
+  responsavel_entrada?: string | null;
+  data_saida?: string | null;
+  responsavel_saida?: string | null;
   cliente_nome?: string;
   pedido_codigo?: string;
   referencia_codigo?: string;
@@ -54,6 +73,10 @@ export function FechamentoSheet({ open, onOpenChange, fechamento, onSaved }: Pro
   const [gradeEntrada, setGradeEntrada] = useState<Record<string, string>>({});
   const [gradeSaida, setGradeSaida] = useState<Record<string, string>>({});
   const [tamanhos, setTamanhos] = useState<string[]>([]);
+  const [dataEntrada, setDataEntrada] = useState<Date | null>(null);
+  const [respEntrada, setRespEntrada] = useState<string>("");
+  const [dataSaida, setDataSaida] = useState<Date | null>(null);
+  const [respSaida, setRespSaida] = useState<string>("");
   const [caixas, setCaixas] = useState<string>("");
   const [obs, setObs] = useState<string>("");
   const [saving, setSaving] = useState(false);
@@ -75,6 +98,10 @@ export function FechamentoSheet({ open, onOpenChange, fechamento, onSaved }: Pro
       Object.fromEntries(Object.entries(g ?? {}).map(([k, v]) => [k, String(v ?? "")]));
     setGradeEntrada(toStr(fechamento.grade_entrada));
     setGradeSaida(toStr(fechamento.grade_saida));
+    setDataEntrada(parseLocalDate(fechamento.data_entrada) ?? null);
+    setRespEntrada(fechamento.responsavel_entrada ?? "");
+    setDataSaida(parseLocalDate(fechamento.data_saida) ?? null);
+    setRespSaida(fechamento.responsavel_saida ?? "");
 
     // Buscar grade de tamanhos do pedido para saber quais tamanhos exibir
     supabase
@@ -85,7 +112,7 @@ export function FechamentoSheet({ open, onOpenChange, fechamento, onSaved }: Pro
       .then(({ data }) => {
         const grade = (data?.grade_tamanhos ?? {}) as Record<string, number>;
         const keys = Object.keys(grade).filter((k) => Number(grade[k]) > 0);
-        setTamanhos(keys);
+        setTamanhos(sortTamanhos(keys));
       });
   }, [fechamento]);
 
@@ -125,6 +152,10 @@ export function FechamentoSheet({ open, onOpenChange, fechamento, onSaved }: Pro
           quantidade_saida: hasSaida ? sai : null,
           quantidade_caixas: caixas === "" ? null : parseInt(caixas),
           observacao_perda: obs.trim() || null,
+          data_entrada: dataEntrada ? toLocalISO(dataEntrada) : null,
+          responsavel_entrada: respEntrada.trim() || null,
+          data_saida: dataSaida ? toLocalISO(dataSaida) : null,
+          responsavel_saida: respSaida.trim() || null,
           data_fechamento: new Date().toISOString(),
         })
         .eq("id", fechamento.id);
@@ -212,15 +243,35 @@ export function FechamentoSheet({ open, onOpenChange, fechamento, onSaved }: Pro
             ) : (
               <>
                 {/* Etapa 1 — Entrada (chegada na passadoria) */}
-                <div className="rounded-md border border-border p-3 space-y-2">
+                <div className="rounded-md border border-border p-3 space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-sm font-medium">1. Entrada na passadoria</p>
-                      <p className="text-xs text-muted-foreground">O que chegou para a passadeira</p>
+                      <p className="text-xs text-muted-foreground">Preencher quando as peças chegarem</p>
                     </div>
                     <Badge variant="secondary">Total: {ent}</Badge>
                   </div>
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs">Data de entrada</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" size="sm" className="w-full justify-start font-normal">
+                            <CalendarIcon className="mr-2 h-3 w-3" />
+                            {dataEntrada ? format(dataEntrada, "dd/MM/yyyy") : "Selecionar"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar mode="single" selected={dataEntrada ?? undefined} onSelect={(d) => setDataEntrada(d ?? null)} initialFocus className="p-3 pointer-events-auto" />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Contagem feita por</Label>
+                      <Input value={respEntrada} onChange={(e) => setRespEntrada(e.target.value)} placeholder="Nome" className="h-9" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
                     {tamanhos.map((t) => (
                       <div key={`ent-${t}`}>
                         <Label className="text-[10px] uppercase text-muted-foreground">{t}</Label>
@@ -237,15 +288,35 @@ export function FechamentoSheet({ open, onOpenChange, fechamento, onSaved }: Pro
                 </div>
 
                 {/* Etapa 2 — Saída (já revisado / nas caixas) */}
-                <div className="rounded-md border border-border p-3 space-y-2">
+                <div className="rounded-md border border-border p-3 space-y-3">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-sm font-medium">2. Saída para caixas</p>
-                      <p className="text-xs text-muted-foreground">O que já foi revisado e embalado</p>
+                      <p className="text-sm font-medium">2. Saída — pronto para retirada</p>
+                      <p className="text-xs text-muted-foreground">Preencher quando estiver embalado</p>
                     </div>
                     <Badge variant="secondary">Total: {sai}</Badge>
                   </div>
-                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label className="text-xs">Data de saída</Label>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <Button variant="outline" size="sm" className="w-full justify-start font-normal">
+                            <CalendarIcon className="mr-2 h-3 w-3" />
+                            {dataSaida ? format(dataSaida, "dd/MM/yyyy") : "Selecionar"}
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar mode="single" selected={dataSaida ?? undefined} onSelect={(d) => setDataSaida(d ?? null)} initialFocus className="p-3 pointer-events-auto" />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                    <div>
+                      <Label className="text-xs">Contagem feita por</Label>
+                      <Input value={respSaida} onChange={(e) => setRespSaida(e.target.value)} placeholder="Nome" className="h-9" />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
                     {tamanhos.map((t) => (
                       <div key={`sai-${t}`}>
                         <Label className="text-[10px] uppercase text-muted-foreground">{t}</Label>
@@ -260,6 +331,7 @@ export function FechamentoSheet({ open, onOpenChange, fechamento, onSaved }: Pro
                     ))}
                   </div>
                 </div>
+
               </>
             )}
 
