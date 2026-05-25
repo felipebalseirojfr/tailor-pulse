@@ -98,6 +98,10 @@ export function FechamentoSheet({ open, onOpenChange, fechamento, onSaved }: Pro
       Object.fromEntries(Object.entries(g ?? {}).map(([k, v]) => [k, String(v ?? "")]));
     setGradeEntrada(toStr(fechamento.grade_entrada));
     setGradeSaida(toStr(fechamento.grade_saida));
+    setDataEntrada(parseLocalDate(fechamento.data_entrada) ?? null);
+    setRespEntrada(fechamento.responsavel_entrada ?? "");
+    setDataSaida(parseLocalDate(fechamento.data_saida) ?? null);
+    setRespSaida(fechamento.responsavel_saida ?? "");
 
     // Buscar grade de tamanhos do pedido para saber quais tamanhos exibir
     supabase
@@ -108,7 +112,7 @@ export function FechamentoSheet({ open, onOpenChange, fechamento, onSaved }: Pro
       .then(({ data }) => {
         const grade = (data?.grade_tamanhos ?? {}) as Record<string, number>;
         const keys = Object.keys(grade).filter((k) => Number(grade[k]) > 0);
-        setTamanhos(keys);
+        setTamanhos(sortTamanhos(keys));
       });
   }, [fechamento]);
 
