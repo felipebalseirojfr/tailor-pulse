@@ -261,6 +261,8 @@ export type Database = {
           created_at: string
           data_emissao_nf: string | null
           data_fechamento: string | null
+          grade_entrada: Json | null
+          grade_saida: Json | null
           id: string
           numero_nf: string | null
           observacao_perda: string | null
@@ -279,6 +281,8 @@ export type Database = {
           created_at?: string
           data_emissao_nf?: string | null
           data_fechamento?: string | null
+          grade_entrada?: Json | null
+          grade_saida?: Json | null
           id?: string
           numero_nf?: string | null
           observacao_perda?: string | null
@@ -297,6 +301,8 @@ export type Database = {
           created_at?: string
           data_emissao_nf?: string | null
           data_fechamento?: string | null
+          grade_entrada?: Json | null
+          grade_saida?: Json | null
           id?: string
           numero_nf?: string | null
           observacao_perda?: string | null

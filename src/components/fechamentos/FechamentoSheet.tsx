@@ -32,6 +32,8 @@ export interface FechamentoRow {
   data_emissao_nf: string | null;
   arquivo_nf_url: string | null;
   data_fechamento: string | null;
+  grade_entrada?: Record<string, number> | null;
+  grade_saida?: Record<string, number> | null;
   cliente_nome?: string;
   pedido_codigo?: string;
   referencia_codigo?: string;
@@ -49,8 +51,9 @@ export function FechamentoSheet({ open, onOpenChange, fechamento, onSaved }: Pro
   const { hasAnyRole } = useUserRoles();
   const canEmitNf = hasAnyRole(["admin", "backoffice_fiscal", "pcp_closer"]);
 
-  const [entrada, setEntrada] = useState<string>("");
-  const [saida, setSaida] = useState<string>("");
+  const [gradeEntrada, setGradeEntrada] = useState<Record<string, string>>({});
+  const [gradeSaida, setGradeSaida] = useState<Record<string, string>>({});
+  const [tamanhos, setTamanhos] = useState<string[]>([]);
   const [caixas, setCaixas] = useState<string>("");
   const [obs, setObs] = useState<string>("");
   const [saving, setSaving] = useState(false);
@@ -62,38 +65,64 @@ export function FechamentoSheet({ open, onOpenChange, fechamento, onSaved }: Pro
   const [emitting, setEmitting] = useState(false);
 
   useEffect(() => {
-    if (fechamento) {
-      setEntrada(fechamento.quantidade_entrada?.toString() ?? "");
-      setSaida(fechamento.quantidade_saida?.toString() ?? "");
-      setCaixas(fechamento.quantidade_caixas?.toString() ?? "");
-      setObs(fechamento.observacao_perda ?? "");
-      setNumeroNf(fechamento.numero_nf ?? "");
-      setDataEmissao(parseLocalDate(fechamento.data_emissao_nf) ?? todayLocal());
-    }
+    if (!fechamento) return;
+    setCaixas(fechamento.quantidade_caixas?.toString() ?? "");
+    setObs(fechamento.observacao_perda ?? "");
+    setNumeroNf(fechamento.numero_nf ?? "");
+    setDataEmissao(parseLocalDate(fechamento.data_emissao_nf) ?? todayLocal());
+
+    const toStr = (g: Record<string, number> | null | undefined) =>
+      Object.fromEntries(Object.entries(g ?? {}).map(([k, v]) => [k, String(v ?? "")]));
+    setGradeEntrada(toStr(fechamento.grade_entrada));
+    setGradeSaida(toStr(fechamento.grade_saida));
+
+    // Buscar grade de tamanhos do pedido para saber quais tamanhos exibir
+    supabase
+      .from("pedidos")
+      .select("grade_tamanhos")
+      .eq("id", fechamento.pedido_id)
+      .maybeSingle()
+      .then(({ data }) => {
+        const grade = (data?.grade_tamanhos ?? {}) as Record<string, number>;
+        const keys = Object.keys(grade).filter((k) => Number(grade[k]) > 0);
+        setTamanhos(keys);
+      });
   }, [fechamento]);
 
   if (!fechamento) return null;
 
-  const ent = entrada === "" ? null : parseInt(entrada);
-  const sai = saida === "" ? null : parseInt(saida);
-  const diferenca = ent != null && sai != null ? ent - sai : null;
+  const sumGrade = (g: Record<string, string>) =>
+    Object.values(g).reduce((s, v) => s + (parseInt(v) || 0), 0);
+  const ent = sumGrade(gradeEntrada);
+  const sai = sumGrade(gradeSaida);
+  const diferenca = ent - sai;
+  const hasEntrada = Object.values(gradeEntrada).some((v) => v !== "" && v != null);
+  const hasSaida = Object.values(gradeSaida).some((v) => v !== "" && v != null);
 
   const handleSalvarContagem = async () => {
-    if (ent == null || sai == null) {
-      toast.error("Informe entrada e saída");
+    if (!hasEntrada && !hasSaida) {
+      toast.error("Preencha pelo menos uma das grades");
       return;
     }
-    if (diferenca !== 0 && !obs.trim()) {
+    if (hasEntrada && hasSaida && diferenca !== 0 && !obs.trim()) {
       toast.error("Observação de perda é obrigatória quando há diferença");
       return;
     }
     setSaving(true);
     try {
+      const toNum = (g: Record<string, string>) =>
+        Object.fromEntries(
+          Object.entries(g)
+            .map(([k, v]) => [k, parseInt(v) || 0])
+            .filter(([, v]) => (v as number) > 0)
+        );
       const { error } = await supabase
         .from("fechamentos")
         .update({
-          quantidade_entrada: ent,
-          quantidade_saida: sai,
+          grade_entrada: toNum(gradeEntrada),
+          grade_saida: toNum(gradeSaida),
+          quantidade_entrada: hasEntrada ? ent : null,
+          quantidade_saida: hasSaida ? sai : null,
           quantidade_caixas: caixas === "" ? null : parseInt(caixas),
           observacao_perda: obs.trim() || null,
           data_fechamento: new Date().toISOString(),
@@ -172,37 +201,101 @@ export function FechamentoSheet({ open, onOpenChange, fechamento, onSaved }: Pro
             <div className="flex justify-between"><span className="text-muted-foreground">Qtd prevista</span><span className="font-medium">{fechamento.quantidade_prevista}</span></div>
           </div>
 
-          {/* Contagens */}
-          <div className="space-y-3">
-            <h3 className="font-semibold">Contagens</h3>
+          {/* Contagens por tamanho */}
+          <div className="space-y-4">
+            <h3 className="font-semibold">Contagem por tamanho</h3>
+
+            {tamanhos.length === 0 ? (
+              <p className="text-xs text-muted-foreground">
+                Este pedido não tem grade de tamanhos definida. Edite o pedido para registrar a grade.
+              </p>
+            ) : (
+              <>
+                {/* Etapa 1 — Entrada (chegada na passadoria) */}
+                <div className="rounded-md border border-border p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium">1. Entrada na passadoria</p>
+                      <p className="text-xs text-muted-foreground">O que chegou para a passadeira</p>
+                    </div>
+                    <Badge variant="secondary">Total: {ent}</Badge>
+                  </div>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                    {tamanhos.map((t) => (
+                      <div key={`ent-${t}`}>
+                        <Label className="text-[10px] uppercase text-muted-foreground">{t}</Label>
+                        <Input
+                          type="number"
+                          min={0}
+                          value={gradeEntrada[t] ?? ""}
+                          onChange={(e) => setGradeEntrada({ ...gradeEntrada, [t]: e.target.value })}
+                          className="h-9 text-center"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Etapa 2 — Saída (já revisado / nas caixas) */}
+                <div className="rounded-md border border-border p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium">2. Saída para caixas</p>
+                      <p className="text-xs text-muted-foreground">O que já foi revisado e embalado</p>
+                    </div>
+                    <Badge variant="secondary">Total: {sai}</Badge>
+                  </div>
+                  <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                    {tamanhos.map((t) => (
+                      <div key={`sai-${t}`}>
+                        <Label className="text-[10px] uppercase text-muted-foreground">{t}</Label>
+                        <Input
+                          type="number"
+                          min={0}
+                          value={gradeSaida[t] ?? ""}
+                          onChange={(e) => setGradeSaida({ ...gradeSaida, [t]: e.target.value })}
+                          className="h-9 text-center"
+                        />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+
             <div className="grid grid-cols-2 gap-3">
-              <div><Label>Entrada</Label><Input type="number" value={entrada} onChange={(e) => setEntrada(e.target.value)} /></div>
-              <div><Label>Saída</Label><Input type="number" value={saida} onChange={(e) => setSaida(e.target.value)} /></div>
-              <div><Label>Caixas</Label><Input type="number" value={caixas} onChange={(e) => setCaixas(e.target.value)} /></div>
               <div>
-                <Label>Diferença</Label>
+                <Label>Caixas</Label>
+                <Input type="number" value={caixas} onChange={(e) => setCaixas(e.target.value)} />
+              </div>
+              <div>
+                <Label>Diferença (entrada − saída)</Label>
                 <div className={cn(
                   "h-10 flex items-center px-3 rounded-md border text-sm font-medium",
-                  diferenca == null ? "text-muted-foreground" :
+                  !hasEntrada || !hasSaida ? "text-muted-foreground" :
                   diferenca > 0 ? "text-destructive border-destructive/40" :
                   diferenca < 0 ? "text-orange-500 border-orange-500/40" :
                   "text-muted-foreground"
                 )}>
-                  {diferenca == null ? "—" : diferenca}
+                  {!hasEntrada || !hasSaida ? "—" : diferenca}
                 </div>
               </div>
             </div>
-            {diferenca != null && diferenca < 0 && (
+            {hasEntrada && hasSaida && diferenca < 0 && (
               <p className="text-xs text-orange-500">⚠ Saída maior que entrada — verifique a contagem</p>
             )}
             <div>
-              <Label>Observação de perda {diferenca !== 0 && diferenca != null && <span className="text-destructive">*</span>}</Label>
+              <Label>
+                Observação de perda{" "}
+                {hasEntrada && hasSaida && diferenca !== 0 && <span className="text-destructive">*</span>}
+              </Label>
               <Textarea value={obs} onChange={(e) => setObs(e.target.value)} rows={3} placeholder="Justifique a diferença..." />
             </div>
             <Button onClick={handleSalvarContagem} disabled={saving} className="w-full">
               {saving && <Loader2 className="h-4 w-4 animate-spin" />} Salvar contagem
             </Button>
           </div>
+
 
           {/* NF */}
           <div className="space-y-3 border-t pt-6">
