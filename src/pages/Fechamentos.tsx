@@ -226,7 +226,11 @@ export default function Fechamentos() {
                       {list.map((r) => {
                         const dif = r.quantidade_entrada != null && r.quantidade_saida != null ? r.quantidade_entrada - r.quantidade_saida : null;
                         return (
-                          <TableRow key={r.id}>
+                          <TableRow
+                            key={r.id}
+                            onClick={() => { setSelected(r); setSheetOpen(true); }}
+                            className="cursor-pointer hover:bg-muted/50 transition-colors"
+                          >
                             <TableCell>
                               <div className="font-medium">{r.cliente_nome}</div>
                               {r.produto_modelo && (
