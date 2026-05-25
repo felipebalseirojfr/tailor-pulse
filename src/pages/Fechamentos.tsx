@@ -227,7 +227,12 @@ export default function Fechamentos() {
                         const dif = r.quantidade_entrada != null && r.quantidade_saida != null ? r.quantidade_entrada - r.quantidade_saida : null;
                         return (
                           <TableRow key={r.id}>
-                            <TableCell>{r.cliente_nome}</TableCell>
+                            <TableCell>
+                              <div className="font-medium">{r.cliente_nome}</div>
+                              {r.produto_modelo && (
+                                <div className="text-xs text-muted-foreground">{r.produto_modelo}</div>
+                              )}
+                            </TableCell>
                             <TableCell className="font-mono text-xs">{r.pedido_codigo}</TableCell>
                             <TableCell className="font-mono text-xs">{r.referencia_codigo}</TableCell>
                             <TableCell className="text-right">{r.quantidade_prevista}</TableCell>
