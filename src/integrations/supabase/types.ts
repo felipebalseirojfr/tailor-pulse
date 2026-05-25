@@ -260,7 +260,9 @@ export type Database = {
           cliente_id: string
           created_at: string
           data_emissao_nf: string | null
+          data_entrada: string | null
           data_fechamento: string | null
+          data_saida: string | null
           grade_entrada: Json | null
           grade_saida: Json | null
           id: string
@@ -272,6 +274,8 @@ export type Database = {
           quantidade_prevista: number
           quantidade_saida: number | null
           referencia_id: string | null
+          responsavel_entrada: string | null
+          responsavel_saida: string | null
           status_nf: Database["public"]["Enums"]["status_nf_fechamento"]
           updated_at: string
         }
@@ -280,7 +284,9 @@ export type Database = {
           cliente_id: string
           created_at?: string
           data_emissao_nf?: string | null
+          data_entrada?: string | null
           data_fechamento?: string | null
+          data_saida?: string | null
           grade_entrada?: Json | null
           grade_saida?: Json | null
           id?: string
@@ -292,6 +298,8 @@ export type Database = {
           quantidade_prevista?: number
           quantidade_saida?: number | null
           referencia_id?: string | null
+          responsavel_entrada?: string | null
+          responsavel_saida?: string | null
           status_nf?: Database["public"]["Enums"]["status_nf_fechamento"]
           updated_at?: string
         }
@@ -300,7 +308,9 @@ export type Database = {
           cliente_id?: string
           created_at?: string
           data_emissao_nf?: string | null
+          data_entrada?: string | null
           data_fechamento?: string | null
+          data_saida?: string | null
           grade_entrada?: Json | null
           grade_saida?: Json | null
           id?: string
@@ -312,6 +322,8 @@ export type Database = {
           quantidade_prevista?: number
           quantidade_saida?: number | null
           referencia_id?: string | null
+          responsavel_entrada?: string | null
+          responsavel_saida?: string | null
           status_nf?: Database["public"]["Enums"]["status_nf_fechamento"]
           updated_at?: string
         }
