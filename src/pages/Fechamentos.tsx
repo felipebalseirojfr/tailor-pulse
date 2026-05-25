@@ -8,7 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Loader2, Search } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Loader2, Search, ClipboardList, FileCheck2 } from "lucide-react";
 import { FechamentoSheet, FechamentoRow } from "@/components/fechamentos/FechamentoSheet";
 import { parseLocalDate } from "@/lib/date-utils";
 
