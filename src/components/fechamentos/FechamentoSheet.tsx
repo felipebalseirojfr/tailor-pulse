@@ -51,8 +51,9 @@ export function FechamentoSheet({ open, onOpenChange, fechamento, onSaved }: Pro
   const { hasAnyRole } = useUserRoles();
   const canEmitNf = hasAnyRole(["admin", "backoffice_fiscal", "pcp_closer"]);
 
-  const [entrada, setEntrada] = useState<string>("");
-  const [saida, setSaida] = useState<string>("");
+  const [gradeEntrada, setGradeEntrada] = useState<Record<string, string>>({});
+  const [gradeSaida, setGradeSaida] = useState<Record<string, string>>({});
+  const [tamanhos, setTamanhos] = useState<string[]>([]);
   const [caixas, setCaixas] = useState<string>("");
   const [obs, setObs] = useState<string>("");
   const [saving, setSaving] = useState(false);
@@ -64,38 +65,64 @@ export function FechamentoSheet({ open, onOpenChange, fechamento, onSaved }: Pro
   const [emitting, setEmitting] = useState(false);
 
   useEffect(() => {
-    if (fechamento) {
-      setEntrada(fechamento.quantidade_entrada?.toString() ?? "");
-      setSaida(fechamento.quantidade_saida?.toString() ?? "");
-      setCaixas(fechamento.quantidade_caixas?.toString() ?? "");
-      setObs(fechamento.observacao_perda ?? "");
-      setNumeroNf(fechamento.numero_nf ?? "");
-      setDataEmissao(parseLocalDate(fechamento.data_emissao_nf) ?? todayLocal());
-    }
+    if (!fechamento) return;
+    setCaixas(fechamento.quantidade_caixas?.toString() ?? "");
+    setObs(fechamento.observacao_perda ?? "");
+    setNumeroNf(fechamento.numero_nf ?? "");
+    setDataEmissao(parseLocalDate(fechamento.data_emissao_nf) ?? todayLocal());
+
+    const toStr = (g: Record<string, number> | null | undefined) =>
+      Object.fromEntries(Object.entries(g ?? {}).map(([k, v]) => [k, String(v ?? "")]));
+    setGradeEntrada(toStr(fechamento.grade_entrada));
+    setGradeSaida(toStr(fechamento.grade_saida));
+
+    // Buscar grade de tamanhos do pedido para saber quais tamanhos exibir
+    supabase
+      .from("pedidos")
+      .select("grade_tamanhos")
+      .eq("id", fechamento.pedido_id)
+      .maybeSingle()
+      .then(({ data }) => {
+        const grade = (data?.grade_tamanhos ?? {}) as Record<string, number>;
+        const keys = Object.keys(grade).filter((k) => Number(grade[k]) > 0);
+        setTamanhos(keys);
+      });
   }, [fechamento]);
 
   if (!fechamento) return null;
 
-  const ent = entrada === "" ? null : parseInt(entrada);
-  const sai = saida === "" ? null : parseInt(saida);
-  const diferenca = ent != null && sai != null ? ent - sai : null;
+  const sumGrade = (g: Record<string, string>) =>
+    Object.values(g).reduce((s, v) => s + (parseInt(v) || 0), 0);
+  const ent = sumGrade(gradeEntrada);
+  const sai = sumGrade(gradeSaida);
+  const diferenca = ent - sai;
+  const hasEntrada = Object.values(gradeEntrada).some((v) => v !== "" && v != null);
+  const hasSaida = Object.values(gradeSaida).some((v) => v !== "" && v != null);
 
   const handleSalvarContagem = async () => {
-    if (ent == null || sai == null) {
-      toast.error("Informe entrada e saída");
+    if (!hasEntrada && !hasSaida) {
+      toast.error("Preencha pelo menos uma das grades");
       return;
     }
-    if (diferenca !== 0 && !obs.trim()) {
+    if (hasEntrada && hasSaida && diferenca !== 0 && !obs.trim()) {
       toast.error("Observação de perda é obrigatória quando há diferença");
       return;
     }
     setSaving(true);
     try {
+      const toNum = (g: Record<string, string>) =>
+        Object.fromEntries(
+          Object.entries(g)
+            .map(([k, v]) => [k, parseInt(v) || 0])
+            .filter(([, v]) => (v as number) > 0)
+        );
       const { error } = await supabase
         .from("fechamentos")
         .update({
-          quantidade_entrada: ent,
-          quantidade_saida: sai,
+          grade_entrada: toNum(gradeEntrada),
+          grade_saida: toNum(gradeSaida),
+          quantidade_entrada: hasEntrada ? ent : null,
+          quantidade_saida: hasSaida ? sai : null,
           quantidade_caixas: caixas === "" ? null : parseInt(caixas),
           observacao_perda: obs.trim() || null,
           data_fechamento: new Date().toISOString(),
