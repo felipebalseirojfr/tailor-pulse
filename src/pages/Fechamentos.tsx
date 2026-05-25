@@ -192,70 +192,101 @@ export default function Fechamentos() {
         </CardContent>
       </Card>
 
-      {/* Table */}
-      <Card>
-        <CardContent className="pt-6">
-          {loading ? (
-            <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
-          ) : filtered.length === 0 ? (
-            <div className="text-center py-12 text-muted-foreground">Nenhum fechamento encontrado.</div>
-          ) : (
-            <TooltipProvider>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Pedido</TableHead>
-                    <TableHead>Referência</TableHead>
-                    <TableHead className="text-right">Prevista</TableHead>
-                    <TableHead className="text-right">Entrada</TableHead>
-                    <TableHead className="text-right">Saída</TableHead>
-                    <TableHead className="text-right">Diferença</TableHead>
-                    <TableHead className="text-right">Caixas</TableHead>
-                    <TableHead>Status NF</TableHead>
-                    <TableHead>Nº NF</TableHead>
-                    <TableHead></TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filtered.map((r) => {
-                    const dif = r.quantidade_entrada != null && r.quantidade_saida != null ? r.quantidade_entrada - r.quantidade_saida : null;
-                    return (
-                      <TableRow key={r.id}>
-                        <TableCell>{r.cliente_nome}</TableCell>
-                        <TableCell className="font-mono text-xs">{r.pedido_codigo}</TableCell>
-                        <TableCell className="font-mono text-xs">{r.referencia_codigo}</TableCell>
-                        <TableCell className="text-right">{r.quantidade_prevista}</TableCell>
-                        <TableCell className="text-right">{r.quantidade_entrada ?? "—"}</TableCell>
-                        <TableCell className="text-right">{r.quantidade_saida ?? "—"}</TableCell>
-                        <TableCell className="text-right">
-                          {dif == null ? "—" : dif > 0 ? <span className="text-destructive font-medium">{dif}</span> :
-                            dif < 0 ? (
-                              <Tooltip>
-                                <TooltipTrigger asChild><span className="text-orange-500 font-medium">{dif}</span></TooltipTrigger>
-                                <TooltipContent>Saída maior que entrada — verifique a contagem</TooltipContent>
-                              </Tooltip>
-                            ) : <span>{dif}</span>}
-                        </TableCell>
-                        <TableCell className="text-right">{r.quantidade_caixas ?? "—"}</TableCell>
-                        <TableCell>
-                          <Badge variant={r.status_nf === "emitida" ? "default" : "secondary"}>
-                            {r.status_nf === "emitida" ? "Emitida" : "Pendente"}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-xs">{r.numero_nf ?? "—"}</TableCell>
-                        <TableCell>
-                          <Button size="sm" variant="outline" onClick={() => { setSelected(r); setSheetOpen(true); }}>Abrir</Button>
-                        </TableCell>
+      {/* Tabs: Em contagem | Emissão de NF */}
+      {(() => {
+        const emContagem = filtered.filter((r) => r.quantidade_saida == null);
+        const prontoNf = filtered.filter((r) => r.quantidade_saida != null);
+
+        const renderTable = (list: FechamentoRow[], emptyMsg: string) => (
+          <Card>
+            <CardContent className="pt-6">
+              {loading ? (
+                <div className="flex justify-center py-12"><Loader2 className="h-6 w-6 animate-spin text-primary" /></div>
+              ) : list.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">{emptyMsg}</div>
+              ) : (
+                <TooltipProvider>
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Cliente</TableHead>
+                        <TableHead>Pedido</TableHead>
+                        <TableHead>Referência</TableHead>
+                        <TableHead className="text-right">Prevista</TableHead>
+                        <TableHead className="text-right">Entrada</TableHead>
+                        <TableHead className="text-right">Saída</TableHead>
+                        <TableHead className="text-right">Diferença</TableHead>
+                        <TableHead className="text-right">Caixas</TableHead>
+                        <TableHead>Status NF</TableHead>
+                        <TableHead>Nº NF</TableHead>
+                        <TableHead></TableHead>
                       </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
-            </TooltipProvider>
-          )}
-        </CardContent>
-      </Card>
+                    </TableHeader>
+                    <TableBody>
+                      {list.map((r) => {
+                        const dif = r.quantidade_entrada != null && r.quantidade_saida != null ? r.quantidade_entrada - r.quantidade_saida : null;
+                        return (
+                          <TableRow key={r.id}>
+                            <TableCell>{r.cliente_nome}</TableCell>
+                            <TableCell className="font-mono text-xs">{r.pedido_codigo}</TableCell>
+                            <TableCell className="font-mono text-xs">{r.referencia_codigo}</TableCell>
+                            <TableCell className="text-right">{r.quantidade_prevista}</TableCell>
+                            <TableCell className="text-right">{r.quantidade_entrada ?? "—"}</TableCell>
+                            <TableCell className="text-right">{r.quantidade_saida ?? "—"}</TableCell>
+                            <TableCell className="text-right">
+                              {dif == null ? "—" : dif > 0 ? <span className="text-destructive font-medium">{dif}</span> :
+                                dif < 0 ? (
+                                  <Tooltip>
+                                    <TooltipTrigger asChild><span className="text-orange-500 font-medium">{dif}</span></TooltipTrigger>
+                                    <TooltipContent>Saída maior que entrada — verifique a contagem</TooltipContent>
+                                  </Tooltip>
+                                ) : <span>{dif}</span>}
+                            </TableCell>
+                            <TableCell className="text-right">{r.quantidade_caixas ?? "—"}</TableCell>
+                            <TableCell>
+                              <Badge variant={r.status_nf === "emitida" ? "default" : "secondary"}>
+                                {r.status_nf === "emitida" ? "Emitida" : "Pendente"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-xs">{r.numero_nf ?? "—"}</TableCell>
+                            <TableCell>
+                              <Button size="sm" variant="outline" onClick={() => { setSelected(r); setSheetOpen(true); }}>Abrir</Button>
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </TooltipProvider>
+              )}
+            </CardContent>
+          </Card>
+        );
+
+        return (
+          <Tabs defaultValue="contagem" className="space-y-4">
+            <TabsList>
+              <TabsTrigger value="contagem" className="gap-2">
+                <ClipboardList className="h-4 w-4" />
+                Em contagem
+                <Badge variant="secondary" className="ml-1">{emContagem.length}</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="nf" className="gap-2">
+                <FileCheck2 className="h-4 w-4" />
+                Emissão de NF
+                <Badge variant="secondary" className="ml-1">{prontoNf.length}</Badge>
+              </TabsTrigger>
+            </TabsList>
+            <TabsContent value="contagem">
+              {renderTable(emContagem, "Nenhum pedido aguardando contagem.")}
+            </TabsContent>
+            <TabsContent value="nf">
+              {renderTable(prontoNf, "Nenhum pedido pronto para emissão de NF.")}
+            </TabsContent>
+          </Tabs>
+        );
+      })()}
+
 
       <FechamentoSheet open={sheetOpen} onOpenChange={setSheetOpen} fechamento={selected} onSaved={() => { load(); }} />
     </div>
