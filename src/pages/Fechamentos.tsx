@@ -40,6 +40,15 @@ export default function Fechamentos() {
 
   const load = async () => {
     setLoading(true);
+
+    // Apenas pedidos atualmente em acabamento (em_andamento) devem aparecer
+    const { data: etapasAtivas } = await supabase
+      .from("etapas_producao")
+      .select("pedido_id")
+      .eq("tipo_etapa", "acabamento")
+      .eq("status", "em_andamento");
+    const pedidosAtivos = new Set((etapasAtivas ?? []).map((e: any) => e.pedido_id));
+
     const { data, error } = await supabase
       .from("fechamentos")
       .select("*")
@@ -49,7 +58,7 @@ export default function Fechamentos() {
       return;
     }
 
-    const fechamentoRows = (data ?? []) as any[];
+    const fechamentoRows = ((data ?? []) as any[]).filter((r) => pedidosAtivos.has(r.pedido_id));
     const pedidoIds = [...new Set(fechamentoRows.map((r) => r.pedido_id).filter(Boolean))];
     const referenciaIds = [...new Set(fechamentoRows.map((r) => r.referencia_id).filter(Boolean))];
     const clienteIds = [...new Set(fechamentoRows.map((r) => r.cliente_id).filter(Boolean))];
