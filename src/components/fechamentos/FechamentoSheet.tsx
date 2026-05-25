@@ -49,6 +49,10 @@ export interface FechamentoRow {
   data_fechamento: string | null;
   grade_entrada?: Record<string, number> | null;
   grade_saida?: Record<string, number> | null;
+  data_entrada?: string | null;
+  responsavel_entrada?: string | null;
+  data_saida?: string | null;
+  responsavel_saida?: string | null;
   cliente_nome?: string;
   pedido_codigo?: string;
   referencia_codigo?: string;
@@ -69,6 +73,10 @@ export function FechamentoSheet({ open, onOpenChange, fechamento, onSaved }: Pro
   const [gradeEntrada, setGradeEntrada] = useState<Record<string, string>>({});
   const [gradeSaida, setGradeSaida] = useState<Record<string, string>>({});
   const [tamanhos, setTamanhos] = useState<string[]>([]);
+  const [dataEntrada, setDataEntrada] = useState<Date | null>(null);
+  const [respEntrada, setRespEntrada] = useState<string>("");
+  const [dataSaida, setDataSaida] = useState<Date | null>(null);
+  const [respSaida, setRespSaida] = useState<string>("");
   const [caixas, setCaixas] = useState<string>("");
   const [obs, setObs] = useState<string>("");
   const [saving, setSaving] = useState(false);
