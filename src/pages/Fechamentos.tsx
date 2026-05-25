@@ -42,23 +42,40 @@ export default function Fechamentos() {
     setLoading(true);
     const { data, error } = await supabase
       .from("fechamentos")
-      .select(`
-        *,
-        pedidos:pedido_id ( codigo_pedido, produto_modelo ),
-        referencias:referencia_id ( codigo_referencia ),
-        clientes:cliente_id ( nome )
-      `)
+      .select("*")
       .order("created_at", { ascending: false });
     if (error) {
       setLoading(false);
       return;
     }
-    const mapped: FechamentoRow[] = (data as any[]).map((r) => ({
+
+    const fechamentoRows = (data ?? []) as any[];
+    const pedidoIds = [...new Set(fechamentoRows.map((r) => r.pedido_id).filter(Boolean))];
+    const referenciaIds = [...new Set(fechamentoRows.map((r) => r.referencia_id).filter(Boolean))];
+    const clienteIds = [...new Set(fechamentoRows.map((r) => r.cliente_id).filter(Boolean))];
+
+    const [pedidosRes, referenciasRes, clientesRes] = await Promise.all([
+      pedidoIds.length
+        ? supabase.from("pedidos").select("id, codigo_pedido, produto_modelo").in("id", pedidoIds)
+        : Promise.resolve({ data: [] as any[] }),
+      referenciaIds.length
+        ? supabase.from("referencias").select("id, codigo_referencia").in("id", referenciaIds)
+        : Promise.resolve({ data: [] as any[] }),
+      clienteIds.length
+        ? supabase.from("clientes").select("id, nome").in("id", clienteIds)
+        : Promise.resolve({ data: [] as any[] }),
+    ]);
+
+    const pedidosMap = new Map((pedidosRes.data ?? []).map((p: any) => [p.id, p]));
+    const referenciasMap = new Map((referenciasRes.data ?? []).map((r: any) => [r.id, r]));
+    const clientesMap = new Map((clientesRes.data ?? []).map((c: any) => [c.id, c]));
+
+    const mapped: FechamentoRow[] = fechamentoRows.map((r) => ({
       ...r,
-      cliente_nome: r.clientes?.nome,
-      pedido_codigo: r.pedidos?.codigo_pedido,
-      produto_modelo: r.pedidos?.produto_modelo,
-      referencia_codigo: r.referencias?.codigo_referencia,
+      cliente_nome: clientesMap.get(r.cliente_id)?.nome,
+      pedido_codigo: pedidosMap.get(r.pedido_id)?.codigo_pedido,
+      produto_modelo: pedidosMap.get(r.pedido_id)?.produto_modelo,
+      referencia_codigo: referenciasMap.get(r.referencia_id)?.codigo_referencia,
     }));
     setRows(mapped);
     setLoading(false);
