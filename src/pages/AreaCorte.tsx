@@ -372,24 +372,18 @@ function ExecucaoCorte({ pedidoId, onDone }: { pedidoId: string; onDone: () => v
         return;
       }
 
-      // Concluir a etapa de corte
+      // Concluir a etapa de corte (a próxima etapa permanece "pendente"
+      // — aguardando o PCP definir prazo/oficina antes de iniciar)
       const { error: concErr } = await supabase
         .from("etapas_producao")
         .update({ status: "concluido", data_termino: new Date().toISOString() })
         .eq("id", corteEtapa.id);
       if (concErr) throw concErr;
 
-      // Iniciar próxima etapa (se existir)
-      const corteIdx = ordenadas.findIndex((e: any) => e.id === corteEtapa.id);
-      const proxima = ordenadas[corteIdx + 1];
-      if (proxima) {
-        await supabase
-          .from("etapas_producao")
-          .update({ status: "em_andamento", data_inicio: new Date().toISOString() })
-          .eq("id", proxima.id);
-      }
-
-      toast({ title: "Corte concluído!", description: "Pedido avançou para a próxima etapa." });
+      toast({
+        title: "Corte concluído!",
+        description: "Pedido enviado para a fila aguardando liberação do PCP.",
+      });
       onDone();
     } catch (err: any) {
       toast({ title: "Erro ao concluir", description: err.message, variant: "destructive" });
