@@ -7,6 +7,8 @@ import { AppErrorBoundary } from "@/components/AppErrorBoundary";
 import { GlobalErrorReporter } from "@/components/GlobalErrorReporter";
 import Layout from "./components/Layout";
 import Auth from "./pages/Auth";
+import Home from "./pages/Home";
+import ComercialHub from "./pages/ComercialHub";
 import Dashboard from "./pages/Dashboard";
 import Pedidos from "./pages/Pedidos";
 import NovoPedido from "./pages/NovoPedido";
@@ -24,6 +26,7 @@ import FilaEtapas from "./pages/FilaEtapas";
 import NotFound from "./pages/NotFound";
 import ScanResultado from "./pages/ScanResultado";
 
+
 const queryClient = new QueryClient();
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -37,8 +40,11 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/scan/:qrRef" element={<ScanQR />} />
             <Route path="/scan-resultado" element={<ScanResultado />} />
-            <Route path="/" element={<Layout><Dashboard /></Layout>} />
+            <Route path="/" element={<Home />} />
+            <Route path="/hub/comercial" element={<ComercialHub />} />
+            <Route path="/ppcp" element={<Layout><Dashboard /></Layout>} />
             <Route path="/pedidos" element={<Layout><Pedidos /></Layout>} />
+
             <Route path="/fila-etapas" element={<Layout><FilaEtapas /></Layout>} />
             <Route path="/comercial" element={<Layout><Comercial /></Layout>} />
             <Route path="/carteira" element={<Layout><CarteiraPedidos /></Layout>} />
