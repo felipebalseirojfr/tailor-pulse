@@ -25,6 +25,7 @@ import Comercial from "./pages/Comercial";
 import FilaEtapas from "./pages/FilaEtapas";
 import NotFound from "./pages/NotFound";
 import ScanResultado from "./pages/ScanResultado";
+import AreaCorte from "./pages/AreaCorte";
 
 
 const queryClient = new QueryClient();
