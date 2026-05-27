@@ -451,17 +451,17 @@ export default function NovoPedido() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="quantidade_total">Quantidade Total *</Label>
+                <Label htmlFor="quantidade_total">Quantidade Total</Label>
                 <Input
                   id="quantidade_total"
-                  name="quantidade_total"
                   type="number"
-                  min="1"
-                  value={formData.quantidade_total}
-                  onChange={handleChange}
-                  placeholder="Ex: 100"
-                  required
+                  value={Object.values(formData.grade_tamanhos).reduce((a, b) => a + (Number(b) || 0), 0) || ""}
+                  readOnly
+                  disabled
+                  placeholder="Calculado pela grade"
+                  className="bg-muted"
                 />
+                <p className="text-xs text-muted-foreground">Somado automaticamente pela grade de tamanhos abaixo.</p>
               </div>
             </div>
 
