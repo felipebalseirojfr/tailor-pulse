@@ -257,7 +257,7 @@ export default function Usuarios() {
 
         const rolesToInsert = formData.roles.map((role) => ({
           user_id: selectedUser.id,
-          role: role as "admin" | "commercial" | "production" | "viewer" | "pcp_closer" | "backoffice_fiscal",
+          role: role as AppRole,
         }));
 
         const { error: insertError } = await supabase
