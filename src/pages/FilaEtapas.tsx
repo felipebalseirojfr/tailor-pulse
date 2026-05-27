@@ -33,6 +33,7 @@ interface EtapaItem {
   pedido: {
     codigo_pedido: string | null;
     produto_modelo: string;
+    grade_tamanhos: Record<string, number> | null;
     cliente: { nome: string } | null;
   } | null;
 }
