@@ -16,6 +16,7 @@ import {
   PackageCheck,
   ListOrdered,
   Home as HomeIcon,
+  Scissors,
 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -45,7 +46,7 @@ export default function Layout({ children }: LayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { roles, hasRole, hasAnyRole } = useUserRoles();
+  const { roles, hasRole, hasAnyRole, loading: rolesLoadingState } = useUserRoles();
 
   useEffect(() => {
     let cancelled = false;
@@ -119,6 +120,14 @@ export default function Layout({ children }: LayoutProps) {
     navigate("/auth");
   };
 
+  useEffect(() => {
+    if (rolesLoadingState || !session) return;
+    const isCorteOnly = roles.includes("corte") && !roles.includes("admin");
+    if (isCorteOnly && !location.pathname.startsWith("/area-corte") && !location.pathname.startsWith("/scan")) {
+      navigate("/area-corte", { replace: true });
+    }
+  }, [rolesLoadingState, roles, location.pathname, navigate, session]);
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
@@ -148,15 +157,17 @@ export default function Layout({ children }: LayoutProps) {
     return <>{children}</>;
   }
 
-  const allNavigation: NavItem[] = [
-    { name: "Início", href: "/", icon: HomeIcon },
-    { name: "Dashboard", href: "/ppcp", icon: LayoutDashboard },
+  const NON_CORTE = ["admin", "commercial", "production", "viewer", "pcp_closer", "backoffice_fiscal"];
 
-    { name: "Pedidos", href: "/pedidos", icon: Package },
+  const allNavigation: NavItem[] = [
+    { name: "Início", href: "/", icon: HomeIcon, roles: NON_CORTE },
+    { name: "Dashboard", href: "/ppcp", icon: LayoutDashboard, roles: NON_CORTE },
+    { name: "Pedidos", href: "/pedidos", icon: Package, roles: NON_CORTE },
     { name: "Fechamento", href: "/pcp/fechamentos", icon: PackageCheck, roles: ["admin", "commercial", "production", "pcp_closer", "backoffice_fiscal"] },
     { name: "Fila das Etapas", href: "/fila-etapas", icon: ListOrdered, roles: ["admin", "commercial", "production"] },
+    { name: "Corte", href: "/area-corte", icon: Scissors, roles: ["admin", "corte"] },
     { name: "Clientes / Terceiros", href: "/clientes", icon: Users, roles: ["admin", "commercial"] },
-    { name: "Calendário", href: "/calendario", icon: CalendarIcon },
+    { name: "Calendário", href: "/calendario", icon: CalendarIcon, roles: NON_CORTE },
     { name: "Usuários", href: "/usuarios", icon: UserCog, roles: ["admin"] },
   ];
 
@@ -169,6 +180,7 @@ export default function Layout({ children }: LayoutProps) {
     if (hasRole("admin")) return { label: "Admin", variant: "destructive" as const };
     if (hasRole("commercial")) return { label: "Comercial", variant: "default" as const };
     if (hasRole("production")) return { label: "Produção", variant: "secondary" as const };
+    if (hasRole("corte")) return { label: "Corte", variant: "secondary" as const };
     if (hasRole("pcp_closer")) return { label: "PCP", variant: "outline" as const };
     if (hasRole("backoffice_fiscal")) return { label: "Fiscal", variant: "outline" as const };
     return { label: "Viewer", variant: "outline" as const };

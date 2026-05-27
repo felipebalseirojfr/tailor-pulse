@@ -53,7 +53,7 @@ interface UserWithRoles extends Profile {
   roles: AppRole[];
 }
 
-type AppRole = "admin" | "commercial" | "production" | "viewer" | "pcp_closer" | "backoffice_fiscal";
+type AppRole = "admin" | "commercial" | "production" | "viewer" | "pcp_closer" | "backoffice_fiscal" | "corte";
 type RoleDefinition = {
   value: AppRole | "production_full";
   label: string;
@@ -68,6 +68,7 @@ const ALL_ROLES: RoleDefinition[] = [
   { value: "production_full", label: "Produção Completa", description: "Cadastra pedidos, controla produção e acompanha calendário", combo: PRODUCTION_FULL_ROLES },
   { value: "commercial", label: "Comercial", description: "Gerencia pedidos e clientes" },
   { value: "production", label: "Produção", description: "Visualiza e atualiza etapas" },
+  { value: "corte", label: "Corte", description: "Acesso apenas à fila de corte" },
   { value: "viewer", label: "Visualizador", description: "Apenas visualização" },
   { value: "pcp_closer", label: "PCP Fechamento", description: "Gerencia fechamentos" },
   { value: "backoffice_fiscal", label: "Backoffice Fiscal", description: "Emite notas fiscais" },
@@ -256,7 +257,7 @@ export default function Usuarios() {
 
         const rolesToInsert = formData.roles.map((role) => ({
           user_id: selectedUser.id,
-          role: role as "admin" | "commercial" | "production" | "viewer" | "pcp_closer" | "backoffice_fiscal",
+          role: role as AppRole,
         }));
 
         const { error: insertError } = await supabase

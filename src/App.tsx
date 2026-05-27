@@ -25,6 +25,7 @@ import Comercial from "./pages/Comercial";
 import FilaEtapas from "./pages/FilaEtapas";
 import NotFound from "./pages/NotFound";
 import ScanResultado from "./pages/ScanResultado";
+import AreaCorte from "./pages/AreaCorte";
 
 
 const queryClient = new QueryClient();
@@ -56,6 +57,8 @@ const App = () => (
             <Route path="/pcp/fechamentos" element={<Layout><Fechamentos /></Layout>} />
             <Route path="/pcp/fechamentos/:id" element={<Layout><DetalhesFechamento /></Layout>} />
             <Route path="/usuarios" element={<Layout><Usuarios /></Layout>} />
+            <Route path="/area-corte" element={<Layout><AreaCorte /></Layout>} />
+            <Route path="/area-corte/:pedidoId" element={<Layout><AreaCorte /></Layout>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

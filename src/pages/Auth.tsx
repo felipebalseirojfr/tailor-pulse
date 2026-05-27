@@ -15,19 +15,33 @@ export default function Auth() {
   const navigate = useNavigate();
   const { toast } = useToast();
 
+  const redirectByRole = async (userId: string) => {
+    const { data: rolesData } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", userId);
+    const roles = (rolesData || []).map((r: any) => r.role);
+    if (roles.includes("corte") && !roles.includes("admin")) {
+      navigate("/area-corte");
+    } else {
+      navigate("/");
+    }
+  };
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session) {
-        navigate("/");
+        redirectByRole(session.user.id);
       }
     });
-  }, [navigate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
+    const { data, error } = await supabase.auth.signInWithPassword({
       email: email.trim(),
       password,
     });
@@ -40,12 +54,9 @@ export default function Auth() {
           : error.message,
         variant: "destructive",
       });
-    } else {
-      toast({
-        title: "Login realizado!",
-        description: "Bem-vindo de volta!",
-      });
-      navigate("/");
+    } else if (data.user) {
+      toast({ title: "Login realizado!", description: "Bem-vindo de volta!" });
+      await redirectByRole(data.user.id);
     }
     setLoading(false);
   };

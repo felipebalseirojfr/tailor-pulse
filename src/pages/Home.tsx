@@ -10,13 +10,23 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    (async () => {
+      const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         navigate("/auth", { replace: true });
-      } else {
-        setLoading(false);
+        return;
       }
-    });
+      const { data: rolesData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", session.user.id);
+      const roles = (rolesData || []).map((r: any) => r.role);
+      if (roles.includes("corte") && !roles.includes("admin")) {
+        navigate("/area-corte", { replace: true });
+        return;
+      }
+      setLoading(false);
+    })();
   }, [navigate]);
 
   if (loading) {
