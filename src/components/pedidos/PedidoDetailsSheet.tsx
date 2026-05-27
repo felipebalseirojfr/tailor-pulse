@@ -437,6 +437,30 @@ export function PedidoDetailsSheet({
                   <div><p className="text-sm text-muted-foreground">Quantidade Total</p><p className="text-lg font-semibold">{calcularQuantidadeReal(pedido.grade_tamanhos, pedido.quantidade_total)} peças</p></div>
                   <div><p className="text-sm text-muted-foreground">Progresso</p><p className="text-lg font-semibold">{pedido.progresso_percentual}%</p></div>
                 </div>
+                {(() => {
+                  const ordem = ["1","2","4","6","8","10","12","14","PP","P","M","G","GG","XGG","XGG1","XGG2","XGG3"];
+                  const entradas = Object.entries(pedido.grade_tamanhos || {})
+                    .filter(([_, q]) => typeof q === "number" && (q as number) > 0)
+                    .sort((a, b) => {
+                      const ia = ordem.indexOf(a[0]); const ib = ordem.indexOf(b[0]);
+                      return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+                    });
+                  if (entradas.length === 0) return null;
+                  return (
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1.5">Grade de Tamanhos</p>
+                      <div className="flex flex-wrap gap-1.5">
+                        {entradas.map(([tam, qtd]) => (
+                          <div key={tam} className="px-2.5 py-1 rounded-md border border-border bg-muted/40 text-sm">
+                            <span className="font-semibold">{tam}</span>
+                            <span className="text-muted-foreground"> · </span>
+                            <span>{qtd as number}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
                 <div className="grid grid-cols-2 gap-4">
                   <div><p className="text-sm text-muted-foreground">Data de Início</p><p className="font-medium">{(() => { const d = parseLocalDate(pedido.data_inicio); return d ? format(d, "dd/MM/yyyy", { locale: ptBR }) : "—"; })()}</p></div>
                   <div><p className="text-sm text-muted-foreground">Prazo de Entrega</p><p className="font-medium">{(() => { const d = parseLocalDate(pedido.prazo_final); return d ? format(d, "dd/MM/yyyy", { locale: ptBR }) : "—"; })()}</p></div>
