@@ -580,11 +580,14 @@ export type Database = {
           cliente_id: string
           codigo_pedido: string | null
           codigo_produto_cliente: string | null
+          comentario_corte: string | null
           composicao_tecido: string | null
           cor_tecido: string | null
+          corte_prioritario: boolean
           created_at: string | null
           data_inicio: string
           foto_modelo_url: string | null
+          grade_corte_real: Json | null
           grade_tamanhos: Json | null
           id: string
           observacoes_pedido: string | null
@@ -614,11 +617,14 @@ export type Database = {
           cliente_id: string
           codigo_pedido?: string | null
           codigo_produto_cliente?: string | null
+          comentario_corte?: string | null
           composicao_tecido?: string | null
           cor_tecido?: string | null
+          corte_prioritario?: boolean
           created_at?: string | null
           data_inicio: string
           foto_modelo_url?: string | null
+          grade_corte_real?: Json | null
           grade_tamanhos?: Json | null
           id?: string
           observacoes_pedido?: string | null
@@ -648,11 +654,14 @@ export type Database = {
           cliente_id?: string
           codigo_pedido?: string | null
           codigo_produto_cliente?: string | null
+          comentario_corte?: string | null
           composicao_tecido?: string | null
           cor_tecido?: string | null
+          corte_prioritario?: boolean
           created_at?: string | null
           data_inicio?: string
           foto_modelo_url?: string | null
+          grade_corte_real?: Json | null
           grade_tamanhos?: Json | null
           id?: string
           observacoes_pedido?: string | null
