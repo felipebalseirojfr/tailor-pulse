@@ -120,6 +120,15 @@ export default function Layout({ children }: LayoutProps) {
     navigate("/auth");
   };
 
+  const { roles: userRolesList, loading: rolesLoadingState } = useUserRoles();
+  useEffect(() => {
+    if (rolesLoadingState || !session) return;
+    const isCorteOnly = userRolesList.includes("corte") && !userRolesList.includes("admin");
+    if (isCorteOnly && !location.pathname.startsWith("/area-corte") && !location.pathname.startsWith("/scan")) {
+      navigate("/area-corte", { replace: true });
+    }
+  }, [rolesLoadingState, userRolesList, location.pathname, navigate, session]);
+
   if (loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
