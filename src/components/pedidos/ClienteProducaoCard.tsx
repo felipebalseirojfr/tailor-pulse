@@ -364,6 +364,31 @@ export function ClienteProducaoCard({ cliente, producoes, onViewProducao }: Clie
                         </div>
                       </div>
 
+                      {(() => {
+                        const ordem = ["1","2","4","6","8","10","12","14","PP","P","M","G","GG","XGG","XGG1","XGG2","XGG3"];
+                        const entradas = Object.entries(producao.grade_tamanhos || {})
+                          .filter(([_, q]) => typeof q === "number" && (q as number) > 0)
+                          .sort((a, b) => {
+                            const ia = ordem.indexOf(a[0]); const ib = ordem.indexOf(b[0]);
+                            return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+                          });
+                        if (entradas.length === 0) return null;
+                        return (
+                          <div>
+                            <p className="text-muted-foreground text-xs mb-1">Grade de Tamanhos</p>
+                            <div className="flex flex-wrap gap-1">
+                              {entradas.map(([tam, qtd]) => (
+                                <span key={tam} className="px-2 py-0.5 rounded-md border border-border bg-muted/40 text-xs">
+                                  <span className="font-semibold">{tam}</span>
+                                  <span className="text-muted-foreground"> · </span>
+                                  <span>{qtd as number}</span>
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })()}
+
                       <div className="space-y-1">
                         <div className="flex justify-between text-xs">
                           <span className="text-muted-foreground">Progresso</span>
