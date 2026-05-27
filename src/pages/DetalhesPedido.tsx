@@ -515,10 +515,45 @@ export default function DetalhesPedido() {
                   <div><p className="text-sm font-medium text-muted-foreground">Tipo de Peça</p><p className="text-base">{pedido.tipo_peca}</p></div>
                   <div><p className="text-sm font-medium text-muted-foreground">Código do Produto do Cliente</p><p className="text-base">{(pedido as any).codigo_produto_cliente || "Não informado"}</p></div>
                   <div><p className="text-sm font-medium text-muted-foreground">Tecido</p><p className="text-base">{pedido.tecido || "Não especificado"}</p></div>
-                  <div><p className="text-sm font-medium text-muted-foreground">Aviamentos</p><p className="text-base">{pedido.aviamentos || "Não especificado"}</p></div>
+                  <div>
+                    <p className="text-sm font-medium text-muted-foreground">Aviamentos</p>
+                    {Array.isArray(pedido.aviamentos) && pedido.aviamentos.length > 0 ? (
+                      <ul className="list-disc pl-5 text-base space-y-0.5">
+                        {pedido.aviamentos.map((a: string, i: number) => (
+                          <li key={i}>{a}</li>
+                        ))}
+                      </ul>
+                    ) : (
+                      <p className="text-base">Não especificado</p>
+                    )}
+                  </div>
                 </div>
                 <div className="space-y-4">
                   <div><p className="text-sm font-medium text-muted-foreground">Quantidade Total</p><p className="text-base">{calcularQuantidadeReal(pedido.grade_tamanhos, pedido.quantidade_total)} unidades</p></div>
+                  {(() => {
+                    const ordem = ["1","2","4","6","8","10","12","14","PP","P","M","G","GG","XGG","XGG1","XGG2","XGG3"];
+                    const entradas = Object.entries(pedido.grade_tamanhos || {})
+                      .filter(([_, q]) => typeof q === "number" && (q as number) > 0)
+                      .sort((a, b) => {
+                        const ia = ordem.indexOf(a[0]); const ib = ordem.indexOf(b[0]);
+                        return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+                      });
+                    if (entradas.length === 0) return null;
+                    return (
+                      <div>
+                        <p className="text-sm font-medium text-muted-foreground mb-1.5">Grade de Tamanhos</p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {entradas.map(([tam, qtd]) => (
+                            <span key={tam} className="px-2.5 py-1 rounded-md border border-border bg-muted/40 text-sm">
+                              <span className="font-semibold">{tam}</span>
+                              <span className="text-muted-foreground"> · </span>
+                              <span>{qtd as number}</span>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })()}
                    <div><p className="text-sm font-medium text-muted-foreground">Data de Início</p><p className="text-base">{new Date(pedido.data_inicio + 'T00:00:00').toLocaleDateString("pt-BR")}</p></div>
                    <div><p className="text-sm font-medium text-muted-foreground">Prazo de Entrega</p><p className="text-base">{new Date(pedido.prazo_final + 'T00:00:00').toLocaleDateString("pt-BR")}</p></div>
                   <div><p className="text-sm font-medium text-muted-foreground">Responsável Comercial</p><p className="text-base">{pedido.profiles?.nome}</p></div>
