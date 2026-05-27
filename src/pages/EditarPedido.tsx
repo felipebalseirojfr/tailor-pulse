@@ -200,8 +200,23 @@ export default function EditarPedido() {
     }
   };
 
+  const quantidadeTotalCalculada = Object.values(formData.grade_tamanhos).reduce(
+    (a, b) => a + (Number(b) || 0),
+    0
+  );
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (quantidadeTotalCalculada <= 0) {
+      toast({
+        title: "Grade de tamanhos obrigatória",
+        description: "Preencha a quantidade por tamanho na grade para calcular a quantidade total.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setSaving(true);
 
     try {
@@ -276,7 +291,7 @@ export default function EditarPedido() {
         tecido: formData.tecido,
         cor_tecido: formData.cor_tecido || null,
         aviamentos: formData.aviamentos,
-        quantidade_total: parseInt(formData.quantidade_total),
+        quantidade_total: quantidadeTotalCalculada,
         data_inicio: formData.data_inicio,
         prazo_final: formData.prazo_final,
         tem_personalizacao: formData.tipos_personalizacao.length > 0,
@@ -584,16 +599,17 @@ export default function EditarPedido() {
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="quantidade_total">Quantidade Total *</Label>
+                  <Label htmlFor="quantidade_total">Quantidade Total</Label>
                   <Input
                     id="quantidade_total"
                     type="number"
-                    value={formData.quantidade_total}
-                    onChange={(e) =>
-                      setFormData({ ...formData, quantidade_total: e.target.value })
-                    }
-                    required
+                    value={quantidadeTotalCalculada || ""}
+                    readOnly
+                    disabled
+                    placeholder="Calculado pela grade"
+                    className="bg-muted"
                   />
+                  <p className="text-xs text-muted-foreground mt-1">Somado automaticamente pela grade de tamanhos.</p>
                 </div>
 
                 <div>

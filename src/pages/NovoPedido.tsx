@@ -95,8 +95,23 @@ export default function NovoPedido() {
     }
   };
 
+  const quantidadeTotalCalculada = Object.values(formData.grade_tamanhos).reduce(
+    (a, b) => a + (Number(b) || 0),
+    0
+  );
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (quantidadeTotalCalculada <= 0) {
+      toast({
+        title: "Grade de tamanhos obrigatória",
+        description: "Preencha a quantidade por tamanho na grade para calcular a quantidade total.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -149,7 +164,7 @@ export default function NovoPedido() {
           tecido: formData.tecido,
           cor_tecido: formData.cor_tecido || null,
           aviamentos: formData.aviamentos,
-          quantidade_total: parseInt(formData.quantidade_total),
+          quantidade_total: quantidadeTotalCalculada,
           data_inicio: formData.data_inicio,
           prazo_final: formData.prazo_final,
           responsavel_comercial_id: user.id,
@@ -260,7 +275,7 @@ export default function NovoPedido() {
         codigo_pedido: pedidoData[0].codigo_pedido || pedidoId,
         produto_modelo: formData.produto_modelo,
         tipo_peca: formData.tipo_peca,
-        quantidade_total: parseInt(formData.quantidade_total),
+        quantidade_total: quantidadeTotalCalculada,
         aviamentos: formData.aviamentos,
         tipos_personalizacao: formData.tipos_personalizacao,
       });
@@ -451,17 +466,17 @@ export default function NovoPedido() {
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="quantidade_total">Quantidade Total *</Label>
+                <Label htmlFor="quantidade_total">Quantidade Total</Label>
                 <Input
                   id="quantidade_total"
-                  name="quantidade_total"
                   type="number"
-                  min="1"
-                  value={formData.quantidade_total}
-                  onChange={handleChange}
-                  placeholder="Ex: 100"
-                  required
+                  value={Object.values(formData.grade_tamanhos).reduce((a, b) => a + (Number(b) || 0), 0) || ""}
+                  readOnly
+                  disabled
+                  placeholder="Calculado pela grade"
+                  className="bg-muted"
                 />
+                <p className="text-xs text-muted-foreground">Somado automaticamente pela grade de tamanhos abaixo.</p>
               </div>
             </div>
 
