@@ -33,6 +33,7 @@ interface EtapaItem {
   pedido: {
     codigo_pedido: string | null;
     produto_modelo: string;
+    grade_tamanhos: Record<string, number> | null;
     cliente: { nome: string } | null;
   } | null;
 }
@@ -67,7 +68,7 @@ export default function FilaEtapas() {
     const [etapasRes, terceirosRes] = await Promise.all([
       supabase
         .from("etapas_producao")
-        .select("id, pedido_id, tipo_etapa, status, data_termino_prevista, terceiro_id, pedido:pedidos(codigo_pedido, produto_modelo, cliente:clientes(nome))")
+        .select("id, pedido_id, tipo_etapa, status, data_termino_prevista, terceiro_id, pedido:pedidos(codigo_pedido, produto_modelo, grade_tamanhos, cliente:clientes(nome))")
         .neq("status", "concluido")
         .order("data_termino_prevista", { ascending: true, nullsFirst: false }),
       supabase.from("terceiros").select("id, nome, tipo_etapa").eq("ativo", true).order("nome"),
@@ -232,6 +233,27 @@ export default function FilaEtapas() {
                                 <div className="text-xs text-muted-foreground truncate">
                                   {item.pedido?.cliente?.nome}
                                 </div>
+                                {(() => {
+                                  const ordem = ["1","2","4","6","8","10","12","14","PP","P","M","G","GG","XGG","XGG1","XGG2","XGG3"];
+                                  const entradas = Object.entries(item.pedido?.grade_tamanhos || {})
+                                    .filter(([_, q]) => typeof q === "number" && (q as number) > 0)
+                                    .sort((a, b) => {
+                                      const ia = ordem.indexOf(a[0]); const ib = ordem.indexOf(b[0]);
+                                      return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
+                                    });
+                                  if (entradas.length === 0) return null;
+                                  return (
+                                    <div className="flex flex-wrap gap-1 mt-1.5">
+                                      {entradas.map(([tam, qtd]) => (
+                                        <span key={tam} className="px-1.5 py-0.5 rounded border border-border bg-muted/40 text-[10px] leading-none">
+                                          <span className="font-semibold">{tam}</span>
+                                          <span className="text-muted-foreground">·</span>
+                                          <span>{qtd as number}</span>
+                                        </span>
+                                      ))}
+                                    </div>
+                                  );
+                                })()}
                               </div>
                               <div className={cn("text-xs flex flex-col items-end gap-0.5", corPrazo)}>
                                 <div className="flex items-center gap-1">
