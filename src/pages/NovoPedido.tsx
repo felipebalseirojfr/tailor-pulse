@@ -95,8 +95,23 @@ export default function NovoPedido() {
     }
   };
 
+  const quantidadeTotalCalculada = Object.values(formData.grade_tamanhos).reduce(
+    (a, b) => a + (Number(b) || 0),
+    0
+  );
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (quantidadeTotalCalculada <= 0) {
+      toast({
+        title: "Grade de tamanhos obrigatória",
+        description: "Preencha a quantidade por tamanho na grade para calcular a quantidade total.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
