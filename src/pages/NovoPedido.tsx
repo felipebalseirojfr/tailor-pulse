@@ -164,7 +164,7 @@ export default function NovoPedido() {
           tecido: formData.tecido,
           cor_tecido: formData.cor_tecido || null,
           aviamentos: formData.aviamentos,
-          quantidade_total: parseInt(formData.quantidade_total),
+          quantidade_total: quantidadeTotalCalculada,
           data_inicio: formData.data_inicio,
           prazo_final: formData.prazo_final,
           responsavel_comercial_id: user.id,
@@ -275,7 +275,7 @@ export default function NovoPedido() {
         codigo_pedido: pedidoData[0].codigo_pedido || pedidoId,
         produto_modelo: formData.produto_modelo,
         tipo_peca: formData.tipo_peca,
-        quantidade_total: parseInt(formData.quantidade_total),
+        quantidade_total: quantidadeTotalCalculada,
         aviamentos: formData.aviamentos,
         tipos_personalizacao: formData.tipos_personalizacao,
       });
