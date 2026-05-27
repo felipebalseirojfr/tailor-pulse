@@ -66,8 +66,8 @@ export default function Auth() {
               />
             </div>
             <div>
-              <CardTitle className="text-2xl font-bold text-foreground">
-                JFR Produções
+              <CardTitle className="text-2xl font-bold text-blue-900">
+                JFR Confecções
               </CardTitle>
               <CardDescription className="text-muted-foreground mt-1">
                 Sistema de Controle de Produção

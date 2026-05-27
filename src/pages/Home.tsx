@@ -48,7 +48,7 @@ export default function Home() {
 
       <div className="relative flex flex-col items-center gap-3 mb-12">
         <img src={logoJfr} alt="JFR Logo" className="h-24 w-auto object-contain" />
-        <h1 className="text-3xl font-bold text-foreground">JFR Produções</h1>
+        <h1 className="text-3xl font-bold text-blue-900">JFR Confecções</h1>
         <p className="text-muted-foreground">Selecione um módulo para começar</p>
       </div>
 
