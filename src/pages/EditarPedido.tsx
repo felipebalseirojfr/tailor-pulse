@@ -291,7 +291,7 @@ export default function EditarPedido() {
         tecido: formData.tecido,
         cor_tecido: formData.cor_tecido || null,
         aviamentos: formData.aviamentos,
-        quantidade_total: parseInt(formData.quantidade_total),
+        quantidade_total: quantidadeTotalCalculada,
         data_inicio: formData.data_inicio,
         prazo_final: formData.prazo_final,
         tem_personalizacao: formData.tipos_personalizacao.length > 0,
