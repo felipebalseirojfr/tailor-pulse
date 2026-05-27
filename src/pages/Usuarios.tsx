@@ -89,6 +89,27 @@ export default function Usuarios() {
     roles: [] as AppRole[],
   });
   const [saving, setSaving] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<UserWithRoles | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+    setDeleting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("deletar-usuario", {
+        body: { user_id: userToDelete.id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ title: "Usuário excluído", description: `${userToDelete.nome} foi removido do sistema.` });
+      setUserToDelete(null);
+      fetchUsers();
+    } catch (error: unknown) {
+      toast({ title: "Erro ao excluir", description: getErrorMessage(error), variant: "destructive" });
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const { hasRole, loading: rolesLoading } = useUserRoles();
   const navigate = useNavigate();
