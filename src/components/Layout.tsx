@@ -267,7 +267,7 @@ export default function Layout({ children }: LayoutProps) {
             <div className="fixed inset-y-0 left-0 w-full max-w-xs bg-sidebar p-6 border-r border-sidebar-border">
               <div className="flex items-center gap-3 mb-4">
                 <img src={logoJfr} alt="JFR Logo" className="h-16 w-auto object-contain" />
-                <span className="text-lg font-bold text-sidebar-foreground">JFR Produções</span>
+                <span className="text-lg font-bold text-blue-900">JFR Confecções</span>
               </div>
 
               {userName && (
