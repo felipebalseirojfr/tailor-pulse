@@ -74,7 +74,7 @@ export default function AreaCorte() {
       .from("etapas_producao")
       .select("pedido_id, status, data_inicio, created_at")
       .eq("tipo_etapa", "corte")
-      .neq("status", "concluido");
+      .eq("status", "em_andamento");
 
     if (etapasErr) {
       console.error(etapasErr);
