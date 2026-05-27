@@ -16,6 +16,7 @@ import {
   PackageCheck,
   ListOrdered,
   Home as HomeIcon,
+  Scissors,
 
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
