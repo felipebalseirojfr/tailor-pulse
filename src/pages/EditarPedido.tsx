@@ -599,16 +599,17 @@ export default function EditarPedido() {
               
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div>
-                  <Label htmlFor="quantidade_total">Quantidade Total *</Label>
+                  <Label htmlFor="quantidade_total">Quantidade Total</Label>
                   <Input
                     id="quantidade_total"
                     type="number"
-                    value={formData.quantidade_total}
-                    onChange={(e) =>
-                      setFormData({ ...formData, quantidade_total: e.target.value })
-                    }
-                    required
+                    value={quantidadeTotalCalculada || ""}
+                    readOnly
+                    disabled
+                    placeholder="Calculado pela grade"
+                    className="bg-muted"
                   />
+                  <p className="text-xs text-muted-foreground mt-1">Somado automaticamente pela grade de tamanhos.</p>
                 </div>
 
                 <div>
