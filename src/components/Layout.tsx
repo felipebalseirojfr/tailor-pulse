@@ -46,7 +46,7 @@ export default function Layout({ children }: LayoutProps) {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const { roles, hasRole, hasAnyRole } = useUserRoles();
+  const { roles, hasRole, hasAnyRole, loading: rolesLoadingState } = useUserRoles();
 
   useEffect(() => {
     let cancelled = false;
