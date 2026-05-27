@@ -68,7 +68,7 @@ export default function FilaEtapas() {
     const [etapasRes, terceirosRes] = await Promise.all([
       supabase
         .from("etapas_producao")
-        .select("id, pedido_id, tipo_etapa, status, data_termino_prevista, terceiro_id, pedido:pedidos(codigo_pedido, produto_modelo, cliente:clientes(nome))")
+        .select("id, pedido_id, tipo_etapa, status, data_termino_prevista, terceiro_id, pedido:pedidos(codigo_pedido, produto_modelo, grade_tamanhos, cliente:clientes(nome))")
         .neq("status", "concluido")
         .order("data_termino_prevista", { ascending: true, nullsFirst: false }),
       supabase.from("terceiros").select("id, nome, tipo_etapa").eq("ativo", true).order("nome"),
