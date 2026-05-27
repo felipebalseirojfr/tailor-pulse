@@ -18,6 +18,16 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
   Table,
   TableBody,
   TableCell,
@@ -25,7 +35,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { UserPlus, Edit, Shield, Users, Loader2 } from "lucide-react";
+import { UserPlus, Edit, Shield, Users, Loader2, Trash2 } from "lucide-react";
 
 interface Profile {
   id: string;
@@ -79,6 +89,27 @@ export default function Usuarios() {
     roles: [] as AppRole[],
   });
   const [saving, setSaving] = useState(false);
+  const [userToDelete, setUserToDelete] = useState<UserWithRoles | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDeleteUser = async () => {
+    if (!userToDelete) return;
+    setDeleting(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("deletar-usuario", {
+        body: { user_id: userToDelete.id },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      toast({ title: "Usuário excluído", description: `${userToDelete.nome} foi removido do sistema.` });
+      setUserToDelete(null);
+      fetchUsers();
+    } catch (error: unknown) {
+      toast({ title: "Erro ao excluir", description: getErrorMessage(error), variant: "destructive" });
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   const { hasRole, loading: rolesLoading } = useUserRoles();
   const navigate = useNavigate();
@@ -369,15 +400,26 @@ export default function Usuarios() {
                       </div>
                     </TableCell>
                     <TableCell className="text-right">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleOpenEdit(user)}
-                        className="gap-1"
-                      >
-                        <Edit className="h-4 w-4" />
-                        Editar
-                      </Button>
+                      <div className="flex justify-end gap-1">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleOpenEdit(user)}
+                          className="gap-1"
+                        >
+                          <Edit className="h-4 w-4" />
+                          Editar
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setUserToDelete(user)}
+                          className="gap-1 text-destructive hover:text-destructive"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                          Excluir
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))}
@@ -492,6 +534,27 @@ export default function Usuarios() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <AlertDialog open={!!userToDelete} onOpenChange={(open) => !open && setUserToDelete(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir usuário?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esta ação é permanente. {userToDelete?.nome} ({userToDelete?.email}) será removido do sistema, junto com suas permissões e acesso de login.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleting}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleDeleteUser(); }}
+              disabled={deleting}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              {deleting ? (<><Loader2 className="mr-2 h-4 w-4 animate-spin" />Excluindo...</>) : "Excluir"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
