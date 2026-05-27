@@ -257,7 +257,7 @@ export default function Layout({ children }: LayoutProps) {
           </Button>
           <div className="flex items-center gap-3">
             <img src={logoJfr} alt="JFR Logo" className="h-12 w-auto object-contain" />
-            <span className="text-lg font-bold text-primary">JFR Produções</span>
+            <span className="text-lg font-bold text-blue-900">JFR Confecções</span>
           </div>
         </div>
 
