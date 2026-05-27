@@ -910,6 +910,7 @@ export type Database = {
         | "viewer"
         | "pcp_closer"
         | "backoffice_fiscal"
+        | "corte"
       bloqueado_por_comercial:
         | "aguardando_cliente"
         | "aguardando_interno"
@@ -1099,6 +1100,7 @@ export const Constants = {
         "viewer",
         "pcp_closer",
         "backoffice_fiscal",
+        "corte",
       ],
       bloqueado_por_comercial: [
         "aguardando_cliente",
