@@ -13,7 +13,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Scissors, ArrowUp, ArrowLeft, Loader2, Clock, Calendar as CalendarIcon, ChevronDown, History } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Scissors, ArrowUp, ArrowLeft, Loader2, Clock, Calendar as CalendarIcon, ChevronDown, History, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { parseLocalDate } from "@/lib/date-utils";
 
