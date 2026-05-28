@@ -40,7 +40,9 @@ interface PedidoCorte {
   corte_prioritario: boolean;
   cliente: { nome: string } | null;
   etapa_corte_inicio: string | null;
+  referencias_codigos: string[];
 }
+
 
 function diffDias(fromIso: string | null): number {
   if (!fromIso) return 0;
@@ -108,9 +110,22 @@ export default function AreaCorte() {
     const etapaByPedido: Record<string, any> = {};
     for (const e of etapas || []) etapaByPedido[(e as any).pedido_id] = e;
 
+    // Buscar referências (códigos REF) de cada pedido
+    const { data: refs } = await supabase
+      .from("referencias")
+      .select("pedido_id, codigo_referencia")
+      .in("pedido_id", pedidoIds);
+    const refsByPedido: Record<string, string[]> = {};
+    for (const r of refs || []) {
+      const pid = (r as any).pedido_id;
+      if (!refsByPedido[pid]) refsByPedido[pid] = [];
+      if ((r as any).codigo_referencia) refsByPedido[pid].push((r as any).codigo_referencia);
+    }
+
     const list: PedidoCorte[] = (peds || []).map((p: any) => ({
       ...p,
       etapa_corte_inicio: etapaByPedido[p.id]?.data_inicio || etapaByPedido[p.id]?.created_at || null,
+      referencias_codigos: refsByPedido[p.id] || [],
     }));
 
     // Ordenação: prioritários primeiro, depois por data de entrada (mais antigo primeiro)
@@ -205,8 +220,13 @@ export default function AreaCorte() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <CardTitle className="text-base truncate">{p.produto_modelo}</CardTitle>
+                          {p.referencias_codigos.length > 0 && (
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              Ref: <span className="font-medium text-foreground">{p.referencias_codigos.join(", ")}</span>
+                            </p>
+                          )}
                           {p.codigo_pedido && (
-                            <p className="text-xs text-muted-foreground mt-0.5">Ref: {p.codigo_pedido}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">OP: {p.codigo_pedido}</p>
                           )}
                         </div>
                         <div className="flex flex-col items-end gap-1">
@@ -307,7 +327,14 @@ function ExecucaoCorte({ pedidoId, onDone }: { pedidoId: string; onDone: () => v
       onDone();
       return;
     }
-    const p: PedidoCorte = { ...(data as any), etapa_corte_inicio: null };
+    const { data: refs } = await supabase
+      .from("referencias")
+      .select("codigo_referencia")
+      .eq("pedido_id", pedidoId);
+    const referencias_codigos = (refs || [])
+      .map((r: any) => r.codigo_referencia)
+      .filter(Boolean) as string[];
+    const p: PedidoCorte = { ...(data as any), etapa_corte_inicio: null, referencias_codigos };
     setPedido(p);
     const real = (p.grade_corte_real || {}) as Record<string, number>;
     const esperada = (p.grade_tamanhos || {}) as Record<string, number>;
@@ -430,7 +457,10 @@ function ExecucaoCorte({ pedidoId, onDone }: { pedidoId: string; onDone: () => v
           </Button>
           <h1 className="text-2xl font-bold">{pedido.produto_modelo}</h1>
           <p className="text-sm text-muted-foreground">
-            {pedido.codigo_pedido && <>Ref: {pedido.codigo_pedido} · </>}
+            {pedido.referencias_codigos.length > 0 && (
+              <>Ref: <span className="text-foreground font-medium">{pedido.referencias_codigos.join(", ")}</span> · </>
+            )}
+            {pedido.codigo_pedido && <>OP: {pedido.codigo_pedido} · </>}
             Cliente: {pedido.cliente?.nome || "—"}
             {pedido.cor_tecido && <> · Cor: {pedido.cor_tecido}</>}
           </p>
@@ -539,7 +569,7 @@ function ExecucaoCorte({ pedidoId, onDone }: { pedidoId: string; onDone: () => v
 interface HistoricoItem {
   id: string;
   codigo_pedido: string | null;
-  codigo_produto_cliente: string | null;
+  codigo_referencia: string | null;
   produto_modelo: string;
   cliente_nome: string;
   grade_tamanhos: Record<string, number> | null;
@@ -595,6 +625,18 @@ function HistoricoCorte() {
       .not("grade_corte_real", "is", null);
     if (pErr) { console.error(pErr); setLoading(false); return; }
 
+    // Buscar referências (códigos REF) por pedido
+    const { data: refs } = await supabase
+      .from("referencias")
+      .select("pedido_id, codigo_referencia")
+      .in("pedido_id", pedidoIds);
+    const refsByPedido: Record<string, string[]> = {};
+    for (const r of refs || []) {
+      const pid = (r as any).pedido_id;
+      if (!refsByPedido[pid]) refsByPedido[pid] = [];
+      if ((r as any).codigo_referencia) refsByPedido[pid].push((r as any).codigo_referencia);
+    }
+
     const pedMap: Record<string, any> = {};
     for (const p of peds || []) pedMap[(p as any).id] = p;
 
@@ -605,7 +647,7 @@ function HistoricoCorte() {
       list.push({
         id: p.id,
         codigo_pedido: p.codigo_pedido,
-        codigo_produto_cliente: p.codigo_produto_cliente || p.tipo_peca || null,
+        codigo_referencia: (refsByPedido[p.id] || []).join(", ") || null,
         produto_modelo: p.produto_modelo,
         cliente_nome: p.cliente?.nome || "—",
         grade_tamanhos: p.grade_tamanhos,
@@ -780,7 +822,7 @@ function HistoricoCorte() {
                                   <td className="px-3 py-3 font-medium border-b-2 border-blue-500/20">{i.produto_modelo}</td>
                                   <td className="px-3 py-3 font-mono whitespace-nowrap border-b-2 border-blue-500/20">{i.codigo_pedido || "—"}</td>
                                   <td className="px-3 py-3 border-b-2 border-blue-500/20">{i.cliente_nome}</td>
-                                  <td className="px-3 py-3 border-b-2 border-blue-500/20">{i.codigo_produto_cliente || "—"}</td>
+                                  <td className="px-3 py-3 font-mono whitespace-nowrap border-b-2 border-blue-500/20">{i.codigo_referencia || "—"}</td>
                                   <td className="px-3 py-3 whitespace-nowrap border-b-2 border-blue-500/20">{formatBR(i.data_inicio)}</td>
                                   <td className="px-3 py-3 whitespace-nowrap border-b-2 border-blue-500/20">{formatBR(i.data_termino)}</td>
                                   <td className="px-3 py-3 border-b-2 border-blue-500/20">
@@ -855,7 +897,7 @@ function HistoricoCorte() {
                                           </DialogHeader>
                                           <p className="text-sm whitespace-pre-wrap leading-relaxed">{com}</p>
                                           <div className="text-xs text-muted-foreground border-t border-border pt-2 mt-2">
-                                            {i.produto_modelo} · {i.codigo_pedido || "—"} · {i.cliente_nome}
+                                            {i.produto_modelo} · Ref: {i.codigo_referencia || "—"} · OP: {i.codigo_pedido || "—"} · {i.cliente_nome}
                                           </div>
                                         </DialogContent>
                                       </Dialog>
