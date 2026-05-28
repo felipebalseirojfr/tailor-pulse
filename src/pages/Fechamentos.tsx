@@ -193,12 +193,20 @@ export default function Fechamentos() {
         </CardContent>
       </Card>
 
-      {/* Tabs: Em contagem | Emissão de NF */}
+      {/* Tabs: Revisão | Fechamento | Emissão de NF */}
       {(() => {
-        const emContagem = filtered.filter((r) => r.quantidade_saida == null);
-        const prontoNf = filtered.filter((r) => r.quantidade_saida != null);
+        const naoEmitidos = filtered.filter((r) => r.status_nf !== "emitida");
+        const revisao = naoEmitidos.filter((r) => r.quantidade_entrada == null);
+        const fechamento = naoEmitidos.filter((r) => r.quantidade_entrada != null && r.quantidade_saida == null);
+        const prontoNf = naoEmitidos.filter((r) => r.quantidade_saida != null);
 
-        const renderTable = (list: FechamentoRow[], emptyMsg: string) => (
+        const openRow = (r: FechamentoRow) => {
+          setSelected(r);
+          setSelectedFase(getFechamentoFase(r));
+          setSheetOpen(true);
+        };
+
+        const renderTable = (list: FechamentoRow[], emptyMsg: string, fase: FechamentoFase) => (
           <Card>
             <CardContent className="pt-6">
               {loading ? (
@@ -215,21 +223,22 @@ export default function Fechamentos() {
                         <TableHead>Referência</TableHead>
                         <TableHead className="text-right">Prevista</TableHead>
                         <TableHead className="text-right">Entrada</TableHead>
-                        <TableHead className="text-right">Saída</TableHead>
-                        <TableHead className="text-right">Diferença</TableHead>
-                        <TableHead className="text-right">Caixas</TableHead>
-                        <TableHead>Status NF</TableHead>
-                        <TableHead>Nº NF</TableHead>
+                        {fase !== "revisao" && <TableHead className="text-right">Saída</TableHead>}
+                        {fase === "nf" && <TableHead className="text-right">Diferença</TableHead>}
+                        {fase === "nf" && <TableHead className="text-right">Caixas</TableHead>}
                         <TableHead></TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {list.map((r) => {
                         const dif = r.quantidade_entrada != null && r.quantidade_saida != null ? r.quantidade_entrada - r.quantidade_saida : null;
+                        const ctaLabel = fase === "revisao" ? "Registrar entrada"
+                          : fase === "fechamento" ? "Fazer fechamento"
+                          : "Emitir NF";
                         return (
                           <TableRow
                             key={r.id}
-                            onClick={() => { setSelected(r); setSheetOpen(true); }}
+                            onClick={() => openRow(r)}
                             className="cursor-pointer hover:bg-muted/50 transition-colors"
                           >
                             <TableCell>
@@ -242,25 +251,25 @@ export default function Fechamentos() {
                             <TableCell className="font-mono text-xs">{r.referencia_codigo}</TableCell>
                             <TableCell className="text-right">{r.quantidade_prevista}</TableCell>
                             <TableCell className="text-right">{r.quantidade_entrada ?? "—"}</TableCell>
-                            <TableCell className="text-right">{r.quantidade_saida ?? "—"}</TableCell>
-                            <TableCell className="text-right">
-                              {dif == null ? "—" : dif > 0 ? <span className="text-destructive font-medium">{dif}</span> :
-                                dif < 0 ? (
-                                  <Tooltip>
-                                    <TooltipTrigger asChild><span className="text-orange-500 font-medium">{dif}</span></TooltipTrigger>
-                                    <TooltipContent>Saída maior que entrada — verifique a contagem</TooltipContent>
-                                  </Tooltip>
-                                ) : <span>{dif}</span>}
-                            </TableCell>
-                            <TableCell className="text-right">{r.quantidade_caixas ?? "—"}</TableCell>
+                            {fase !== "revisao" && (
+                              <TableCell className="text-right">{r.quantidade_saida ?? "—"}</TableCell>
+                            )}
+                            {fase === "nf" && (
+                              <TableCell className="text-right">
+                                {dif == null ? "—" : dif > 0 ? <span className="text-destructive font-medium">{dif}</span> :
+                                  dif < 0 ? (
+                                    <Tooltip>
+                                      <TooltipTrigger asChild><span className="text-orange-500 font-medium">{dif}</span></TooltipTrigger>
+                                      <TooltipContent>Saída maior que entrada — verifique a contagem</TooltipContent>
+                                    </Tooltip>
+                                  ) : <span>{dif}</span>}
+                              </TableCell>
+                            )}
+                            {fase === "nf" && (
+                              <TableCell className="text-right">{r.quantidade_caixas ?? "—"}</TableCell>
+                            )}
                             <TableCell>
-                              <Badge variant={r.status_nf === "emitida" ? "default" : "secondary"}>
-                                {r.status_nf === "emitida" ? "Emitida" : "Pendente"}
-                              </Badge>
-                            </TableCell>
-                            <TableCell className="text-xs">{r.numero_nf ?? "—"}</TableCell>
-                            <TableCell>
-                              <Button size="sm" variant="outline" onClick={() => { setSelected(r); setSheetOpen(true); }}>Abrir</Button>
+                              <Button size="sm" variant="outline" onClick={(e) => { e.stopPropagation(); openRow(r); }}>{ctaLabel}</Button>
                             </TableCell>
                           </TableRow>
                         );
@@ -274,12 +283,17 @@ export default function Fechamentos() {
         );
 
         return (
-          <Tabs defaultValue="contagem" className="space-y-4">
+          <Tabs defaultValue="revisao" className="space-y-4">
             <TabsList>
-              <TabsTrigger value="contagem" className="gap-2">
+              <TabsTrigger value="revisao" className="gap-2">
+                <PackageCheck className="h-4 w-4" />
+                Revisão
+                <Badge variant="secondary" className="ml-1">{revisao.length}</Badge>
+              </TabsTrigger>
+              <TabsTrigger value="fechamento" className="gap-2">
                 <ClipboardList className="h-4 w-4" />
-                Em contagem
-                <Badge variant="secondary" className="ml-1">{emContagem.length}</Badge>
+                Fechamento
+                <Badge variant="secondary" className="ml-1">{fechamento.length}</Badge>
               </TabsTrigger>
               <TabsTrigger value="nf" className="gap-2">
                 <FileCheck2 className="h-4 w-4" />
@@ -287,18 +301,22 @@ export default function Fechamentos() {
                 <Badge variant="secondary" className="ml-1">{prontoNf.length}</Badge>
               </TabsTrigger>
             </TabsList>
-            <TabsContent value="contagem">
-              {renderTable(emContagem, "Nenhum pedido aguardando contagem.")}
+            <TabsContent value="revisao">
+              {renderTable(revisao, "Nenhuma referência aguardando contagem de entrada.", "revisao")}
+            </TabsContent>
+            <TabsContent value="fechamento">
+              {renderTable(fechamento, "Nenhuma referência aguardando fechamento.", "fechamento")}
             </TabsContent>
             <TabsContent value="nf">
-              {renderTable(prontoNf, "Nenhum pedido pronto para emissão de NF.")}
+              {renderTable(prontoNf, "Nenhum pedido pronto para emissão de NF.", "nf")}
             </TabsContent>
           </Tabs>
         );
       })()}
 
 
-      <FechamentoSheet open={sheetOpen} onOpenChange={setSheetOpen} fechamento={selected} onSaved={() => { load(); }} />
+      <FechamentoSheet open={sheetOpen} onOpenChange={setSheetOpen} fechamento={selected} fase={selectedFase} onSaved={() => { load(); }} />
+
     </div>
   );
 }
