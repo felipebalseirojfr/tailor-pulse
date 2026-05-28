@@ -532,3 +532,294 @@ function ExecucaoCorte({ pedidoId, onDone }: { pedidoId: string; onDone: () => v
     </div>
   );
 }
+
+// =================== HISTÓRICO ===================
+
+interface HistoricoItem {
+  id: string;
+  codigo_pedido: string | null;
+  codigo_produto_cliente: string | null;
+  produto_modelo: string;
+  cliente_nome: string;
+  grade_tamanhos: Record<string, number> | null;
+  grade_corte_real: Record<string, number> | null;
+  comentario_corte: string | null;
+  data_inicio: string | null;
+  data_termino: string;
+}
+
+function gradeToString(grade: Record<string, number> | null | undefined): string {
+  if (!grade) return "—";
+  const tamanhos = sortTamanhos(Object.keys(grade).filter((k) => Number(grade[k]) > 0));
+  if (tamanhos.length === 0) return "—";
+  return tamanhos.map((t) => `${t}:${grade[t]}`).join(" ");
+}
+
+function sumGrade(grade: Record<string, number> | null | undefined): number {
+  if (!grade) return 0;
+  return Object.values(grade).reduce((a, b) => a + (Number(b) || 0), 0);
+}
+
+function diasEntre(inicio: string | null, fim: string): number {
+  if (!inicio) return 0;
+  const ms = new Date(fim).getTime() - new Date(inicio).getTime();
+  return Math.max(0, Math.round(ms / 86400000));
+}
+
+function HistoricoCorte() {
+  const [loading, setLoading] = useState(true);
+  const [items, setItems] = useState<HistoricoItem[]>([]);
+  const [clienteFiltro, setClienteFiltro] = useState<string>("__all__");
+  const [mesFiltro, setMesFiltro] = useState<string>("__all__");
+  const [expandidos, setExpandidos] = useState<Record<string, boolean>>({});
+
+  const load = async () => {
+    setLoading(true);
+    const { data: etapas, error: etErr } = await supabase
+      .from("etapas_producao")
+      .select("pedido_id, data_inicio, data_termino, created_at")
+      .eq("tipo_etapa", "corte")
+      .eq("status", "concluido")
+      .not("data_termino", "is", null)
+      .order("data_termino", { ascending: false });
+    if (etErr) { console.error(etErr); setLoading(false); return; }
+
+    const pedidoIds = Array.from(new Set((etapas || []).map((e: any) => e.pedido_id)));
+    if (pedidoIds.length === 0) { setItems([]); setLoading(false); return; }
+
+    const { data: peds, error: pErr } = await supabase
+      .from("pedidos")
+      .select("id, codigo_pedido, codigo_produto_cliente, produto_modelo, grade_tamanhos, grade_corte_real, comentario_corte, cliente:clientes(nome)")
+      .in("id", pedidoIds)
+      .not("grade_corte_real", "is", null);
+    if (pErr) { console.error(pErr); setLoading(false); return; }
+
+    const pedMap: Record<string, any> = {};
+    for (const p of peds || []) pedMap[(p as any).id] = p;
+
+    const list: HistoricoItem[] = [];
+    for (const e of etapas || []) {
+      const p = pedMap[(e as any).pedido_id];
+      if (!p) continue;
+      list.push({
+        id: p.id,
+        codigo_pedido: p.codigo_pedido,
+        codigo_produto_cliente: p.codigo_produto_cliente,
+        produto_modelo: p.produto_modelo,
+        cliente_nome: p.cliente?.nome || "—",
+        grade_tamanhos: p.grade_tamanhos,
+        grade_corte_real: p.grade_corte_real,
+        comentario_corte: p.comentario_corte,
+        data_inicio: (e as any).data_inicio || (e as any).created_at,
+        data_termino: (e as any).data_termino,
+      });
+    }
+    setItems(list);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    load();
+    const ch = supabase
+      .channel("area-corte-historico")
+      .on("postgres_changes", { event: "*", schema: "public", table: "etapas_producao" }, load)
+      .on("postgres_changes", { event: "*", schema: "public", table: "pedidos" }, load)
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, []);
+
+  const clientes = useMemo(() => {
+    const set = new Set(items.map((i) => i.cliente_nome));
+    return Array.from(set).sort();
+  }, [items]);
+
+  const meses = useMemo(() => {
+    const set = new Set(items.map((i) => i.data_termino.slice(0, 7)));
+    return Array.from(set).sort().reverse();
+  }, [items]);
+
+  const filtrados = useMemo(() => {
+    return items.filter((i) => {
+      if (clienteFiltro !== "__all__" && i.cliente_nome !== clienteFiltro) return false;
+      if (mesFiltro !== "__all__" && i.data_termino.slice(0, 7) !== mesFiltro) return false;
+      return true;
+    });
+  }, [items, clienteFiltro, mesFiltro]);
+
+  const grupos = useMemo(() => {
+    const map: Record<string, HistoricoItem[]> = {};
+    for (const i of filtrados) {
+      const key = i.data_termino.slice(0, 7);
+      if (!map[key]) map[key] = [];
+      map[key].push(i);
+    }
+    const keys = Object.keys(map).sort().reverse();
+    return keys.map((k) => ({ key: k, items: map[k] }));
+  }, [filtrados]);
+
+  const mesAtual = new Date().toISOString().slice(0, 7);
+
+  const isExpanded = (key: string) => {
+    if (expandidos[key] !== undefined) return expandidos[key];
+    return key === mesAtual;
+  };
+
+  const toggle = (key: string) => setExpandidos((s) => ({ ...s, [key]: !isExpanded(key) }));
+
+  const formatMes = (yyyymm: string) => {
+    const [y, m] = yyyymm.split("-");
+    const d = new Date(Number(y), Number(m) - 1, 1);
+    const nome = d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+    return nome.charAt(0).toUpperCase() + nome.slice(1);
+  };
+
+  if (loading) {
+    return <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-40" />)}</div>;
+  }
+
+  return (
+    <TooltipProvider delayDuration={200}>
+      <div className="space-y-4">
+        <div className="flex flex-wrap gap-3 items-center">
+          <Select value={clienteFiltro} onValueChange={setClienteFiltro}>
+            <SelectTrigger className="w-[220px]"><SelectValue placeholder="Todos os clientes" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Todos os clientes</SelectItem>
+              {clientes.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          <Select value={mesFiltro} onValueChange={setMesFiltro}>
+            <SelectTrigger className="w-[200px]"><SelectValue placeholder="Todos os meses" /></SelectTrigger>
+            <SelectContent>
+              <SelectItem value="__all__">Todos os meses</SelectItem>
+              {meses.map((m) => <SelectItem key={m} value={m}>{formatMes(m)}</SelectItem>)}
+            </SelectContent>
+          </Select>
+          {(clienteFiltro !== "__all__" || mesFiltro !== "__all__") && (
+            <Button variant="ghost" size="sm" onClick={() => { setClienteFiltro("__all__"); setMesFiltro("__all__"); }}>
+              Limpar filtros
+            </Button>
+          )}
+          <span className="text-sm text-muted-foreground ml-auto">{filtrados.length} cortes</span>
+        </div>
+
+        {grupos.length === 0 ? (
+          <Card>
+            <CardContent className="py-10 text-center text-muted-foreground">
+              Nenhum corte registrado ainda.
+            </CardContent>
+          </Card>
+        ) : (
+          <div className="space-y-3">
+            {grupos.map(({ key, items: grupoItems }) => {
+              const totalEsperado = grupoItems.reduce((acc, i) => acc + sumGrade(i.grade_tamanhos), 0);
+              const totalReal = grupoItems.reduce((acc, i) => acc + sumGrade(i.grade_corte_real), 0);
+              const diffMes = totalReal - totalEsperado;
+              const open = isExpanded(key);
+              return (
+                <Collapsible key={key} open={open} onOpenChange={() => toggle(key)}>
+                  <Card>
+                    <CollapsibleTrigger asChild>
+                      <button className="w-full flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors text-left">
+                        <div className="flex items-center gap-2">
+                          <ChevronDown className={cn("h-4 w-4 transition-transform", !open && "-rotate-90")} />
+                          <span className="font-semibold">{formatMes(key)}</span>
+                          <Badge variant="secondary">{grupoItems.length} corte{grupoItems.length > 1 ? "s" : ""}</Badge>
+                        </div>
+                        <div className="hidden sm:flex items-center gap-3 text-xs text-muted-foreground">
+                          <span>Esperado: <span className="text-foreground font-medium">{totalEsperado}</span></span>
+                          <span>Real: <span className="text-foreground font-medium">{totalReal}</span></span>
+                          <span className={cn(
+                            "font-medium",
+                            diffMes === 0 ? "text-muted-foreground" : diffMes > 0 ? "text-blue-500" : "text-destructive"
+                          )}>
+                            {diffMes === 0 ? "0" : diffMes > 0 ? `+${diffMes}` : `${diffMes}`}
+                          </span>
+                        </div>
+                      </button>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <div className="overflow-x-auto border-t border-border">
+                        <table className="w-full text-xs">
+                          <thead className="bg-muted/40 text-muted-foreground">
+                            <tr>
+                              <th className="text-left px-3 py-2 font-medium whitespace-nowrap">Nº OP</th>
+                              <th className="text-left px-3 py-2 font-medium">Cliente</th>
+                              <th className="text-left px-3 py-2 font-medium">Produto</th>
+                              <th className="text-left px-3 py-2 font-medium">Referência</th>
+                              <th className="text-left px-3 py-2 font-medium whitespace-nowrap">Início</th>
+                              <th className="text-left px-3 py-2 font-medium whitespace-nowrap">Conclusão</th>
+                              <th className="text-right px-3 py-2 font-medium whitespace-nowrap">Dias</th>
+                              <th className="text-left px-3 py-2 font-medium">Grade Esperada</th>
+                              <th className="text-left px-3 py-2 font-medium">Grade Real</th>
+                              <th className="text-right px-3 py-2 font-medium whitespace-nowrap">Dif.</th>
+                              <th className="text-left px-3 py-2 font-medium">Comentário</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {grupoItems.map((i, idx) => {
+                              const esp = sumGrade(i.grade_tamanhos);
+                              const real = sumGrade(i.grade_corte_real);
+                              const diff = real - esp;
+                              const dias = diasEntre(i.data_inicio, i.data_termino);
+                              const com = i.comentario_corte || "";
+                              const comShort = com.length > 40 ? com.slice(0, 40) + "…" : com;
+                              return (
+                                <tr key={i.id + i.data_termino} className={cn("border-t border-border/40", idx % 2 === 1 && "bg-muted/20")}>
+                                  <td className="px-3 py-2 font-mono whitespace-nowrap">{i.codigo_pedido || "—"}</td>
+                                  <td className="px-3 py-2">{i.cliente_nome}</td>
+                                  <td className="px-3 py-2">{i.produto_modelo}</td>
+                                  <td className="px-3 py-2">{i.codigo_produto_cliente || "—"}</td>
+                                  <td className="px-3 py-2 whitespace-nowrap">{formatBR(i.data_inicio)}</td>
+                                  <td className="px-3 py-2 whitespace-nowrap">{formatBR(i.data_termino)}</td>
+                                  <td className="px-3 py-2 text-right">{dias}</td>
+                                  <td className="px-3 py-2 font-mono text-[11px]">{gradeToString(i.grade_tamanhos)}</td>
+                                  <td className="px-3 py-2 font-mono text-[11px]">{gradeToString(i.grade_corte_real)}</td>
+                                  <td className={cn(
+                                    "px-3 py-2 text-right font-medium whitespace-nowrap",
+                                    diff === 0 ? "text-muted-foreground" : diff > 0 ? "text-blue-500" : "text-destructive"
+                                  )}>
+                                    {diff === 0 ? "0" : diff > 0 ? `+${diff}` : `${diff}`}
+                                  </td>
+                                  <td className="px-3 py-2 max-w-[220px]">
+                                    {com ? (
+                                      <Tooltip>
+                                        <TooltipTrigger asChild>
+                                          <span className="cursor-help">{comShort}</span>
+                                        </TooltipTrigger>
+                                        <TooltipContent className="max-w-sm whitespace-pre-wrap">{com}</TooltipContent>
+                                      </Tooltip>
+                                    ) : <span className="text-muted-foreground">—</span>}
+                                  </td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                          <tfoot className="bg-muted/30 font-medium">
+                            <tr className="border-t-2 border-border">
+                              <td className="px-3 py-2" colSpan={6}>Totais do mês — {grupoItems.length} OPs</td>
+                              <td className="px-3 py-2"></td>
+                              <td className="px-3 py-2 text-muted-foreground">Esperado: <span className="text-foreground">{totalEsperado}</span></td>
+                              <td className="px-3 py-2 text-muted-foreground">Cortado: <span className="text-foreground">{totalReal}</span></td>
+                              <td className={cn(
+                                "px-3 py-2 text-right",
+                                diffMes === 0 ? "text-muted-foreground" : diffMes > 0 ? "text-blue-500" : "text-destructive"
+                              )}>
+                                {diffMes === 0 ? "0" : diffMes > 0 ? `+${diffMes}` : `${diffMes}`}
+                              </td>
+                              <td className="px-3 py-2"></td>
+                            </tr>
+                          </tfoot>
+                        </table>
+                      </div>
+                    </CollapsibleContent>
+                  </Card>
+                </Collapsible>
+              );
+            })}
+          </div>
+        )}
+      </div>
+    </TooltipProvider>
+  );
+}
