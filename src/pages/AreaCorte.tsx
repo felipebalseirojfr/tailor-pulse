@@ -324,7 +324,7 @@ function ExecucaoCorte({ pedidoId, onDone }: { pedidoId: string; onDone: () => v
     setLoading(true);
     const { data, error } = await supabase
       .from("pedidos")
-      .select("id, codigo_pedido, produto_modelo, cor_tecido, prazo_final, quantidade_total, grade_tamanhos, grade_corte_real, comentario_corte, corte_prioritario, cliente:clientes(nome)")
+      .select("id, codigo_pedido, codigo_produto_cliente, tipo_peca, produto_modelo, cor_tecido, prazo_final, quantidade_total, grade_tamanhos, grade_corte_real, comentario_corte, corte_prioritario, cliente:clientes(nome)")
       .eq("id", pedidoId)
       .single();
     if (error || !data) {
@@ -339,6 +339,10 @@ function ExecucaoCorte({ pedidoId, onDone }: { pedidoId: string; onDone: () => v
     const referencias_codigos = (refs || [])
       .map((r: any) => r.codigo_referencia)
       .filter(Boolean) as string[];
+    if (referencias_codigos.length === 0) {
+      const fallback = (data as any).codigo_produto_cliente || (data as any).tipo_peca;
+      if (fallback) referencias_codigos.push(fallback);
+    }
     const p: PedidoCorte = { ...(data as any), etapa_corte_inicio: null, referencias_codigos };
     setPedido(p);
     const real = (p.grade_corte_real || {}) as Record<string, number>;
