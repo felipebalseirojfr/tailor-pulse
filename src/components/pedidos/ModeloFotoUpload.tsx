@@ -19,7 +19,11 @@ export function ModeloFotoUpload({ value, onChange, label = "Foto do Modelo" }: 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    await uploadFile(file);
+    e.target.value = "";
+  };
 
+  const uploadFile = async (file: File) => {
     if (!file.type.startsWith("image/")) {
       toast({ title: "Arquivo inválido", description: "Selecione uma imagem.", variant: "destructive" });
       return;
@@ -27,7 +31,7 @@ export function ModeloFotoUpload({ value, onChange, label = "Foto do Modelo" }: 
 
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop();
+      const ext = file.name.split(".").pop() || "png";
       const path = `${crypto.randomUUID()}.${ext}`;
       const { error } = await supabase.storage
         .from("modelos-fotos")
@@ -41,9 +45,43 @@ export function ModeloFotoUpload({ value, onChange, label = "Foto do Modelo" }: 
       toast({ title: "Erro ao enviar", description: err.message, variant: "destructive" });
     } finally {
       setUploading(false);
-      e.target.value = "";
     }
   };
+
+  const handlePaste = async (e: React.ClipboardEvent | ClipboardEvent) => {
+    const items = (e as ClipboardEvent).clipboardData?.items;
+    if (!items) return;
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) {
+          e.preventDefault();
+          await uploadFile(file);
+          return;
+        }
+      }
+    }
+  };
+
+  const pasteFromClipboard = async () => {
+    try {
+      // @ts-ignore
+      const items = await navigator.clipboard.read();
+      for (const item of items) {
+        const type = item.types.find((t: string) => t.startsWith("image/"));
+        if (type) {
+          const blob = await item.getType(type);
+          const file = new File([blob], `pasted.${type.split("/")[1] || "png"}`, { type });
+          await uploadFile(file);
+          return;
+        }
+      }
+      toast({ title: "Nenhuma imagem", description: "Não há imagem na área de transferência.", variant: "destructive" });
+    } catch (err: any) {
+      toast({ title: "Não foi possível ler", description: "Use Ctrl+V sobre o campo da foto.", variant: "destructive" });
+    }
+  };
+
 
   const handleRemove = () => onChange(null);
 
