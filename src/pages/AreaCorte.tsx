@@ -327,7 +327,14 @@ function ExecucaoCorte({ pedidoId, onDone }: { pedidoId: string; onDone: () => v
       onDone();
       return;
     }
-    const p: PedidoCorte = { ...(data as any), etapa_corte_inicio: null };
+    const { data: refs } = await supabase
+      .from("referencias")
+      .select("codigo_referencia")
+      .eq("pedido_id", pedidoId);
+    const referencias_codigos = (refs || [])
+      .map((r: any) => r.codigo_referencia)
+      .filter(Boolean) as string[];
+    const p: PedidoCorte = { ...(data as any), etapa_corte_inicio: null, referencias_codigos };
     setPedido(p);
     const real = (p.grade_corte_real || {}) as Record<string, number>;
     const esperada = (p.grade_tamanhos || {}) as Record<string, number>;
