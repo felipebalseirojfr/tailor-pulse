@@ -1,5 +1,6 @@
-import { useState } from "react";
-import { Upload, X, Image as ImageIcon, Loader2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Upload, X, Image as ImageIcon, Loader2, Clipboard } from "lucide-react";
+
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,7 +19,11 @@ export function ModeloFotoUpload({ value, onChange, label = "Foto do Modelo" }: 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    await uploadFile(file);
+    e.target.value = "";
+  };
 
+  const uploadFile = async (file: File) => {
     if (!file.type.startsWith("image/")) {
       toast({ title: "Arquivo inválido", description: "Selecione uma imagem.", variant: "destructive" });
       return;
@@ -26,7 +31,7 @@ export function ModeloFotoUpload({ value, onChange, label = "Foto do Modelo" }: 
 
     setUploading(true);
     try {
-      const ext = file.name.split(".").pop();
+      const ext = file.name.split(".").pop() || "png";
       const path = `${crypto.randomUUID()}.${ext}`;
       const { error } = await supabase.storage
         .from("modelos-fotos")
@@ -40,14 +45,52 @@ export function ModeloFotoUpload({ value, onChange, label = "Foto do Modelo" }: 
       toast({ title: "Erro ao enviar", description: err.message, variant: "destructive" });
     } finally {
       setUploading(false);
-      e.target.value = "";
     }
   };
+
+  const handlePaste = async (e: React.ClipboardEvent | ClipboardEvent) => {
+    const items = (e as ClipboardEvent).clipboardData?.items;
+    if (!items) return;
+    for (const item of Array.from(items)) {
+      if (item.type.startsWith("image/")) {
+        const file = item.getAsFile();
+        if (file) {
+          e.preventDefault();
+          await uploadFile(file);
+          return;
+        }
+      }
+    }
+  };
+
+  const pasteFromClipboard = async () => {
+    try {
+      // @ts-ignore
+      const items = await navigator.clipboard.read();
+      for (const item of items) {
+        const type = item.types.find((t: string) => t.startsWith("image/"));
+        if (type) {
+          const blob = await item.getType(type);
+          const file = new File([blob], `pasted.${type.split("/")[1] || "png"}`, { type });
+          await uploadFile(file);
+          return;
+        }
+      }
+      toast({ title: "Nenhuma imagem", description: "Não há imagem na área de transferência.", variant: "destructive" });
+    } catch (err: any) {
+      toast({ title: "Não foi possível ler", description: "Use Ctrl+V sobre o campo da foto.", variant: "destructive" });
+    }
+  };
+
 
   const handleRemove = () => onChange(null);
 
   return (
-    <div className="space-y-2">
+    <div
+      className="space-y-2"
+      onPaste={handlePaste as any}
+      tabIndex={0}
+    >
       <Label>{label}</Label>
       {value ? (
         <div className="relative inline-block group">
@@ -67,23 +110,40 @@ export function ModeloFotoUpload({ value, onChange, label = "Foto do Modelo" }: 
           </Button>
         </div>
       ) : (
-        <label className="flex flex-col items-center justify-center w-40 h-40 border-2 border-dashed border-border rounded-md cursor-pointer hover:bg-muted/30 transition-colors">
-          {uploading ? (
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          ) : (
-            <>
-              <ImageIcon className="h-6 w-6 text-muted-foreground mb-2" />
-              <span className="text-xs text-muted-foreground">Clique para enviar</span>
-            </>
-          )}
-          <input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleUpload}
+        <div className="space-y-2">
+          <label
+            className="flex flex-col items-center justify-center w-40 h-40 border-2 border-dashed border-border rounded-md cursor-pointer hover:bg-muted/30 hover:border-primary/50 transition-colors focus-within:border-primary"
+            onPaste={handlePaste as any}
+            tabIndex={0}
+          >
+            {uploading ? (
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            ) : (
+              <>
+                <ImageIcon className="h-6 w-6 text-muted-foreground mb-2" />
+                <span className="text-xs text-muted-foreground text-center px-2">Clique, arraste ou cole (Ctrl+V)</span>
+              </>
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleUpload}
+              disabled={uploading}
+            />
+          </label>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={pasteFromClipboard}
             disabled={uploading}
-          />
-        </label>
+            className="w-40 h-8 text-xs gap-1.5"
+          >
+            <Clipboard className="h-3.5 w-3.5" />
+            Colar da área de transferência
+          </Button>
+        </div>
       )}
     </div>
   );
