@@ -869,7 +869,7 @@ function HistoricoCorte() {
                           </tbody>
                           <tfoot className="bg-blue-500/10 font-semibold">
                             <tr>
-                              <td className="px-3 py-2 border-t-2 border-blue-500/40" colSpan={7}>
+                              <td className="px-3 py-2 border-t-2 border-blue-500/40" colSpan={6}>
                                 Totais do mês — {grupoItems.length} OPs
                               </td>
                               <td className="px-3 py-2 border-t-2 border-blue-500/40 text-muted-foreground">
