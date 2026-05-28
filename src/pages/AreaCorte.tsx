@@ -457,7 +457,10 @@ function ExecucaoCorte({ pedidoId, onDone }: { pedidoId: string; onDone: () => v
           </Button>
           <h1 className="text-2xl font-bold">{pedido.produto_modelo}</h1>
           <p className="text-sm text-muted-foreground">
-            {pedido.codigo_pedido && <>Ref: {pedido.codigo_pedido} · </>}
+            {pedido.referencias_codigos.length > 0 && (
+              <>Ref: <span className="text-foreground font-medium">{pedido.referencias_codigos.join(", ")}</span> · </>
+            )}
+            {pedido.codigo_pedido && <>OP: {pedido.codigo_pedido} · </>}
             Cliente: {pedido.cliente?.nome || "—"}
             {pedido.cor_tecido && <> · Cor: {pedido.cor_tecido}</>}
           </p>
