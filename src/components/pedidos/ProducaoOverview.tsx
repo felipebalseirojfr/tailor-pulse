@@ -280,6 +280,9 @@ function AlertaCard({
               {items.slice(0, 3).map((p) => (
                 <p key={p.id} className="text-xs text-muted-foreground truncate">
                   · {p.clientes?.nome || "—"} — {p.produto_modelo}
+                  {(p as any)._aguardandoLabel && (
+                    <span className="text-warning"> · {(p as any)._aguardandoLabel}</span>
+                  )}
                 </p>
               ))}
               {items.length > 3 && (
