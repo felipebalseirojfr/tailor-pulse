@@ -105,6 +105,8 @@ export default function AreaCorte() {
       console.error(pedErr);
       setLoading(false);
       return;
+    }
+
     const etapaByPedido: Record<string, any> = {};
     for (const e of etapas || []) etapaByPedido[(e as any).pedido_id] = e;
 
