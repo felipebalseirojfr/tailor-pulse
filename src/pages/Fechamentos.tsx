@@ -37,6 +37,7 @@ export default function Fechamentos() {
   const [search, setSearch] = useState("");
   const [clientes, setClientes] = useState<{ id: string; nome: string }[]>([]);
   const [selected, setSelected] = useState<FechamentoRow | null>(null);
+  const [selectedFase, setSelectedFase] = useState<FechamentoFase>("revisao");
   const [sheetOpen, setSheetOpen] = useState(false);
 
   const load = async () => {
