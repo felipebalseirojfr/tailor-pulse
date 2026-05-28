@@ -86,7 +86,11 @@ export function ModeloFotoUpload({ value, onChange, label = "Foto do Modelo" }: 
   const handleRemove = () => onChange(null);
 
   return (
-    <div className="space-y-2">
+    <div
+      className="space-y-2"
+      onPaste={handlePaste as any}
+      tabIndex={0}
+    >
       <Label>{label}</Label>
       {value ? (
         <div className="relative inline-block group">
@@ -106,24 +110,43 @@ export function ModeloFotoUpload({ value, onChange, label = "Foto do Modelo" }: 
           </Button>
         </div>
       ) : (
-        <label className="flex flex-col items-center justify-center w-40 h-40 border-2 border-dashed border-border rounded-md cursor-pointer hover:bg-muted/30 transition-colors">
-          {uploading ? (
-            <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-          ) : (
-            <>
-              <ImageIcon className="h-6 w-6 text-muted-foreground mb-2" />
-              <span className="text-xs text-muted-foreground">Clique para enviar</span>
-            </>
-          )}
-          <input
-            type="file"
-            accept="image/*"
-            className="hidden"
-            onChange={handleUpload}
+        <div className="space-y-2">
+          <label
+            className="flex flex-col items-center justify-center w-40 h-40 border-2 border-dashed border-border rounded-md cursor-pointer hover:bg-muted/30 hover:border-primary/50 transition-colors focus-within:border-primary"
+            onPaste={handlePaste as any}
+            tabIndex={0}
+          >
+            {uploading ? (
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            ) : (
+              <>
+                <ImageIcon className="h-6 w-6 text-muted-foreground mb-2" />
+                <span className="text-xs text-muted-foreground text-center px-2">Clique, arraste ou cole (Ctrl+V)</span>
+              </>
+            )}
+            <input
+              type="file"
+              accept="image/*"
+              className="hidden"
+              onChange={handleUpload}
+              disabled={uploading}
+            />
+          </label>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={pasteFromClipboard}
             disabled={uploading}
-          />
-        </label>
+            className="w-40 h-8 text-xs gap-1.5"
+          >
+            <Clipboard className="h-3.5 w-3.5" />
+            Colar da área de transferência
+          </Button>
+        </div>
       )}
     </div>
   );
+}
+
 }
