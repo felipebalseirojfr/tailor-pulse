@@ -126,9 +126,6 @@ export default function AreaCorte() {
       referencias_codigos: refsByPedido[p.id] || [],
     }));
 
-      etapa_corte_inicio: etapaByPedido[p.id]?.data_inicio || etapaByPedido[p.id]?.created_at || null,
-    }));
-
     // Ordenação: prioritários primeiro, depois por data de entrada (mais antigo primeiro)
     list.sort((a, b) => {
       if (a.corte_prioritario !== b.corte_prioritario) return a.corte_prioritario ? -1 : 1;
