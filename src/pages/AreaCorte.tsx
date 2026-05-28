@@ -783,21 +783,23 @@ function HistoricoCorte() {
                                   <td className="px-3 py-3 border-b-2 border-blue-500/20">{i.codigo_produto_cliente || "—"}</td>
                                   <td className="px-3 py-3 whitespace-nowrap border-b-2 border-blue-500/20">{formatBR(i.data_inicio)}</td>
                                   <td className="px-3 py-3 whitespace-nowrap border-b-2 border-blue-500/20">{formatBR(i.data_termino)}</td>
-                                  <td className="px-3 py-3 text-right border-b-2 border-blue-500/20">{dias}</td>
                                   <td className="px-3 py-3 border-b-2 border-blue-500/20">
                                     {tamanhos.length === 0 ? (
                                       <span className="text-muted-foreground">—</span>
                                     ) : (
                                       <div
-                                        className="inline-grid gap-x-2 gap-y-0.5 font-mono text-[11px]"
-                                        style={{ gridTemplateColumns: `repeat(${tamanhos.length}, minmax(2rem, auto))` }}
+                                        className="inline-grid gap-x-2 gap-y-0.5 font-mono text-[11px] items-center"
+                                        style={{ gridTemplateColumns: `auto repeat(${tamanhos.length}, minmax(1.75rem, auto))` }}
                                       >
+                                        <div className="border-b border-blue-500/30 pb-0.5" />
                                         {tamanhos.map((t) => (
                                           <div key={`h-${t}`} className="text-center font-semibold text-muted-foreground border-b border-blue-500/30 pb-0.5">{t}</div>
                                         ))}
+                                        <div className="text-right pr-2 text-muted-foreground uppercase text-[10px] tracking-wide">Esperada</div>
                                         {tamanhos.map((t) => (
                                           <div key={`e-${t}`} className="text-center text-muted-foreground">{Number(espGrade[t] || 0)}</div>
                                         ))}
+                                        <div className="text-right pr-2 font-semibold uppercase text-[10px] tracking-wide">Cortada</div>
                                         {tamanhos.map((t) => (
                                           <div key={`r-${t}`} className="text-center font-semibold">{Number(realGrade[t] || 0)}</div>
                                         ))}
