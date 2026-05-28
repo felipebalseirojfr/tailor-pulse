@@ -605,7 +605,7 @@ function HistoricoCorte() {
       list.push({
         id: p.id,
         codigo_pedido: p.codigo_pedido,
-        codigo_produto_cliente: p.codigo_produto_cliente,
+        codigo_produto_cliente: p.codigo_produto_cliente || p.tipo_peca || null,
         produto_modelo: p.produto_modelo,
         cliente_nome: p.cliente?.nome || "—",
         grade_tamanhos: p.grade_tamanhos,
