@@ -200,11 +200,11 @@ export function ProducaoOverview({ pedidos, onPedidoClick }: Props) {
           />
           <AlertaCard
             icon={PauseCircle}
-            label="Parados em estamparia/bordado >3d"
-            count={alertas.paradosEstamparia.length}
-            tone="destructive"
-            items={alertas.paradosEstamparia}
-            onClick={() => setAlertaSelecionado({ titulo: "Parados em estamparia/bordado", items: alertas.paradosEstamparia })}
+            label="Aguardando próxima etapa"
+            count={alertas.aguardandoEtapa.length}
+            tone="warning"
+            items={alertas.aguardandoEtapa}
+            onClick={() => setAlertaSelecionado({ titulo: "Pedidos aguardando próxima etapa", items: alertas.aguardandoEtapa })}
           />
           <AlertaCard
             icon={Timer}
