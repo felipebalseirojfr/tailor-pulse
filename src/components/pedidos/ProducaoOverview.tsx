@@ -69,14 +69,24 @@ export function ProducaoOverview({ pedidos, onPedidoClick }: Props) {
       return prazo && prazo >= hoje && prazo <= tresDias;
     });
 
-    const paradosEstamparia = pedidos.filter((p) => {
+    const ETAPA_LABELS: Record<string, string> = {
+      pilotagem: "pilotagem", compra_de_insumos: "compra de insumos",
+      liberacao_corte: "liberação de corte", corte: "corte",
+      lavanderia: "lavanderia", costura: "costura", caseado: "caseado",
+      estamparia: "estamparia", bordado: "bordado", acabamento: "acabamento",
+      aplicacao_travete: "aplicação de travete", entrega: "entrega",
+    };
+
+    const aguardandoEtapa = pedidos.filter((p) => {
       if (p.status_geral === "concluido") return false;
-      const etapa = p.etapas_producao?.find(
-        (e) => e.status === "em_andamento" && (e.tipo_etapa === "estamparia" || e.tipo_etapa === "bordado"),
-      );
-      if (!etapa) return false;
-      const ref = etapa.updated_at ? new Date(etapa.updated_at) : null;
-      return ref ? diffDays(ref, hoje) > 3 : false;
+      const temEmAndamento = p.etapas_producao?.some((e) => e.status === "em_andamento");
+      if (temEmAndamento) return false;
+      return p.etapas_producao?.some((e) => e.status === "pendente");
+    }).map((p) => {
+      const proxima = [...(p.etapas_producao || [])]
+        .filter((e) => e.status === "pendente")
+        .sort((a, b) => a.ordem - b.ordem)[0];
+      return { ...p, _aguardandoLabel: proxima ? `Aguardando ${ETAPA_LABELS[proxima.tipo_etapa] || proxima.tipo_etapa}` : "Aguardando próxima etapa" };
     });
 
     const semMovimentacao = pedidos.filter((p) => {
@@ -85,7 +95,7 @@ export function ProducaoOverview({ pedidos, onPedidoClick }: Props) {
       return ultima ? diffDays(ultima, hoje) > 2 : false;
     });
 
-    return { atrasados, entregaProxima, paradosEstamparia, semMovimentacao };
+    return { atrasados, entregaProxima, aguardandoEtapa, semMovimentacao };
   }, [pedidos, hoje]);
 
   const producaoPorEtapa = useMemo(() => {
@@ -190,11 +200,11 @@ export function ProducaoOverview({ pedidos, onPedidoClick }: Props) {
           />
           <AlertaCard
             icon={PauseCircle}
-            label="Parados em estamparia/bordado >3d"
-            count={alertas.paradosEstamparia.length}
-            tone="destructive"
-            items={alertas.paradosEstamparia}
-            onClick={() => setAlertaSelecionado({ titulo: "Parados em estamparia/bordado", items: alertas.paradosEstamparia })}
+            label="Aguardando próxima etapa"
+            count={alertas.aguardandoEtapa.length}
+            tone="warning"
+            items={alertas.aguardandoEtapa}
+            onClick={() => setAlertaSelecionado({ titulo: "Pedidos aguardando próxima etapa", items: alertas.aguardandoEtapa })}
           />
           <AlertaCard
             icon={Timer}
@@ -270,6 +280,9 @@ function AlertaCard({
               {items.slice(0, 3).map((p) => (
                 <p key={p.id} className="text-xs text-muted-foreground truncate">
                   · {p.clientes?.nome || "—"} — {p.produto_modelo}
+                  {(p as any)._aguardandoLabel && (
+                    <span className="text-warning"> · {(p as any)._aguardandoLabel}</span>
+                  )}
                 </p>
               ))}
               {items.length > 3 && (
