@@ -822,7 +822,7 @@ function HistoricoCorte() {
                                   <td className="px-3 py-3 font-medium border-b-2 border-blue-500/20">{i.produto_modelo}</td>
                                   <td className="px-3 py-3 font-mono whitespace-nowrap border-b-2 border-blue-500/20">{i.codigo_pedido || "—"}</td>
                                   <td className="px-3 py-3 border-b-2 border-blue-500/20">{i.cliente_nome}</td>
-                                  <td className="px-3 py-3 border-b-2 border-blue-500/20">{i.codigo_produto_cliente || "—"}</td>
+                                  <td className="px-3 py-3 font-mono whitespace-nowrap border-b-2 border-blue-500/20">{i.codigo_referencia || "—"}</td>
                                   <td className="px-3 py-3 whitespace-nowrap border-b-2 border-blue-500/20">{formatBR(i.data_inicio)}</td>
                                   <td className="px-3 py-3 whitespace-nowrap border-b-2 border-blue-500/20">{formatBR(i.data_termino)}</td>
                                   <td className="px-3 py-3 border-b-2 border-blue-500/20">
