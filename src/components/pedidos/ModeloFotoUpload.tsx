@@ -148,5 +148,3 @@ export function ModeloFotoUpload({ value, onChange, label = "Foto do Modelo" }: 
     </div>
   );
 }
-
-}
