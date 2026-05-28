@@ -40,7 +40,9 @@ interface PedidoCorte {
   corte_prioritario: boolean;
   cliente: { nome: string } | null;
   etapa_corte_inicio: string | null;
+  referencias_codigos: string[];
 }
+
 
 function diffDias(fromIso: string | null): number {
   if (!fromIso) return 0;
