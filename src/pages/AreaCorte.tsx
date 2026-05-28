@@ -218,8 +218,13 @@ export default function AreaCorte() {
                       <div className="flex items-start justify-between gap-2">
                         <div className="min-w-0">
                           <CardTitle className="text-base truncate">{p.produto_modelo}</CardTitle>
+                          {p.referencias_codigos.length > 0 && (
+                            <p className="text-xs text-muted-foreground mt-0.5">
+                              Ref: <span className="font-medium text-foreground">{p.referencias_codigos.join(", ")}</span>
+                            </p>
+                          )}
                           {p.codigo_pedido && (
-                            <p className="text-xs text-muted-foreground mt-0.5">Ref: {p.codigo_pedido}</p>
+                            <p className="text-xs text-muted-foreground mt-0.5">OP: {p.codigo_pedido}</p>
                           )}
                         </div>
                         <div className="flex flex-col items-end gap-1">
