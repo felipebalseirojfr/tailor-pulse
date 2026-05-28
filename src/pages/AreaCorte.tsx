@@ -105,13 +105,27 @@ export default function AreaCorte() {
       console.error(pedErr);
       setLoading(false);
       return;
-    }
-
     const etapaByPedido: Record<string, any> = {};
     for (const e of etapas || []) etapaByPedido[(e as any).pedido_id] = e;
 
+    // Buscar referências (códigos REF) de cada pedido
+    const { data: refs } = await supabase
+      .from("referencias")
+      .select("pedido_id, codigo_referencia")
+      .in("pedido_id", pedidoIds);
+    const refsByPedido: Record<string, string[]> = {};
+    for (const r of refs || []) {
+      const pid = (r as any).pedido_id;
+      if (!refsByPedido[pid]) refsByPedido[pid] = [];
+      if ((r as any).codigo_referencia) refsByPedido[pid].push((r as any).codigo_referencia);
+    }
+
     const list: PedidoCorte[] = (peds || []).map((p: any) => ({
       ...p,
+      etapa_corte_inicio: etapaByPedido[p.id]?.data_inicio || etapaByPedido[p.id]?.created_at || null,
+      referencias_codigos: refsByPedido[p.id] || [],
+    }));
+
       etapa_corte_inicio: etapaByPedido[p.id]?.data_inicio || etapaByPedido[p.id]?.created_at || null,
     }));
 
