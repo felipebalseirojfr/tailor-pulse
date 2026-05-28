@@ -590,7 +590,7 @@ function HistoricoCorte() {
 
     const { data: peds, error: pErr } = await supabase
       .from("pedidos")
-      .select("id, codigo_pedido, codigo_produto_cliente, produto_modelo, grade_tamanhos, grade_corte_real, comentario_corte, cliente:clientes(nome)")
+      .select("id, codigo_pedido, codigo_produto_cliente, tipo_peca, produto_modelo, grade_tamanhos, grade_corte_real, comentario_corte, cliente:clientes(nome)")
       .in("id", pedidoIds)
       .not("grade_corte_real", "is", null);
     if (pErr) { console.error(pErr); setLoading(false); return; }
@@ -605,7 +605,7 @@ function HistoricoCorte() {
       list.push({
         id: p.id,
         codigo_pedido: p.codigo_pedido,
-        codigo_produto_cliente: p.codigo_produto_cliente,
+        codigo_produto_cliente: p.codigo_produto_cliente || p.tipo_peca || null,
         produto_modelo: p.produto_modelo,
         cliente_nome: p.cliente?.nome || "—",
         grade_tamanhos: p.grade_tamanhos,
