@@ -13,7 +13,8 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Scissors, ArrowUp, ArrowLeft, Loader2, Clock, Calendar as CalendarIcon, ChevronDown, History } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Scissors, ArrowUp, ArrowLeft, Loader2, Clock, Calendar as CalendarIcon, ChevronDown, History, MessageSquare } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { parseLocalDate } from "@/lib/date-utils";
 
@@ -739,21 +740,21 @@ function HistoricoCorte() {
                       </button>
                     </CollapsibleTrigger>
                     <CollapsibleContent>
-                      <div className="overflow-x-auto border-t border-border">
-                        <table className="w-full text-xs">
-                          <thead className="bg-muted/40 text-muted-foreground">
+                      <div className="overflow-x-auto border-t-2 border-blue-500/40">
+                        <table className="w-full text-xs border-separate border-spacing-0">
+                          <thead className="bg-blue-500/10 text-muted-foreground">
                             <tr>
-                              <th className="text-left px-3 py-2 font-medium whitespace-nowrap">Nº OP</th>
-                              <th className="text-left px-3 py-2 font-medium">Cliente</th>
-                              <th className="text-left px-3 py-2 font-medium">Produto</th>
-                              <th className="text-left px-3 py-2 font-medium">Referência</th>
-                              <th className="text-left px-3 py-2 font-medium whitespace-nowrap">Início</th>
-                              <th className="text-left px-3 py-2 font-medium whitespace-nowrap">Conclusão</th>
-                              <th className="text-right px-3 py-2 font-medium whitespace-nowrap">Dias</th>
-                              <th className="text-left px-3 py-2 font-medium">Grade Esperada</th>
-                              <th className="text-left px-3 py-2 font-medium">Grade Real</th>
-                              <th className="text-right px-3 py-2 font-medium whitespace-nowrap">Dif.</th>
-                              <th className="text-left px-3 py-2 font-medium">Comentário</th>
+                              <th className="text-left px-3 py-2 font-semibold border-b-2 border-blue-500/40">Produto</th>
+                              <th className="text-left px-3 py-2 font-semibold border-b-2 border-blue-500/40 whitespace-nowrap">Nº OP</th>
+                              <th className="text-left px-3 py-2 font-semibold border-b-2 border-blue-500/40">Cliente</th>
+                              <th className="text-left px-3 py-2 font-semibold border-b-2 border-blue-500/40">Referência</th>
+                              <th className="text-left px-3 py-2 font-semibold border-b-2 border-blue-500/40 whitespace-nowrap">Início</th>
+                              <th className="text-left px-3 py-2 font-semibold border-b-2 border-blue-500/40 whitespace-nowrap">Conclusão</th>
+                              <th className="text-right px-3 py-2 font-semibold border-b-2 border-blue-500/40 whitespace-nowrap">Dias</th>
+                              <th className="text-left px-3 py-2 font-semibold border-b-2 border-blue-500/40">Grade Esperada / Cortada</th>
+                              <th className="text-left px-3 py-2 font-semibold border-b-2 border-blue-500/40">Diferença por Tamanho</th>
+                              <th className="text-right px-3 py-2 font-semibold border-b-2 border-blue-500/40 whitespace-nowrap">Total Dif.</th>
+                              <th className="text-center px-3 py-2 font-semibold border-b-2 border-blue-500/40">Coment.</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -763,51 +764,123 @@ function HistoricoCorte() {
                               const diff = real - esp;
                               const dias = diasEntre(i.data_inicio, i.data_termino);
                               const com = i.comentario_corte || "";
-                              const comShort = com.length > 40 ? com.slice(0, 40) + "…" : com;
+                              const espGrade = i.grade_tamanhos || {};
+                              const realGrade = i.grade_corte_real || {};
+                              const tamanhos = sortTamanhos(
+                                Array.from(new Set([
+                                  ...Object.keys(espGrade).filter((k) => Number(espGrade[k]) > 0),
+                                  ...Object.keys(realGrade).filter((k) => Number(realGrade[k]) > 0),
+                                ]))
+                              );
                               return (
-                                <tr key={i.id + i.data_termino} className={cn("border-t border-border/40", idx % 2 === 1 && "bg-muted/20")}>
-                                  <td className="px-3 py-2 font-mono whitespace-nowrap">{i.codigo_pedido || "—"}</td>
-                                  <td className="px-3 py-2">{i.cliente_nome}</td>
-                                  <td className="px-3 py-2">{i.produto_modelo}</td>
-                                  <td className="px-3 py-2">{i.codigo_produto_cliente || "—"}</td>
-                                  <td className="px-3 py-2 whitespace-nowrap">{formatBR(i.data_inicio)}</td>
-                                  <td className="px-3 py-2 whitespace-nowrap">{formatBR(i.data_termino)}</td>
-                                  <td className="px-3 py-2 text-right">{dias}</td>
-                                  <td className="px-3 py-2 font-mono text-[11px]">{gradeToString(i.grade_tamanhos)}</td>
-                                  <td className="px-3 py-2 font-mono text-[11px]">{gradeToString(i.grade_corte_real)}</td>
+                                <tr
+                                  key={i.id + i.data_termino}
+                                  className={cn(idx % 2 === 1 && "bg-muted/30")}
+                                >
+                                  <td className="px-3 py-3 font-medium border-b-2 border-blue-500/20">{i.produto_modelo}</td>
+                                  <td className="px-3 py-3 font-mono whitespace-nowrap border-b-2 border-blue-500/20">{i.codigo_pedido || "—"}</td>
+                                  <td className="px-3 py-3 border-b-2 border-blue-500/20">{i.cliente_nome}</td>
+                                  <td className="px-3 py-3 border-b-2 border-blue-500/20">{i.codigo_produto_cliente || "—"}</td>
+                                  <td className="px-3 py-3 whitespace-nowrap border-b-2 border-blue-500/20">{formatBR(i.data_inicio)}</td>
+                                  <td className="px-3 py-3 whitespace-nowrap border-b-2 border-blue-500/20">{formatBR(i.data_termino)}</td>
+                                  <td className="px-3 py-3 text-right border-b-2 border-blue-500/20">{dias}</td>
+                                  <td className="px-3 py-3 border-b-2 border-blue-500/20">
+                                    {tamanhos.length === 0 ? (
+                                      <span className="text-muted-foreground">—</span>
+                                    ) : (
+                                      <div
+                                        className="inline-grid gap-x-2 gap-y-0.5 font-mono text-[11px]"
+                                        style={{ gridTemplateColumns: `repeat(${tamanhos.length}, minmax(2rem, auto))` }}
+                                      >
+                                        {tamanhos.map((t) => (
+                                          <div key={`h-${t}`} className="text-center font-semibold text-muted-foreground border-b border-blue-500/30 pb-0.5">{t}</div>
+                                        ))}
+                                        {tamanhos.map((t) => (
+                                          <div key={`e-${t}`} className="text-center text-muted-foreground">{Number(espGrade[t] || 0)}</div>
+                                        ))}
+                                        {tamanhos.map((t) => (
+                                          <div key={`r-${t}`} className="text-center font-semibold">{Number(realGrade[t] || 0)}</div>
+                                        ))}
+                                      </div>
+                                    )}
+                                  </td>
+                                  <td className="px-3 py-3 border-b-2 border-blue-500/20">
+                                    {tamanhos.length === 0 ? (
+                                      <span className="text-muted-foreground">—</span>
+                                    ) : (
+                                      <div
+                                        className="inline-grid gap-x-2 gap-y-0.5 font-mono text-[11px]"
+                                        style={{ gridTemplateColumns: `repeat(${tamanhos.length}, minmax(2rem, auto))` }}
+                                      >
+                                        {tamanhos.map((t) => (
+                                          <div key={`dh-${t}`} className="text-center font-semibold text-muted-foreground border-b border-blue-500/30 pb-0.5">{t}</div>
+                                        ))}
+                                        {tamanhos.map((t) => {
+                                          const d = Number(realGrade[t] || 0) - Number(espGrade[t] || 0);
+                                          return (
+                                            <div
+                                              key={`d-${t}`}
+                                              className={cn(
+                                                "text-center font-semibold",
+                                                d === 0 ? "text-muted-foreground" : d > 0 ? "text-blue-500" : "text-destructive"
+                                              )}
+                                            >
+                                              {d === 0 ? "0" : d > 0 ? `+${d}` : `${d}`}
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    )}
+                                  </td>
                                   <td className={cn(
-                                    "px-3 py-2 text-right font-medium whitespace-nowrap",
+                                    "px-3 py-3 text-right font-bold whitespace-nowrap border-b-2 border-blue-500/20",
                                     diff === 0 ? "text-muted-foreground" : diff > 0 ? "text-blue-500" : "text-destructive"
                                   )}>
                                     {diff === 0 ? "0" : diff > 0 ? `+${diff}` : `${diff}`}
                                   </td>
-                                  <td className="px-3 py-2 max-w-[220px]">
+                                  <td className="px-3 py-3 text-center border-b-2 border-blue-500/20">
                                     {com ? (
-                                      <Tooltip>
-                                        <TooltipTrigger asChild>
-                                          <span className="cursor-help">{comShort}</span>
-                                        </TooltipTrigger>
-                                        <TooltipContent className="max-w-sm whitespace-pre-wrap">{com}</TooltipContent>
-                                      </Tooltip>
-                                    ) : <span className="text-muted-foreground">—</span>}
+                                      <Dialog>
+                                        <DialogTrigger asChild>
+                                          <Button size="sm" variant="outline" className="h-7 px-2 gap-1">
+                                            <MessageSquare className="h-3.5 w-3.5" />
+                                            <span className="text-xs">Ver</span>
+                                          </Button>
+                                        </DialogTrigger>
+                                        <DialogContent>
+                                          <DialogHeader>
+                                            <DialogTitle>Comentário do corte</DialogTitle>
+                                          </DialogHeader>
+                                          <p className="text-sm whitespace-pre-wrap leading-relaxed">{com}</p>
+                                          <div className="text-xs text-muted-foreground border-t border-border pt-2 mt-2">
+                                            {i.produto_modelo} · {i.codigo_pedido || "—"} · {i.cliente_nome}
+                                          </div>
+                                        </DialogContent>
+                                      </Dialog>
+                                    ) : (
+                                      <span className="text-muted-foreground">—</span>
+                                    )}
                                   </td>
                                 </tr>
                               );
                             })}
                           </tbody>
-                          <tfoot className="bg-muted/30 font-medium">
-                            <tr className="border-t-2 border-border">
-                              <td className="px-3 py-2" colSpan={6}>Totais do mês — {grupoItems.length} OPs</td>
-                              <td className="px-3 py-2"></td>
-                              <td className="px-3 py-2 text-muted-foreground">Esperado: <span className="text-foreground">{totalEsperado}</span></td>
-                              <td className="px-3 py-2 text-muted-foreground">Cortado: <span className="text-foreground">{totalReal}</span></td>
+                          <tfoot className="bg-blue-500/10 font-semibold">
+                            <tr>
+                              <td className="px-3 py-2 border-t-2 border-blue-500/40" colSpan={7}>
+                                Totais do mês — {grupoItems.length} OPs
+                              </td>
+                              <td className="px-3 py-2 border-t-2 border-blue-500/40 text-muted-foreground">
+                                Esperado: <span className="text-foreground">{totalEsperado}</span> · Cortado: <span className="text-foreground">{totalReal}</span>
+                              </td>
+                              <td className="px-3 py-2 border-t-2 border-blue-500/40"></td>
                               <td className={cn(
-                                "px-3 py-2 text-right",
+                                "px-3 py-2 text-right border-t-2 border-blue-500/40",
                                 diffMes === 0 ? "text-muted-foreground" : diffMes > 0 ? "text-blue-500" : "text-destructive"
                               )}>
                                 {diffMes === 0 ? "0" : diffMes > 0 ? `+${diffMes}` : `${diffMes}`}
                               </td>
-                              <td className="px-3 py-2"></td>
+                              <td className="px-3 py-2 border-t-2 border-blue-500/40"></td>
                             </tr>
                           </tfoot>
                         </table>
