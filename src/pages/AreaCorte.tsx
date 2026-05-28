@@ -156,114 +156,129 @@ export default function AreaCorte() {
       <div className="flex items-start justify-between gap-3">
         <div>
           <h1 className="text-2xl lg:text-3xl font-bold flex items-center gap-2">
-            <Scissors className="h-7 w-7 text-primary" /> Fila de Corte
+            <Scissors className="h-7 w-7 text-primary" /> Área de Corte
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Pedidos liberados para corte — do mais antigo para o mais recente
+            Gerencie a fila de corte e consulte o histórico
           </p>
         </div>
-        <Badge variant="secondary" className="text-sm h-8 px-3">
-          {pedidos.length} aguardando
-        </Badge>
       </div>
 
-      {loading ? (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-72" />)}
-        </div>
-      ) : pedidos.length === 0 ? (
-        <Card>
-          <CardContent className="py-10 text-center text-muted-foreground">
-            Nenhum pedido na fila de corte no momento.
-          </CardContent>
-        </Card>
-      ) : (
-        <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-          {pedidos.map((p) => {
-            const dias = diffDias(p.etapa_corte_inicio);
-            const grade = p.grade_tamanhos || {};
-            const tamanhos = sortTamanhos(Object.keys(grade).filter((k) => Number(grade[k]) > 0));
-            return (
-              <Card
-                key={p.id}
-                className={cn(
-                  "transition-all flex flex-col",
-                  p.corte_prioritario && "border-orange-500 border-2 bg-orange-500/5"
-                )}
-              >
-                <CardHeader className="pb-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <CardTitle className="text-base truncate">{p.produto_modelo}</CardTitle>
-                      {p.codigo_pedido && (
-                        <p className="text-xs text-muted-foreground mt-0.5">Ref: {p.codigo_pedido}</p>
-                      )}
-                    </div>
-                    <div className="flex flex-col items-end gap-1">
-                      {p.corte_prioritario && (
-                        <Badge className="bg-orange-500 text-white hover:bg-orange-500">PRIORITÁRIO</Badge>
-                      )}
-                      {isAdmin && (
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className={cn("h-7 w-7", p.corte_prioritario && "text-orange-500")}
-                          onClick={() => togglePrioridade(p)}
-                          title={p.corte_prioritario ? "Remover prioridade" : "Marcar como prioritário"}
-                        >
-                          <ArrowUp className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardHeader>
-                <CardContent className="flex-1 flex flex-col gap-3 text-sm">
-                  <div className="space-y-1">
-                    <p><span className="text-muted-foreground">Cliente:</span> {p.cliente?.nome || "—"}</p>
-                    {p.cor_tecido && (
-                      <p><span className="text-muted-foreground">Cor:</span> {p.cor_tecido}</p>
+      <Tabs defaultValue="fila" className="w-full">
+        <TabsList>
+          <TabsTrigger value="fila" className="gap-2">
+            <Scissors className="h-4 w-4" /> Fila de Corte
+            <Badge variant="secondary" className="ml-1 h-5 px-2 text-xs">{pedidos.length}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="historico" className="gap-2">
+            <History className="h-4 w-4" /> Histórico
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="fila" className="mt-4">
+          {loading ? (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-72" />)}
+            </div>
+          ) : pedidos.length === 0 ? (
+            <Card>
+              <CardContent className="py-10 text-center text-muted-foreground">
+                Nenhum pedido na fila de corte no momento.
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              {pedidos.map((p) => {
+                const dias = diffDias(p.etapa_corte_inicio);
+                const grade = p.grade_tamanhos || {};
+                const tamanhos = sortTamanhos(Object.keys(grade).filter((k) => Number(grade[k]) > 0));
+                return (
+                  <Card
+                    key={p.id}
+                    className={cn(
+                      "transition-all flex flex-col",
+                      p.corte_prioritario && "border-orange-500 border-2 bg-orange-500/5"
                     )}
-                    <p className="flex items-center gap-1.5 text-muted-foreground">
-                      <CalendarIcon className="h-3.5 w-3.5" />
-                      Entrou em corte: <span className="text-foreground">{formatBR(p.etapa_corte_inicio)}</span>
-                      <span className="inline-flex items-center gap-1 ml-2">
-                        <Clock className="h-3.5 w-3.5" />
-                        {dias === 0 ? "hoje" : `há ${dias} dia${dias > 1 ? "s" : ""}`}
-                      </span>
-                    </p>
-                  </div>
-
-                  {tamanhos.length > 0 && (
-                    <div>
-                      <p className="text-xs text-muted-foreground mb-1">Grade esperada</p>
-                      <div className="flex flex-wrap gap-1">
-                        {tamanhos.map((t) => (
-                          <span key={t} className="px-2 py-0.5 rounded-md border border-border bg-muted/40 text-xs">
-                            <span className="font-medium">{t}</span>: {grade[t]}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  <p className="text-sm">
-                    <span className="text-muted-foreground">Total:</span>{" "}
-                    <span className="font-semibold">{p.quantidade_total} peças</span>
-                  </p>
-
-                  <Button
-                    className="mt-auto w-full"
-                    onClick={() => navigate(`/area-corte/${p.id}`)}
                   >
-                    <Scissors className="h-4 w-4 mr-2" />
-                    Abrir para Cortar
-                  </Button>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
+                    <CardHeader className="pb-2">
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0">
+                          <CardTitle className="text-base truncate">{p.produto_modelo}</CardTitle>
+                          {p.codigo_pedido && (
+                            <p className="text-xs text-muted-foreground mt-0.5">Ref: {p.codigo_pedido}</p>
+                          )}
+                        </div>
+                        <div className="flex flex-col items-end gap-1">
+                          {p.corte_prioritario && (
+                            <Badge className="bg-orange-500 text-white hover:bg-orange-500">PRIORITÁRIO</Badge>
+                          )}
+                          {isAdmin && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className={cn("h-7 w-7", p.corte_prioritario && "text-orange-500")}
+                              onClick={() => togglePrioridade(p)}
+                              title={p.corte_prioritario ? "Remover prioridade" : "Marcar como prioritário"}
+                            >
+                              <ArrowUp className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="flex-1 flex flex-col gap-3 text-sm">
+                      <div className="space-y-1">
+                        <p><span className="text-muted-foreground">Cliente:</span> {p.cliente?.nome || "—"}</p>
+                        {p.cor_tecido && (
+                          <p><span className="text-muted-foreground">Cor:</span> {p.cor_tecido}</p>
+                        )}
+                        <p className="flex items-center gap-1.5 text-muted-foreground">
+                          <CalendarIcon className="h-3.5 w-3.5" />
+                          Entrou em corte: <span className="text-foreground">{formatBR(p.etapa_corte_inicio)}</span>
+                          <span className="inline-flex items-center gap-1 ml-2">
+                            <Clock className="h-3.5 w-3.5" />
+                            {dias === 0 ? "hoje" : `há ${dias} dia${dias > 1 ? "s" : ""}`}
+                          </span>
+                        </p>
+                      </div>
+
+                      {tamanhos.length > 0 && (
+                        <div>
+                          <p className="text-xs text-muted-foreground mb-1">Grade esperada</p>
+                          <div className="flex flex-wrap gap-1">
+                            {tamanhos.map((t) => (
+                              <span key={t} className="px-2 py-0.5 rounded-md border border-border bg-muted/40 text-xs">
+                                <span className="font-medium">{t}</span>: {grade[t]}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <p className="text-sm">
+                        <span className="text-muted-foreground">Total:</span>{" "}
+                        <span className="font-semibold">{p.quantidade_total} peças</span>
+                      </p>
+
+                      <Button
+                        className="mt-auto w-full"
+                        onClick={() => navigate(`/area-corte/${p.id}`)}
+                      >
+                        <Scissors className="h-4 w-4 mr-2" />
+                        Abrir para Cortar
+                      </Button>
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </TabsContent>
+
+        <TabsContent value="historico" className="mt-4">
+          <HistoricoCorte />
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }
