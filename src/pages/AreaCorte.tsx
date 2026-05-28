@@ -569,7 +569,7 @@ function ExecucaoCorte({ pedidoId, onDone }: { pedidoId: string; onDone: () => v
 interface HistoricoItem {
   id: string;
   codigo_pedido: string | null;
-  codigo_produto_cliente: string | null;
+  codigo_referencia: string | null;
   produto_modelo: string;
   cliente_nome: string;
   grade_tamanhos: Record<string, number> | null;
