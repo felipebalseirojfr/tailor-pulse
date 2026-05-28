@@ -256,7 +256,7 @@ function AlertaCard({
 
   return (
     <button onClick={onClick} disabled={count === 0} className="text-left disabled:cursor-default">
-      <Card className={`${bgColor} ${borderColor} border-2 h-full ${count > 0 && isDanger ? "animate-pulse" : ""}`}>
+      <Card className={`${bgColor} ${borderColor} border-2 h-full ${count > 0 && isDanger ? "animate-pulse [animation-duration:3.5s]" : ""}`}>
         <CardContent className="p-5">
           <div className="flex items-start justify-between gap-3 mb-3">
             <div className={`h-10 w-10 rounded-lg flex items-center justify-center ${isDanger ? "bg-destructive/20" : "bg-warning/20"}`}>
