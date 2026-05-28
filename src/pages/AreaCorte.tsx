@@ -897,7 +897,7 @@ function HistoricoCorte() {
                                           </DialogHeader>
                                           <p className="text-sm whitespace-pre-wrap leading-relaxed">{com}</p>
                                           <div className="text-xs text-muted-foreground border-t border-border pt-2 mt-2">
-                                            {i.produto_modelo} · {i.codigo_pedido || "—"} · {i.cliente_nome}
+                                            {i.produto_modelo} · Ref: {i.codigo_referencia || "—"} · OP: {i.codigo_pedido || "—"} · {i.cliente_nome}
                                           </div>
                                         </DialogContent>
                                       </Dialog>
