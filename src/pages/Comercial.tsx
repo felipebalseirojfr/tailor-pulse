@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import {
@@ -7,11 +8,39 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { CalendarCheck, Kanban, MoreHorizontal, UserSearch, BarChart3 } from "lucide-react";
+import { ArrowLeft, CalendarCheck, Kanban, MoreHorizontal, UserSearch, BarChart3 } from "lucide-react";
 import HojeView from "@/components/comercial/HojeView";
 import PipelineKanban from "@/components/comercial/PipelineKanban";
 import ProspeccaoTable from "@/components/comercial/ProspeccaoTable";
 import RelatoriosView from "@/components/comercial/RelatoriosView";
+
+type View = "hoje" | "pipeline" | "prospeccao" | "relatorios";
+
+export default function Comercial() {
+  const [activeView, setActiveView] = useState<View>("hoje");
+  const navigate = useNavigate();
+
+  const isSecondary = activeView === "prospeccao" || activeView === "relatorios";
+
+  return (
+    <div className="space-y-5">
+      <div className="flex items-start gap-3">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate("/")}
+          className="mt-1"
+        >
+          <ArrowLeft className="h-4 w-4" />
+          Voltar
+        </Button>
+        <div>
+          <h1 className="text-2xl font-bold text-foreground">Comercial</h1>
+          <p className="text-muted-foreground text-sm">
+            Gerencie negociações e acompanhe o pipeline comercial.
+          </p>
+        </div>
+      </div>
 
 type View = "hoje" | "pipeline" | "prospeccao" | "relatorios";
 
