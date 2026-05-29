@@ -67,7 +67,7 @@ export default function Fechamentos() {
 
     const [pedidosRes, referenciasRes, clientesRes] = await Promise.all([
       pedidoIds.length
-        ? supabase.from("pedidos").select("id, codigo_pedido, produto_modelo").in("id", pedidoIds)
+        ? supabase.from("pedidos").select("id, codigo_pedido, produto_modelo, tipo_peca").in("id", pedidoIds)
         : Promise.resolve({ data: [] as any[] }),
       referenciaIds.length
         ? supabase.from("referencias").select("id, codigo_referencia").in("id", referenciaIds)
