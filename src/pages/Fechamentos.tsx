@@ -85,7 +85,7 @@ export default function Fechamentos() {
       ...r,
       cliente_nome: clientesMap.get(r.cliente_id)?.nome,
       pedido_codigo: pedidosMap.get(r.pedido_id)?.codigo_pedido,
-      produto_modelo: pedidosMap.get(r.pedido_id)?.tipo_peca || pedidosMap.get(r.pedido_id)?.produto_modelo,
+      produto_modelo: pedidosMap.get(r.pedido_id)?.produto_modelo || pedidosMap.get(r.pedido_id)?.tipo_peca,
       referencia_codigo: referenciasMap.get(r.referencia_id)?.codigo_referencia,
     }));
     setRows(mapped);
