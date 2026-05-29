@@ -67,7 +67,7 @@ export default function Fechamentos() {
 
     const [pedidosRes, referenciasRes, clientesRes] = await Promise.all([
       pedidoIds.length
-        ? supabase.from("pedidos").select("id, codigo_pedido, produto_modelo").in("id", pedidoIds)
+        ? supabase.from("pedidos").select("id, codigo_pedido, produto_modelo, tipo_peca").in("id", pedidoIds)
         : Promise.resolve({ data: [] as any[] }),
       referenciaIds.length
         ? supabase.from("referencias").select("id, codigo_referencia").in("id", referenciaIds)
@@ -85,7 +85,7 @@ export default function Fechamentos() {
       ...r,
       cliente_nome: clientesMap.get(r.cliente_id)?.nome,
       pedido_codigo: pedidosMap.get(r.pedido_id)?.codigo_pedido,
-      produto_modelo: pedidosMap.get(r.pedido_id)?.produto_modelo,
+      produto_modelo: pedidosMap.get(r.pedido_id)?.tipo_peca || pedidosMap.get(r.pedido_id)?.produto_modelo,
       referencia_codigo: referenciasMap.get(r.referencia_id)?.codigo_referencia,
     }));
     setRows(mapped);
