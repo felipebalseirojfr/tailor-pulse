@@ -42,22 +42,6 @@ export default function Comercial() {
         </div>
       </div>
 
-type View = "hoje" | "pipeline" | "prospeccao" | "relatorios";
-
-export default function Comercial() {
-  const [activeView, setActiveView] = useState<View>("hoje");
-
-  const isSecondary = activeView === "prospeccao" || activeView === "relatorios";
-
-  return (
-    <div className="space-y-5">
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">Comercial</h1>
-        <p className="text-muted-foreground text-sm">
-          Gerencie negociações e acompanhe o pipeline comercial.
-        </p>
-      </div>
-
       {/* Navigation */}
       <div className="flex items-center gap-1 border-b border-border pb-px">
         <button
