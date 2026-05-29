@@ -65,29 +65,38 @@ export default function Fechamentos() {
     const referenciaIds = [...new Set(fechamentoRows.map((r) => r.referencia_id).filter(Boolean))];
     const clienteIds = [...new Set(fechamentoRows.map((r) => r.cliente_id).filter(Boolean))];
 
-    const [pedidosRes, referenciasRes, clientesRes] = await Promise.all([
+    const [pedidosRes, referenciasRes] = await Promise.all([
       pedidoIds.length
-        ? supabase.from("pedidos").select("id, codigo_pedido, produto_modelo, tipo_peca").in("id", pedidoIds)
+        ? supabase.from("pedidos").select("id, codigo_pedido, produto_modelo, tipo_peca, cliente_id").in("id", pedidoIds)
         : Promise.resolve({ data: [] as any[] }),
       referenciaIds.length
         ? supabase.from("referencias").select("id, codigo_referencia").in("id", referenciaIds)
-        : Promise.resolve({ data: [] as any[] }),
-      clienteIds.length
-        ? supabase.from("clientes").select("id, nome").in("id", clienteIds)
         : Promise.resolve({ data: [] as any[] }),
     ]);
 
     const pedidosMap = new Map((pedidosRes.data ?? []).map((p: any) => [p.id, p]));
     const referenciasMap = new Map((referenciasRes.data ?? []).map((r: any) => [r.id, r]));
+    const clienteIdsAll = [...new Set([
+      ...clienteIds,
+      ...((pedidosRes.data ?? []).map((p: any) => p.cliente_id).filter(Boolean)),
+    ])];
+    const clientesRes = clienteIdsAll.length
+      ? await supabase.from("clientes").select("id, nome").in("id", clienteIdsAll)
+      : { data: [] as any[] };
     const clientesMap = new Map((clientesRes.data ?? []).map((c: any) => [c.id, c]));
 
-    const mapped: FechamentoRow[] = fechamentoRows.map((r) => ({
-      ...r,
-      cliente_nome: clientesMap.get(r.cliente_id)?.nome,
-      pedido_codigo: pedidosMap.get(r.pedido_id)?.codigo_pedido,
-      produto_modelo: pedidosMap.get(r.pedido_id)?.produto_modelo || pedidosMap.get(r.pedido_id)?.tipo_peca,
-      referencia_codigo: referenciasMap.get(r.referencia_id)?.codigo_referencia,
-    }));
+    const mapped: FechamentoRow[] = fechamentoRows.map((r) => {
+      const pedido = pedidosMap.get(r.pedido_id);
+      const cliId = pedido?.cliente_id ?? r.cliente_id;
+      return {
+        ...r,
+        cliente_id: cliId,
+        cliente_nome: clientesMap.get(cliId)?.nome,
+        pedido_codigo: pedido?.codigo_pedido,
+        produto_modelo: pedido?.produto_modelo || pedido?.tipo_peca,
+        referencia_codigo: referenciasMap.get(r.referencia_id)?.codigo_referencia,
+      };
+    });
     setRows(mapped);
     setLoading(false);
   };
