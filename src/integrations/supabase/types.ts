@@ -61,6 +61,68 @@ export type Database = {
           },
         ]
       }
+      aviamento_price_history: {
+        Row: {
+          aviamento_id: string
+          changed_at: string
+          changed_by: string | null
+          id: string
+          price_per_piece: number
+        }
+        Insert: {
+          aviamento_id: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          price_per_piece: number
+        }
+        Update: {
+          aviamento_id?: string
+          changed_at?: string
+          changed_by?: string | null
+          id?: string
+          price_per_piece?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aviamento_price_history_aviamento_id_fkey"
+            columns: ["aviamento_id"]
+            isOneToOne: false
+            referencedRelation: "aviamentos_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      aviamentos_catalog: {
+        Row: {
+          active: boolean
+          created_at: string
+          current_price_per_piece: number
+          id: string
+          name: string
+          notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          current_price_per_piece?: number
+          id?: string
+          name: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          current_price_per_piece?: number
+          id?: string
+          name?: string
+          notes?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       capacidade_mensal: {
         Row: {
           capacidade_pecas: number
@@ -90,6 +152,7 @@ export type Database = {
       }
       clientes: {
         Row: {
+          active: boolean
           contato: string | null
           created_at: string | null
           email: string | null
@@ -102,6 +165,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          active?: boolean
           contato?: string | null
           created_at?: string | null
           email?: string | null
@@ -114,6 +178,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          active?: boolean
           contato?: string | null
           created_at?: string | null
           email?: string | null
@@ -124,6 +189,150 @@ export type Database = {
           telefone?: string | null
           total_pedidos_ativos?: number | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      company_parameters: {
+        Row: {
+          accounting: number
+          bad_debt_provision_pct: number
+          capital_cost_monthly_pct: number
+          cash_payment_pct: number
+          commission_default_pct: number
+          created_at: string
+          created_by: string | null
+          cut_inputs_per_piece: number
+          default_lead_time_days: number
+          effective_from: string
+          effective_to: string | null
+          id: string
+          installment_avg_days: number
+          logistics_operational: number
+          margin_comfort_pct: number
+          margin_floor_pct: number
+          margin_premium_pct: number
+          margin_target_pct: number
+          monthly_capacity_pieces: number
+          notes: string | null
+          prolabore: number
+          rent: number
+          software: number
+          tax_das_pct: number
+          tax_others_pct: number
+          team_internal: number
+          updated_at: string
+          utilities: number
+        }
+        Insert: {
+          accounting?: number
+          bad_debt_provision_pct?: number
+          capital_cost_monthly_pct?: number
+          cash_payment_pct?: number
+          commission_default_pct?: number
+          created_at?: string
+          created_by?: string | null
+          cut_inputs_per_piece?: number
+          default_lead_time_days?: number
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          installment_avg_days?: number
+          logistics_operational?: number
+          margin_comfort_pct?: number
+          margin_floor_pct?: number
+          margin_premium_pct?: number
+          margin_target_pct?: number
+          monthly_capacity_pieces?: number
+          notes?: string | null
+          prolabore?: number
+          rent?: number
+          software?: number
+          tax_das_pct?: number
+          tax_others_pct?: number
+          team_internal?: number
+          updated_at?: string
+          utilities?: number
+        }
+        Update: {
+          accounting?: number
+          bad_debt_provision_pct?: number
+          capital_cost_monthly_pct?: number
+          cash_payment_pct?: number
+          commission_default_pct?: number
+          created_at?: string
+          created_by?: string | null
+          cut_inputs_per_piece?: number
+          default_lead_time_days?: number
+          effective_from?: string
+          effective_to?: string | null
+          id?: string
+          installment_avg_days?: number
+          logistics_operational?: number
+          margin_comfort_pct?: number
+          margin_floor_pct?: number
+          margin_premium_pct?: number
+          margin_target_pct?: number
+          monthly_capacity_pieces?: number
+          notes?: string | null
+          prolabore?: number
+          rent?: number
+          software?: number
+          tax_das_pct?: number
+          tax_others_pct?: number
+          team_internal?: number
+          updated_at?: string
+          utilities?: number
+        }
+        Relationships: []
+      }
+      company_profile: {
+        Row: {
+          address: string | null
+          cnpj: string | null
+          created_at: string
+          default_payment_terms: string | null
+          default_production_lead_text: string | null
+          email: string | null
+          footer_text: string | null
+          id: string
+          legal_name: string | null
+          logo_url: string | null
+          phone: string | null
+          proposal_validity_text: string | null
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          address?: string | null
+          cnpj?: string | null
+          created_at?: string
+          default_payment_terms?: string | null
+          default_production_lead_text?: string | null
+          email?: string | null
+          footer_text?: string | null
+          id?: string
+          legal_name?: string | null
+          logo_url?: string | null
+          phone?: string | null
+          proposal_validity_text?: string | null
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          address?: string | null
+          cnpj?: string | null
+          created_at?: string
+          default_payment_terms?: string | null
+          default_production_lead_text?: string | null
+          email?: string | null
+          footer_text?: string | null
+          id?: string
+          legal_name?: string | null
+          logo_url?: string | null
+          phone?: string | null
+          proposal_validity_text?: string | null
+          updated_at?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -253,6 +462,74 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      fabric_price_history: {
+        Row: {
+          changed_at: string
+          changed_by: string | null
+          fabric_id: string
+          id: string
+          price_per_kg: number
+        }
+        Insert: {
+          changed_at?: string
+          changed_by?: string | null
+          fabric_id: string
+          id?: string
+          price_per_kg: number
+        }
+        Update: {
+          changed_at?: string
+          changed_by?: string | null
+          fabric_id?: string
+          id?: string
+          price_per_kg?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fabric_price_history_fabric_id_fkey"
+            columns: ["fabric_id"]
+            isOneToOne: false
+            referencedRelation: "fabrics_catalog"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fabrics_catalog: {
+        Row: {
+          active: boolean
+          created_at: string
+          current_price_per_kg: number
+          grams_per_meter: number | null
+          id: string
+          name: string
+          notes: string | null
+          stock_kg: number
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          current_price_per_kg?: number
+          grams_per_meter?: number | null
+          id?: string
+          name: string
+          notes?: string | null
+          stock_kg?: number
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          current_price_per_kg?: number
+          grams_per_meter?: number | null
+          id?: string
+          name?: string
+          notes?: string | null
+          stock_kg?: number
+          updated_at?: string
+        }
+        Relationships: []
       }
       fechamentos: {
         Row: {
@@ -444,6 +721,36 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      monthly_targets: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          id: string
+          month: number
+          target_revenue: number
+          updated_at: string
+          year: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          month: number
+          target_revenue?: number
+          updated_at?: string
+          year: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          month?: number
+          target_revenue?: number
+          updated_at?: string
+          year?: number
+        }
+        Relationships: []
       }
       negociacao_interacoes: {
         Row: {
@@ -754,6 +1061,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          active: boolean
           cargo: string | null
           created_at: string | null
           email: string
@@ -762,6 +1070,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          active?: boolean
           cargo?: string | null
           created_at?: string | null
           email: string
@@ -770,6 +1079,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          active?: boolean
           cargo?: string | null
           created_at?: string | null
           email?: string
@@ -778,6 +1088,442 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      quote_activity_log: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          metadata: Json | null
+          quote_id: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          quote_id: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          metadata?: Json | null
+          quote_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_activity_log_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_aviamentos: {
+        Row: {
+          aviamento_id: string | null
+          cost_per_piece: number
+          created_at: string
+          id: string
+          item_label: string
+          quote_id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          aviamento_id?: string | null
+          cost_per_piece?: number
+          created_at?: string
+          id?: string
+          item_label: string
+          quote_id: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          aviamento_id?: string | null
+          cost_per_piece?: number
+          created_at?: string
+          id?: string
+          item_label?: string
+          quote_id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_aviamentos_aviamento_id_fkey"
+            columns: ["aviamento_id"]
+            isOneToOne: false
+            referencedRelation: "aviamentos_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_aviamentos_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_customizations: {
+        Row: {
+          cost_per_piece: number
+          created_at: string
+          fixed_cost: number
+          id: string
+          item_label: string
+          quote_id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          cost_per_piece?: number
+          created_at?: string
+          fixed_cost?: number
+          id?: string
+          item_label: string
+          quote_id: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          cost_per_piece?: number
+          created_at?: string
+          fixed_cost?: number
+          id?: string
+          item_label?: string
+          quote_id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_customizations_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_deliveries: {
+        Row: {
+          created_at: string
+          expected_delivery_date: string
+          id: string
+          production_status: string
+          quantity: number
+          quote_id: string
+          sort_order: number
+          status_notes: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          expected_delivery_date: string
+          id?: string
+          production_status?: string
+          quantity: number
+          quote_id: string
+          sort_order?: number
+          status_notes?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          expected_delivery_date?: string
+          id?: string
+          production_status?: string
+          quantity?: number
+          quote_id?: string
+          sort_order?: number
+          status_notes?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_deliveries_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_development: {
+        Row: {
+          created_at: string
+          id: string
+          item_label: string
+          quote_id: string
+          sort_order: number
+          total_cost: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_label: string
+          quote_id: string
+          sort_order?: number
+          total_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_label?: string
+          quote_id?: string
+          sort_order?: number
+          total_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_development_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_logistics: {
+        Row: {
+          created_at: string
+          id: string
+          item_label: string
+          quote_id: string
+          sort_order: number
+          total_cost: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          item_label: string
+          quote_id: string
+          sort_order?: number
+          total_cost?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          item_label?: string
+          quote_id?: string
+          sort_order?: number
+          total_cost?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_logistics_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_materials: {
+        Row: {
+          consumption_kg: number
+          created_at: string
+          fabric_id: string | null
+          id: string
+          item_label: string
+          price_per_kg: number
+          quote_id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          consumption_kg?: number
+          created_at?: string
+          fabric_id?: string | null
+          id?: string
+          item_label: string
+          price_per_kg?: number
+          quote_id: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          consumption_kg?: number
+          created_at?: string
+          fabric_id?: string | null
+          id?: string
+          item_label?: string
+          price_per_kg?: number
+          quote_id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_materials_fabric_id_fkey"
+            columns: ["fabric_id"]
+            isOneToOne: false
+            referencedRelation: "fabrics_catalog"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quote_materials_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quote_number_seq: {
+        Row: {
+          last_seq: number
+          year: number
+        }
+        Insert: {
+          last_seq?: number
+          year: number
+        }
+        Update: {
+          last_seq?: number
+          year?: number
+        }
+        Relationships: []
+      }
+      quote_processes: {
+        Row: {
+          cost_per_piece: number
+          created_at: string
+          id: string
+          process_label: string
+          quote_id: string
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          cost_per_piece?: number
+          created_at?: string
+          id?: string
+          process_label: string
+          quote_id: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          cost_per_piece?: number
+          created_at?: string
+          id?: string
+          process_label?: string
+          quote_id?: string
+          sort_order?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quote_processes_quote_id_fkey"
+            columns: ["quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      quotes: {
+        Row: {
+          cash_payment_pct: number | null
+          charged_price: number | null
+          client_id: string
+          commission_pct: number
+          created_at: string
+          created_by: string | null
+          id: string
+          installment_avg_days: number | null
+          loss_reason: string | null
+          parameters_snapshot_id: string | null
+          parent_quote_id: string | null
+          piece_description: string
+          quantity: number | null
+          quote_date: string
+          quote_number: string
+          reference_code: string | null
+          status: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          cash_payment_pct?: number | null
+          charged_price?: number | null
+          client_id: string
+          commission_pct?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          installment_avg_days?: number | null
+          loss_reason?: string | null
+          parameters_snapshot_id?: string | null
+          parent_quote_id?: string | null
+          piece_description: string
+          quantity?: number | null
+          quote_date?: string
+          quote_number?: string
+          reference_code?: string | null
+          status?: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          cash_payment_pct?: number | null
+          charged_price?: number | null
+          client_id?: string
+          commission_pct?: number
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          installment_avg_days?: number | null
+          loss_reason?: string | null
+          parameters_snapshot_id?: string | null
+          parent_quote_id?: string | null
+          piece_description?: string
+          quantity?: number | null
+          quote_date?: string
+          quote_number?: string
+          reference_code?: string | null
+          status?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "quotes_client_id_fkey"
+            columns: ["client_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_parameters_snapshot_id_fkey"
+            columns: ["parameters_snapshot_id"]
+            isOneToOne: false
+            referencedRelation: "company_parameters"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "quotes_parent_quote_id_fkey"
+            columns: ["parent_quote_id"]
+            isOneToOne: false
+            referencedRelation: "quotes"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       referencias: {
         Row: {
@@ -910,6 +1656,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      next_quote_number: { Args: never; Returns: string }
     }
     Enums: {
       app_role:
