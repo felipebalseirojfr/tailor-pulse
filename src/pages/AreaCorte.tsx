@@ -375,13 +375,7 @@ function ExecucaoCorte({ pedidoId, onDone }: { pedidoId: string; onDone: () => v
       .from("referencias")
       .select("codigo_referencia")
       .eq("pedido_id", pedidoId);
-    const referencias_codigos = (refs || [])
-      .map((r: any) => r.codigo_referencia)
-      .filter(Boolean) as string[];
-    if (referencias_codigos.length === 0) {
-      const fallback = (data as any).codigo_produto_cliente || (data as any).tipo_peca;
-      if (fallback) referencias_codigos.push(fallback);
-    }
+    const referencias_codigos = buildReferenciaCodigos(data as any, refs || []);
     const p: PedidoCorte = { ...(data as any), etapa_corte_inicio: null, referencias_codigos };
     setPedido(p);
     const real = (p.grade_corte_real || {}) as Record<string, number>;
