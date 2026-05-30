@@ -150,14 +150,15 @@ export async function gerarFichaCortePDF(pedidoId: string) {
   // Tabela de grade
   const grade = (p.grade_tamanhos || {}) as Record<string, number>;
   const tamanhos = sortTamanhos(Object.keys(grade).filter((k) => Number(grade[k]) > 0));
-  const headers = ["Tamanho", "Grade Esperada", "Grade Cortada", "Diferença", "Observação"];
-  const colWidths = [22, 32, 32, 26, pageW - margin * 2 - (22 + 32 + 32 + 26)];
+  const headers = ["Tamanho", "Grade Esperada", "Grade Cortada", "Diferença"];
+  const innerW = pageW - margin * 2;
+  const colWidths = [innerW * 0.22, innerW * 0.28, innerW * 0.28, innerW * 0.22];
   const headerH = 7;
   const tRowH = 8;
 
   // Header
   pdf.setFillColor(240, 240, 240);
-  pdf.rect(margin, y, pageW - margin * 2, headerH, "F");
+  pdf.rect(margin, y, innerW, headerH, "F");
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(9);
   let cx = margin;
@@ -174,27 +175,23 @@ export async function gerarFichaCortePDF(pedidoId: string) {
     const qtd = Number(grade[t] || 0);
     totalEsperado += qtd;
     cx = margin;
-    const values = [t, String(qtd), "", "", ""];
+    const values = [t, String(qtd), "", ""];
     for (let i = 0; i < values.length; i++) {
       pdf.rect(cx, y, colWidths[i], tRowH);
-      pdf.text(values[i], cx + (i < 4 ? colWidths[i] / 2 : 2), y + 5.5, {
-        align: i < 4 ? "center" : "left",
-      });
+      pdf.text(values[i], cx + colWidths[i] / 2, y + 5.5, { align: "center" });
       cx += colWidths[i];
     }
     y += tRowH;
   }
   // Total
   pdf.setFillColor(248, 248, 248);
-  pdf.rect(margin, y, pageW - margin * 2, tRowH, "F");
+  pdf.rect(margin, y, innerW, tRowH, "F");
   pdf.setFont("helvetica", "bold");
   cx = margin;
-  const totals = ["TOTAL", String(totalEsperado || p.quantidade_total || 0), "", "", ""];
+  const totals = ["TOTAL", String(totalEsperado || p.quantidade_total || 0), "", ""];
   for (let i = 0; i < totals.length; i++) {
     pdf.rect(cx, y, colWidths[i], tRowH);
-    pdf.text(totals[i], cx + (i < 4 ? colWidths[i] / 2 : 2), y + 5.5, {
-      align: i < 4 ? "center" : "left",
-    });
+    pdf.text(totals[i], cx + colWidths[i] / 2, y + 5.5, { align: "center" });
     cx += colWidths[i];
   }
   y += tRowH + 5;
