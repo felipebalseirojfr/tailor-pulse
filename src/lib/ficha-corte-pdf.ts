@@ -98,8 +98,8 @@ export async function gerarFichaCortePDF(pedidoId: string) {
   pdf.setLineWidth(0.2);
   pdf.rect(margin, blockTop, leftW, blockH);
   const rows: Array<[string, string]> = [
-    ["Nº OP:", p.codigo_pedido || "—"],
     ["Referência:", referencias || "—"],
+    ["Nº OP:", p.codigo_pedido || "—"],
     ["Nome da Peça:", p.produto_modelo || "—"],
     ["Cliente:", (p.cliente as any)?.nome || "—"],
     ["Cor do Tecido:", p.cor_tecido || "—"],
