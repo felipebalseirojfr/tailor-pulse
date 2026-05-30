@@ -35,7 +35,7 @@ export async function gerarFichaCortePDF(pedidoId: string) {
   const { data: p, error } = await supabase
     .from("pedidos")
     .select(
-      "id, codigo_pedido, produto_modelo, tipo_peca, tecido, aviamentos, cor_tecido, foto_modelo_url, data_inicio, prazo_final, grade_tamanhos, quantidade_total, cliente:clientes(nome)"
+      "id, codigo_pedido, codigo_produto_cliente, produto_modelo, tipo_peca, tecido, cor_tecido, foto_modelo_url, data_inicio, prazo_final, grade_tamanhos, quantidade_total, cliente:clientes(nome)"
     )
     .eq("id", pedidoId)
     .single();
@@ -45,7 +45,12 @@ export async function gerarFichaCortePDF(pedidoId: string) {
     .from("referencias")
     .select("codigo_referencia")
     .eq("pedido_id", pedidoId);
-  const referencias = (refs || []).map((r: any) => r.codigo_referencia).filter(Boolean).join(", ");
+  const codigos = (refs || []).map((r: any) => r.codigo_referencia).filter(Boolean);
+  if (codigos.length === 0) {
+    const fallback = (p as any).codigo_produto_cliente || (p as any).tipo_peca;
+    if (fallback) codigos.push(fallback);
+  }
+  const referencias = codigos.join(", ");
 
   const { jsPDF } = await import("jspdf");
   const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
@@ -85,7 +90,6 @@ export async function gerarFichaCortePDF(pedidoId: string) {
     ["Cliente:", (p.cliente as any)?.nome || "—"],
     ["Cor do Tecido:", p.cor_tecido || "—"],
     ["Tecido:", p.tecido || "—"],
-    ["Aviamentos:", (p.aviamentos || []).join(", ") || "—"],
   ];
   pdf.setFontSize(9);
   let ry = blockTop + 6;
