@@ -90,7 +90,6 @@ export async function gerarFichaCortePDF(pedidoId: string) {
     ["Cliente:", (p.cliente as any)?.nome || "—"],
     ["Cor do Tecido:", p.cor_tecido || "—"],
     ["Tecido:", p.tecido || "—"],
-    ["Aviamentos:", (p.aviamentos || []).join(", ") || "—"],
   ];
   pdf.setFontSize(9);
   let ry = blockTop + 6;
