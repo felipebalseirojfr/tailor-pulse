@@ -138,7 +138,7 @@ export async function gerarFichaCortePDF(pedidoId: string) {
   // Bloco direito (foto)
   pdf.rect(rightX, blockTop, rightW, blockH);
   if (p.foto_modelo_url) {
-    const data = await loadImage(p.foto_modelo_url);
+    const data = await loadImageScaled(p.foto_modelo_url);
     if (data) {
       try {
         pdf.addImage(data, "JPEG", rightX + 2, blockTop + 2, rightW - 4, blockH - 4, undefined, "FAST");
