@@ -64,6 +64,7 @@ export default function AreaCorte() {
 
   const [loading, setLoading] = useState(true);
   const [pedidos, setPedidos] = useState<PedidoCorte[]>([]);
+  const [fichaGerandoId, setFichaGerandoId] = useState<string | null>(null);
 
   const isAdmin = hasRole("admin");
   const allowed = hasAnyRole(["admin", "corte"]);
@@ -299,16 +300,25 @@ export default function AreaCorte() {
                           size="sm"
                           variant="outline"
                           className="w-full h-8 text-xs"
+                          disabled={fichaGerandoId === p.id}
                           onClick={async () => {
                             try {
+                              setFichaGerandoId(p.id);
                               await gerarFichaCortePDF(p.id);
+                              toast({ title: "Ficha de corte baixada" });
                             } catch (e: any) {
                               toast({ title: "Erro ao gerar PDF", description: e?.message, variant: "destructive" });
+                            } finally {
+                              setFichaGerandoId(null);
                             }
                           }}
                         >
-                          <Download className="h-3.5 w-3.5 mr-1.5" />
-                          Baixar Ficha de Corte
+                          {fichaGerandoId === p.id ? (
+                            <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                          ) : (
+                            <Download className="h-3.5 w-3.5 mr-1.5" />
+                          )}
+                          {fichaGerandoId === p.id ? "Gerando..." : "Baixar Ficha de Corte"}
                         </Button>
                       </div>
                     </CardContent>

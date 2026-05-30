@@ -12,53 +12,6 @@ const sortTamanhos = (sizes: string[]) =>
 const fmtBR = (d: string | null | undefined) =>
   d ? parseLocalDate(d.slice(0, 10))!.toLocaleDateString("pt-BR") : "";
 
-/**
- * Loads an image and downscales it via canvas to keep the PDF small/fast.
- * Returns { dataUrl, format } or null on failure / timeout.
- */
-async function loadImageScaled(
-  url: string,
-  maxPx = 600,
-  timeoutMs = 4000
-): Promise<string | null> {
-  return new Promise((resolve) => {
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    let done = false;
-    const finish = (v: string | null) => {
-      if (done) return;
-      done = true;
-      resolve(v);
-    };
-    const timer = setTimeout(() => finish(null), timeoutMs);
-    img.onload = () => {
-      try {
-        const ratio = Math.min(1, maxPx / Math.max(img.naturalWidth, img.naturalHeight));
-        const w = Math.max(1, Math.round(img.naturalWidth * ratio));
-        const h = Math.max(1, Math.round(img.naturalHeight * ratio));
-        const canvas = document.createElement("canvas");
-        canvas.width = w;
-        canvas.height = h;
-        const ctx = canvas.getContext("2d");
-        if (!ctx) return finish(null);
-        ctx.fillStyle = "#ffffff";
-        ctx.fillRect(0, 0, w, h);
-        ctx.drawImage(img, 0, 0, w, h);
-        clearTimeout(timer);
-        finish(canvas.toDataURL("image/jpeg", 0.8));
-      } catch {
-        clearTimeout(timer);
-        finish(null);
-      }
-    };
-    img.onerror = () => {
-      clearTimeout(timer);
-      finish(null);
-    };
-    img.src = url;
-  });
-}
-
 function sanitize(s: string) {
   return s.replace(/[^\w\-]+/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, "");
 }
@@ -67,7 +20,7 @@ export async function gerarFichaCortePDF(pedidoId: string) {
   const { data: p, error } = await supabase
     .from("pedidos")
     .select(
-      "id, codigo_pedido, codigo_produto_cliente, produto_modelo, tipo_peca, tecido, cor_tecido, foto_modelo_url, data_inicio, prazo_final, grade_tamanhos, quantidade_total, cliente:clientes(nome)"
+      "id, codigo_pedido, codigo_produto_cliente, produto_modelo, tipo_peca, tecido, cor_tecido, data_inicio, prazo_final, grade_tamanhos, quantidade_total, cliente:clientes(nome)"
     )
     .eq("id", pedidoId)
     .single();
@@ -135,26 +88,14 @@ export async function gerarFichaCortePDF(pedidoId: string) {
     ry += rowH;
   }
 
-  // Bloco direito (foto)
+  // Bloco direito (foto) — sem buscar imagem aqui para o download não travar.
   pdf.rect(rightX, blockTop, rightW, blockH);
-  if (p.foto_modelo_url) {
-    const data = await loadImageScaled(p.foto_modelo_url);
-    if (data) {
-      try {
-        pdf.addImage(data, "JPEG", rightX + 2, blockTop + 2, rightW - 4, blockH - 4, undefined, "FAST");
-      } catch {
-        pdf.setFontSize(9);
-        pdf.text("Foto não cadastrada", rightX + rightW / 2, blockTop + blockH / 2, { align: "center" });
-      }
-    }
-  } else {
-    pdf.setFillColor(230, 230, 230);
-    pdf.rect(rightX + 1, blockTop + 1, rightW - 2, blockH - 2, "F");
-    pdf.setFontSize(9);
-    pdf.setTextColor(100);
-    pdf.text("Foto não cadastrada", rightX + rightW / 2, blockTop + blockH / 2, { align: "center" });
-    pdf.setTextColor(0);
-  }
+  pdf.setFillColor(230, 230, 230);
+  pdf.rect(rightX + 1, blockTop + 1, rightW - 2, blockH - 2, "F");
+  pdf.setFontSize(9);
+  pdf.setTextColor(100);
+  pdf.text("Foto não cadastrada", rightX + rightW / 2, blockTop + blockH / 2, { align: "center" });
+  pdf.setTextColor(0);
   y = blockTop + blockH + 4;
 
   // Bloco de datas
