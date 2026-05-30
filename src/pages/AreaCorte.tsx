@@ -28,6 +28,19 @@ const sortTamanhos = (sizes: string[]) =>
     return (ia === -1 ? 999 : ia) - (ib === -1 ? 999 : ib);
   });
 
+const isFilled = (value: unknown) => {
+  const text = String(value ?? "").trim();
+  return Boolean(text && text !== "-" && text !== "—");
+};
+
+const buildReferenciaCodigos = (pedido: { tipo_peca?: string | null; codigo_produto_cliente?: string | null }, refs: unknown[] = []) => {
+  const codigos = refs.map((ref: any) => ref?.codigo_referencia).filter(isFilled) as string[];
+  if (codigos.length > 0) return codigos;
+
+  const fallback = isFilled(pedido.tipo_peca) ? pedido.tipo_peca : pedido.codigo_produto_cliente;
+  return isFilled(fallback) ? [String(fallback).trim()] : [];
+};
+
 interface PedidoCorte {
   id: string;
   codigo_pedido: string | null;
@@ -121,17 +134,14 @@ export default function AreaCorte() {
     for (const r of refs || []) {
       const pid = (r as any).pedido_id;
       if (!refsByPedido[pid]) refsByPedido[pid] = [];
-      if ((r as any).codigo_referencia) refsByPedido[pid].push((r as any).codigo_referencia);
+      if (isFilled((r as any).codigo_referencia)) refsByPedido[pid].push((r as any).codigo_referencia.trim());
     }
 
     const list: PedidoCorte[] = (peds || []).map((p: any) => {
-      const codigos = refsByPedido[p.id] || [];
-      const fallback = p.codigo_produto_cliente || p.tipo_peca;
-      if (codigos.length === 0 && fallback) codigos.push(fallback);
       return {
         ...p,
         etapa_corte_inicio: etapaByPedido[p.id]?.data_inicio || etapaByPedido[p.id]?.created_at || null,
-        referencias_codigos: codigos,
+        referencias_codigos: buildReferenciaCodigos(p, (refsByPedido[p.id] || []).map((codigo_referencia) => ({ codigo_referencia }))),
       };
     });
 
@@ -154,6 +164,7 @@ export default function AreaCorte() {
       .channel("area-corte-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "etapas_producao" }, fetchData)
       .on("postgres_changes", { event: "*", schema: "public", table: "pedidos" }, fetchData)
+      .on("postgres_changes", { event: "*", schema: "public", table: "referencias" }, fetchData)
       .subscribe();
     return () => { supabase.removeChannel(ch); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -364,13 +375,7 @@ function ExecucaoCorte({ pedidoId, onDone }: { pedidoId: string; onDone: () => v
       .from("referencias")
       .select("codigo_referencia")
       .eq("pedido_id", pedidoId);
-    const referencias_codigos = (refs || [])
-      .map((r: any) => r.codigo_referencia)
-      .filter(Boolean) as string[];
-    if (referencias_codigos.length === 0) {
-      const fallback = (data as any).codigo_produto_cliente || (data as any).tipo_peca;
-      if (fallback) referencias_codigos.push(fallback);
-    }
+    const referencias_codigos = buildReferenciaCodigos(data as any, refs || []);
     const p: PedidoCorte = { ...(data as any), etapa_corte_inicio: null, referencias_codigos };
     setPedido(p);
     const real = (p.grade_corte_real || {}) as Record<string, number>;
