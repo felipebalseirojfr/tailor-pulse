@@ -12,15 +12,44 @@ const sortTamanhos = (sizes: string[]) =>
 const fmtBR = (d: string | null | undefined) =>
   d ? parseLocalDate(d.slice(0, 10))!.toLocaleDateString("pt-BR") : "";
 
+const isFilled = (value: unknown) => {
+  const text = String(value ?? "").trim();
+  return Boolean(text && text !== "-" && text !== "—");
+};
+
 function sanitize(s: string) {
   return s.replace(/[^\w\-]+/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, "");
+}
+
+async function loadImageForPdf(url: string, timeoutMs = 2500): Promise<{ dataUrl: string; format: "PNG" | "JPEG" } | null> {
+  const controller = new AbortController();
+  const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(url, { signal: controller.signal, cache: "force-cache" });
+    if (!response.ok) return null;
+    const blob = await response.blob();
+    if (!blob.type.startsWith("image/")) return null;
+
+    const dataUrl = await new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onloadend = () => resolve(String(reader.result));
+      reader.onerror = reject;
+      reader.readAsDataURL(blob);
+    });
+
+    return { dataUrl, format: blob.type.includes("png") ? "PNG" : "JPEG" };
+  } catch {
+    return null;
+  } finally {
+    window.clearTimeout(timeout);
+  }
 }
 
 export async function gerarFichaCortePDF(pedidoId: string) {
   const { data: p, error } = await supabase
     .from("pedidos")
     .select(
-      "id, codigo_pedido, codigo_produto_cliente, produto_modelo, tipo_peca, tecido, cor_tecido, data_inicio, prazo_final, grade_tamanhos, quantidade_total, cliente:clientes(nome)"
+      "id, codigo_pedido, codigo_produto_cliente, produto_modelo, tipo_peca, tecido, cor_tecido, foto_modelo_url, data_inicio, prazo_final, grade_tamanhos, quantidade_total, cliente:clientes(nome)"
     )
     .eq("id", pedidoId)
     .single();
@@ -30,9 +59,9 @@ export async function gerarFichaCortePDF(pedidoId: string) {
     .from("referencias")
     .select("codigo_referencia")
     .eq("pedido_id", pedidoId);
-  const codigos = (refs || []).map((r: any) => r.codigo_referencia).filter(Boolean);
+  const codigos = (refs || []).map((r: any) => r.codigo_referencia).filter(isFilled);
   if (codigos.length === 0) {
-    const fallback = (p as any).codigo_produto_cliente || (p as any).tipo_peca;
+    const fallback = isFilled((p as any).tipo_peca) ? (p as any).tipo_peca : (p as any).codigo_produto_cliente;
     if (fallback) codigos.push(fallback);
   }
   const referencias = codigos.join(", ");
@@ -88,14 +117,19 @@ export async function gerarFichaCortePDF(pedidoId: string) {
     ry += rowH;
   }
 
-  // Bloco direito (foto) — sem buscar imagem aqui para o download não travar.
+  // Bloco direito (foto)
   pdf.rect(rightX, blockTop, rightW, blockH);
-  pdf.setFillColor(230, 230, 230);
-  pdf.rect(rightX + 1, blockTop + 1, rightW - 2, blockH - 2, "F");
-  pdf.setFontSize(9);
-  pdf.setTextColor(100);
-  pdf.text("Foto não cadastrada", rightX + rightW / 2, blockTop + blockH / 2, { align: "center" });
-  pdf.setTextColor(0);
+  const image = isFilled((p as any).foto_modelo_url) ? await loadImageForPdf((p as any).foto_modelo_url) : null;
+  if (image) {
+    pdf.addImage(image.dataUrl, image.format, rightX + 2, blockTop + 2, rightW - 4, blockH - 4, undefined, "FAST");
+  } else {
+    pdf.setFillColor(230, 230, 230);
+    pdf.rect(rightX + 1, blockTop + 1, rightW - 2, blockH - 2, "F");
+    pdf.setFontSize(9);
+    pdf.setTextColor(100);
+    pdf.text("Foto não cadastrada", rightX + rightW / 2, blockTop + blockH / 2, { align: "center" });
+    pdf.setTextColor(0);
+  }
   y = blockTop + blockH + 4;
 
   // Bloco de datas
