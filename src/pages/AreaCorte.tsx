@@ -287,13 +287,30 @@ export default function AreaCorte() {
                         <span className="font-semibold">{p.quantidade_total} peças</span>
                       </p>
 
-                      <Button
-                        className="mt-auto w-full"
-                        onClick={() => navigate(`/area-corte/${p.id}`)}
-                      >
-                        <Scissors className="h-4 w-4 mr-2" />
-                        Abrir para Cortar
-                      </Button>
+                      <div className="mt-auto flex flex-col gap-2">
+                        <Button
+                          className="w-full"
+                          onClick={() => navigate(`/area-corte/${p.id}`)}
+                        >
+                          <Scissors className="h-4 w-4 mr-2" />
+                          Abrir para Cortar
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="w-full h-8 text-xs"
+                          onClick={async () => {
+                            try {
+                              await gerarFichaCortePDF(p.id);
+                            } catch (e: any) {
+                              toast({ title: "Erro ao gerar PDF", description: e?.message, variant: "destructive" });
+                            }
+                          }}
+                        >
+                          <Download className="h-3.5 w-3.5 mr-1.5" />
+                          Baixar Ficha de Corte
+                        </Button>
+                      </div>
                     </CardContent>
                   </Card>
                 );
