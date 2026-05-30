@@ -12,19 +12,51 @@ const sortTamanhos = (sizes: string[]) =>
 const fmtBR = (d: string | null | undefined) =>
   d ? parseLocalDate(d.slice(0, 10))!.toLocaleDateString("pt-BR") : "";
 
-async function loadImage(url: string): Promise<string | null> {
-  try {
-    const res = await fetch(url, { mode: "cors" });
-    const blob = await res.blob();
-    return await new Promise((resolve) => {
-      const r = new FileReader();
-      r.onloadend = () => resolve(r.result as string);
-      r.onerror = () => resolve(null);
-      r.readAsDataURL(blob);
-    });
-  } catch {
-    return null;
-  }
+/**
+ * Loads an image and downscales it via canvas to keep the PDF small/fast.
+ * Returns { dataUrl, format } or null on failure / timeout.
+ */
+async function loadImageScaled(
+  url: string,
+  maxPx = 600,
+  timeoutMs = 4000
+): Promise<string | null> {
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    let done = false;
+    const finish = (v: string | null) => {
+      if (done) return;
+      done = true;
+      resolve(v);
+    };
+    const timer = setTimeout(() => finish(null), timeoutMs);
+    img.onload = () => {
+      try {
+        const ratio = Math.min(1, maxPx / Math.max(img.naturalWidth, img.naturalHeight));
+        const w = Math.max(1, Math.round(img.naturalWidth * ratio));
+        const h = Math.max(1, Math.round(img.naturalHeight * ratio));
+        const canvas = document.createElement("canvas");
+        canvas.width = w;
+        canvas.height = h;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) return finish(null);
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, w, h);
+        ctx.drawImage(img, 0, 0, w, h);
+        clearTimeout(timer);
+        finish(canvas.toDataURL("image/jpeg", 0.8));
+      } catch {
+        clearTimeout(timer);
+        finish(null);
+      }
+    };
+    img.onerror = () => {
+      clearTimeout(timer);
+      finish(null);
+    };
+    img.src = url;
+  });
 }
 
 function sanitize(s: string) {
