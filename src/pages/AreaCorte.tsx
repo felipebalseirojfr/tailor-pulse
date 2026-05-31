@@ -313,15 +313,12 @@ export default function AreaCorte() {
                           className="w-full h-8 text-xs"
                           disabled={fichaGerandoId === p.id}
                           onClick={async () => {
-                            let previewWindow: Window | null = null;
                             try {
-                              previewWindow = window.open("", "_blank");
                               setFichaGerandoId(p.id);
-                              await abrirFichaCortePDF(p.id, previewWindow);
-                              toast({ title: "Ficha de corte aberta" });
+                              await gerarFichaCortePDF(p.id);
+                              toast({ title: "Ficha de corte baixada" });
                             } catch (e: any) {
-                              previewWindow?.close();
-                              toast({ title: "Erro ao abrir ficha", description: e?.message, variant: "destructive" });
+                              toast({ title: "Erro ao baixar ficha", description: e?.message, variant: "destructive" });
                             } finally {
                               setFichaGerandoId(null);
                             }
@@ -330,9 +327,9 @@ export default function AreaCorte() {
                           {fichaGerandoId === p.id ? (
                             <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
                           ) : (
-                            <Eye className="h-3.5 w-3.5 mr-1.5" />
+                            <Download className="h-3.5 w-3.5 mr-1.5" />
                           )}
-                          {fichaGerandoId === p.id ? "Abrindo..." : "Ver / Imprimir Ficha"}
+                          {fichaGerandoId === p.id ? "Baixando..." : "Baixar Ficha de Corte"}
                         </Button>
                       </div>
                     </CardContent>
