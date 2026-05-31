@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Scissors, ArrowUp, ArrowLeft, Loader2, Clock, Calendar as CalendarIcon, ChevronDown, History, MessageSquare, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { parseLocalDate } from "@/lib/date-utils";
-import { criarBlobFichaCortePDF } from "@/lib/ficha-corte-pdf";
+import { criarBlobFichaCortePDF, loadImageForPdf } from "@/lib/ficha-corte-pdf";
 
 const ORDEM_TAMANHOS = ["1","2","4","6","8","10","12","14","PP","P","M","G","GG","XGG","XGG1","XGG2","XGG3"];
 
@@ -62,6 +62,9 @@ interface PedidoCorte {
   codigo_produto_cliente?: string | null;
   tipo_peca?: string | null;
   produto_modelo: string;
+  foto_modelo_url?: string | null;
+  foto_modelo_pdf_data_url?: string | null;
+  foto_modelo_pdf_format?: "PNG" | "JPEG";
   tecido?: string | null;
   cor_tecido: string | null;
   data_inicio?: string | null;
@@ -133,7 +136,7 @@ export default function AreaCorte() {
 
     const { data: peds, error: pedErr } = await supabase
       .from("pedidos")
-      .select("id, codigo_pedido, codigo_produto_cliente, tipo_peca, produto_modelo, tecido, cor_tecido, data_inicio, prazo_final, quantidade_total, grade_tamanhos, grade_corte_real, comentario_corte, corte_prioritario, cliente:clientes(nome)")
+      .select("id, codigo_pedido, codigo_produto_cliente, tipo_peca, produto_modelo, foto_modelo_url, tecido, cor_tecido, data_inicio, prazo_final, quantidade_total, grade_tamanhos, grade_corte_real, comentario_corte, corte_prioritario, cliente:clientes(nome)")
       .in("id", pedidoIds);
 
     if (pedErr) {
@@ -170,12 +173,21 @@ export default function AreaCorte() {
       obsByPedido[item.pedido_id].push(`• ${ETAPA_LABELS[item.tipo_etapa] || item.tipo_etapa}: ${String(item.observacoes).trim()}`);
     }
 
+    const fotosByPedido: Record<string, { dataUrl: string; format: "PNG" | "JPEG" } | null> = {};
+    await Promise.all((peds || []).map(async (p: any) => {
+      if (!isFilled(p.foto_modelo_url)) return;
+      fotosByPedido[p.id] = await loadImageForPdf(p.foto_modelo_url, 3500);
+    }));
+
     const list: PedidoCorte[] = (peds || []).map((p: any) => {
+      const fotoPdf = fotosByPedido[p.id];
       return {
         ...p,
         etapa_corte_inicio: etapaByPedido[p.id]?.data_inicio || etapaByPedido[p.id]?.created_at || null,
         referencias_codigos: buildReferenciaCodigos(p, (refsByPedido[p.id] || []).map((codigo_referencia) => ({ codigo_referencia }))),
         observacoes_etapas: obsByPedido[p.id] || [],
+        foto_modelo_pdf_data_url: fotoPdf?.dataUrl || null,
+        foto_modelo_pdf_format: fotoPdf?.format,
       };
     });
 
