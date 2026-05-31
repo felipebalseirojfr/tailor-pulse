@@ -54,32 +54,6 @@ export async function salvarBlobFichaCortePDF(blob: Blob, filename: string) {
   return baixarBlobFichaCortePDF(blob, filename);
 }
 
-function abrirBlobFichaCorteEmJanela(blob: Blob, filename: string, targetWindow?: Window | null) {
-  const safeFilename = ensurePdfFilename(filename);
-  const url = URL.createObjectURL(blob);
-  const win = targetWindow || window.open("", "_blank", "noopener,noreferrer");
-
-  if (win) {
-    win.document.open();
-    win.document.write(`<!doctype html>
-      <html lang="pt-BR">
-        <head><meta charset="utf-8" /><title>${escapeHtml(safeFilename)}</title></head>
-        <body style="margin:0;background:#f3f4f6;font-family:Arial,sans-serif">
-          <div style="height:52px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 14px;background:#fff;border-bottom:1px solid #d1d5db">
-            <strong style="font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(safeFilename)}</strong>
-            <a href="${url}" download="${escapeHtml(safeFilename)}" style="border:1px solid #0284c7;background:#0284c7;color:#fff;padding:8px 12px;border-radius:6px;text-decoration:none;font-weight:700;font-size:13px">Baixar PDF</a>
-          </div>
-          <embed src="${url}" type="application/pdf" style="width:100vw;height:calc(100vh - 52px);border:0;background:#fff" />
-        </body>
-      </html>`);
-    win.document.close();
-  } else {
-    baixarUrlFichaCorte(url, safeFilename);
-  }
-
-  window.setTimeout(() => URL.revokeObjectURL(url), 10 * 60 * 1000);
-}
-
 export async function salvarFichaCortePDFNoDisco(filename: string, criarBlob: () => Blob, fallbackWindow?: Window | null) {
   const safeFilename = ensurePdfFilename(filename);
   fallbackWindow?.close();
