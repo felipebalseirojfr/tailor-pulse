@@ -313,6 +313,31 @@ export async function loadImageForPdf(url: string, timeoutMs = 2500): Promise<{ 
     const blob = await response.blob();
     if (!blob.type.startsWith("image/")) return null;
 
+    const mime = blob.type.toLowerCase();
+    const format: "PNG" | "JPEG" | null = mime.includes("png") ? "PNG" : mime.includes("jpeg") || mime.includes("jpg") ? "JPEG" : null;
+    if (!format) {
+      const objectUrl = URL.createObjectURL(blob);
+      try {
+        const dataUrl = await new Promise<string>((resolve, reject) => {
+          const image = new Image();
+          image.onload = () => {
+            const canvas = document.createElement("canvas");
+            canvas.width = image.naturalWidth || image.width;
+            canvas.height = image.naturalHeight || image.height;
+            const ctx = canvas.getContext("2d");
+            if (!ctx) return reject(new Error("Não foi possível preparar a foto para PDF"));
+            ctx.drawImage(image, 0, 0);
+            resolve(canvas.toDataURL("image/jpeg", 0.92));
+          };
+          image.onerror = reject;
+          image.src = objectUrl;
+        });
+        return { dataUrl, format: "JPEG" };
+      } finally {
+        URL.revokeObjectURL(objectUrl);
+      }
+    }
+
     const dataUrl = await new Promise<string>((resolve, reject) => {
       const reader = new FileReader();
       reader.onloadend = () => resolve(String(reader.result));
@@ -320,7 +345,7 @@ export async function loadImageForPdf(url: string, timeoutMs = 2500): Promise<{ 
       reader.readAsDataURL(blob);
     });
 
-    return { dataUrl, format: blob.type.includes("png") ? "PNG" : "JPEG" };
+    return { dataUrl, format };
   } catch {
     return null;
   } finally {
