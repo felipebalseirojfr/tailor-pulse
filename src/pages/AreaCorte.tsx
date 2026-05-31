@@ -14,11 +14,10 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ToastAction } from "@/components/ui/toast";
 import { Scissors, ArrowUp, ArrowLeft, Loader2, Clock, Calendar as CalendarIcon, ChevronDown, History, MessageSquare, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { parseLocalDate } from "@/lib/date-utils";
-import { baixarUrlFichaCorte, criarNomeFichaCortePDF, salvarFichaCortePDF } from "@/lib/ficha-corte-pdf";
+import { criarBlobFichaCortePDF } from "@/lib/ficha-corte-pdf";
 
 const ORDEM_TAMANHOS = ["1","2","4","6","8","10","12","14","PP","P","M","G","GG","XGG","XGG1","XGG2","XGG3"];
 
@@ -34,6 +33,21 @@ const isFilled = (value: unknown) => {
   return Boolean(text && text !== "-" && text !== "—");
 };
 
+const ETAPA_LABELS: Record<string, string> = {
+  pilotagem: "Pilotagem",
+  compra_de_insumos: "Compra de Insumos",
+  liberacao_corte: "Liberação de Corte",
+  corte: "Corte",
+  lavanderia: "Lavanderia",
+  costura: "Costura",
+  caseado: "Caseado",
+  estamparia: "Estamparia",
+  bordado: "Bordado",
+  acabamento: "Acabamento",
+  aplicacao_travete: "Aplicação de Travete",
+  entrega: "Entrega",
+};
+
 const buildReferenciaCodigos = (pedido: { tipo_peca?: string | null; codigo_produto_cliente?: string | null }, refs: unknown[] = []) => {
   const codigos = refs.map((ref: any) => ref?.codigo_referencia).filter(isFilled) as string[];
   if (codigos.length > 0) return codigos;
@@ -45,8 +59,12 @@ const buildReferenciaCodigos = (pedido: { tipo_peca?: string | null; codigo_prod
 interface PedidoCorte {
   id: string;
   codigo_pedido: string | null;
+  codigo_produto_cliente?: string | null;
+  tipo_peca?: string | null;
   produto_modelo: string;
+  tecido?: string | null;
   cor_tecido: string | null;
+  data_inicio?: string | null;
   prazo_final: string;
   quantidade_total: number;
   grade_tamanhos: Record<string, number> | null;
@@ -56,6 +74,7 @@ interface PedidoCorte {
   cliente: { nome: string } | null;
   etapa_corte_inicio: string | null;
   referencias_codigos: string[];
+  observacoes_etapas: string[];
 }
 
 
