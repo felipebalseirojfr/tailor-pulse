@@ -1,0 +1,3 @@
+ALTER TABLE public.pedidos_auditoria DROP CONSTRAINT pedidos_auditoria_usuario_id_fkey, ADD CONSTRAINT pedidos_auditoria_usuario_id_fkey FOREIGN KEY (usuario_id) REFERENCES auth.users(id) ON DELETE SET NULL;
+
+ALTER TABLE public.etapas_producao DROP CONSTRAINT etapas_producao_responsavel_id_fkey, ADD CONSTRAINT etapas_producao_responsavel_id_fkey FOREIGN KEY (responsavel_id) REFERENCES public.profiles(id) ON DELETE SET NULL;
