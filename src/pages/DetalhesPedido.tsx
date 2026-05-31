@@ -494,7 +494,7 @@ export default function DetalhesPedido() {
             </Button>
             <Button variant="outline" size="sm" onClick={() => setShowFichaCorte(true)}>
               <Scissors className="mr-2 h-4 w-4" />
-              Gerar Ficha de Corte
+              Ver Ficha de Corte
             </Button>
             <Button variant="destructive" size="sm" onClick={() => setDeleteDialogOpen(true)}>
               <Trash2 className="mr-2 h-4 w-4" />
@@ -812,13 +812,10 @@ export default function DetalhesPedido() {
             quantidadeTotal={pedido.quantidade_total}
             observacoes={(() => {
               const base = pedido.observacoes_pedido || "";
-              const obsPers = ((pedido as any).observacoes_personalizacao || {}) as Record<string, string>;
-              const linhas = Object.entries(obsPers)
-                .filter(([_, v]) => v && v.trim())
-                .map(([k, v]) => `• ${k.charAt(0).toUpperCase() + k.slice(1)}: ${v}`);
-              if (!linhas.length) return base;
-              const header = "Separação para personalização:";
-              return [base, base ? "" : null, header, ...linhas].filter(Boolean).join("\n");
+              const linhas = etapas
+                .filter((etapa) => etapa.observacoes && String(etapa.observacoes).trim())
+                .map((etapa) => `• ${ETAPAS_NOMES[etapa.tipo_etapa] || etapa.tipo_etapa}: ${String(etapa.observacoes).trim()}`);
+              return [base, base && linhas.length ? "" : null, ...linhas].filter(Boolean).join("\n");
             })()}
             clienteNome={pedido.clientes?.nome || "Cliente não identificado"}
             fotoModeloUrl={(pedido as any).foto_modelo_url}
@@ -826,18 +823,9 @@ export default function DetalhesPedido() {
           <AlertDialogFooter className="print:hidden">
             <AlertDialogCancel>Fechar</AlertDialogCancel>
             <Button
-              onClick={async () => {
-                const { downloadFichaCortePDF } = await import("@/lib/ficha-corte-download");
-                if (fichaCorteRef.current) {
-                  try {
-                    await downloadFichaCortePDF(fichaCorteRef.current, pedido.codigo_pedido || pedido.id.slice(0, 8));
-                  } catch {
-                    toast({ title: "Erro ao baixar", description: "Não foi possível gerar o PDF.", variant: "destructive" });
-                  }
-                }
-              }}
+              onClick={() => window.print()}
             >
-              <Download className="mr-2 h-4 w-4" />Baixar PDF
+              <Printer className="mr-2 h-4 w-4" />Imprimir
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>

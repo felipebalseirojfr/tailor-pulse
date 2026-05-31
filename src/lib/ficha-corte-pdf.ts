@@ -21,6 +21,59 @@ function sanitize(s: string) {
   return s.replace(/[^\w\-]+/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, "");
 }
 
+function escapeHtml(s: string) {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function openPdfPreview(pdf: any, filename: string, targetWindow?: Window | null) {
+  const blob = pdf.output("blob");
+  const pdfUrl = URL.createObjectURL(blob);
+  const win = targetWindow || window.open("", "_blank");
+
+  if (!win) {
+    URL.revokeObjectURL(pdfUrl);
+    throw new Error("O navegador bloqueou a abertura da ficha. Libere pop-ups para visualizar e imprimir.");
+  }
+
+  const safeFilename = escapeHtml(filename);
+  win.document.open();
+  win.document.write(`<!doctype html>
+    <html lang="pt-BR">
+      <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>${safeFilename}</title>
+        <style>
+          * { box-sizing: border-box; }
+          body { margin: 0; font-family: Arial, sans-serif; background: #f3f4f6; color: #111827; }
+          .toolbar { height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; background: #ffffff; border-bottom: 1px solid #d1d5db; }
+          .title { min-width: 0; font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+          .actions { display: flex; gap: 8px; flex-shrink: 0; }
+          button, a { border: 1px solid #9ca3af; border-radius: 6px; background: #ffffff; color: #111827; padding: 8px 12px; font-size: 13px; font-weight: 700; text-decoration: none; cursor: pointer; }
+          button.primary { border-color: #0284c7; background: #0284c7; color: #ffffff; }
+          iframe { width: 100vw; height: calc(100vh - 56px); border: 0; display: block; background: #ffffff; }
+          @media print { .toolbar { display: none; } iframe { height: 100vh; } }
+        </style>
+      </head>
+      <body>
+        <div class="toolbar">
+          <div class="title">${safeFilename}</div>
+          <div class="actions">
+            <button class="primary" onclick="document.getElementById('ficha').contentWindow.print()">Imprimir</button>
+          </div>
+        </div>
+        <iframe id="ficha" src="${pdfUrl}" title="Ficha de corte"></iframe>
+      </body>
+    </html>`);
+  win.document.close();
+  win.addEventListener("beforeunload", () => URL.revokeObjectURL(pdfUrl), { once: true });
+}
+
 async function loadImageForPdf(url: string, timeoutMs = 2500): Promise<{ dataUrl: string; format: "PNG" | "JPEG" } | null> {
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
@@ -45,7 +98,7 @@ async function loadImageForPdf(url: string, timeoutMs = 2500): Promise<{ dataUrl
   }
 }
 
-export async function gerarFichaCortePDF(pedidoId: string) {
+async function montarFichaCortePDF(pedidoId: string) {
   const { data: p, error } = await supabase
     .from("pedidos")
     .select(
@@ -248,5 +301,15 @@ export async function gerarFichaCortePDF(pedidoId: string) {
   pdf.text("Data: ___/___/_____", pageW - margin, sigY, { align: "right" });
 
   const filename = `ficha-corte-${sanitize(p.codigo_pedido || "OP")}-${sanitize(p.produto_modelo || "peca")}.pdf`;
+  return { pdf, filename };
+}
+
+export async function gerarFichaCortePDF(pedidoId: string) {
+  const { pdf, filename } = await montarFichaCortePDF(pedidoId);
   pdf.save(filename);
+}
+
+export async function abrirFichaCortePDF(pedidoId: string, targetWindow?: Window | null) {
+  const { pdf, filename } = await montarFichaCortePDF(pedidoId);
+  openPdfPreview(pdf, filename, targetWindow);
 }
