@@ -100,7 +100,7 @@ export async function salvarFichaCortePDFNoDisco(filename: string, criarBlob: ()
   const safeFilename = ensurePdfFilename(filename);
   const picker = (window as any).showSaveFilePicker;
 
-  if (typeof picker === "function" && window.isSecureContext) {
+  if (!fallbackWindow && typeof picker === "function" && window.isSecureContext) {
     try {
       const handle = await picker.call(window, {
         suggestedName: safeFilename,
