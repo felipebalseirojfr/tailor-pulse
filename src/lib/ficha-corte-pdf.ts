@@ -607,26 +607,13 @@ export async function gerarFichaCortePDF(pedidoId: string) {
 }
 
 export async function salvarFichaCortePDF(pedidoId: string, suggestedFilename = "ficha-corte.pdf") {
-  const saveTarget = await escolherLocalParaSalvar(suggestedFilename);
-  if (saveTarget.cancelled) return { status: "cancelled" as const };
-
   const { pdf, filename } = await montarFichaCortePDF(pedidoId);
   const blob = pdf.output("blob");
-
-  if (saveTarget.handle) {
-    const writable = await saveTarget.handle.createWritable();
-    await writable.write(blob);
-    await writable.close();
-    return { status: "saved" as const, filename: saveTarget.handle.name || filename };
-  }
-
-  const url = URL.createObjectURL(blob);
-  baixarUrlFichaCorte(url, filename);
-  window.setTimeout(() => URL.revokeObjectURL(url), 10 * 60 * 1000);
-  return { status: "download_started" as const, filename, url };
+  return baixarBlobFichaCortePDF(blob, suggestedFilename || filename);
 }
 
 export async function abrirFichaCortePDF(pedidoId: string, targetWindow?: Window | null) {
   const { pdf, filename } = await montarFichaCortePDF(pedidoId);
-  openPdfPreview(pdf, filename, targetWindow);
+  targetWindow?.close();
+  return baixarBlobFichaCortePDF(pdf.output("blob"), filename);
 }
