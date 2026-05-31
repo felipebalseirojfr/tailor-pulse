@@ -18,14 +18,17 @@ interface PedidoLike {
   status_geral: string;
   created_at?: string;
   updated_at?: string;
+  grade_tamanhos?: Record<string, number> | null;
   clientes?: { nome: string } | null;
   etapas_producao?: Array<{
     tipo_etapa: string;
     status: string;
     ordem: number;
     updated_at?: string;
+    data_termino?: string | null;
   }>;
 }
+
 
 interface Props {
   pedidos: PedidoLike[];
