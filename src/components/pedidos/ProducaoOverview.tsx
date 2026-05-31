@@ -7,6 +7,8 @@ import {
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { parseLocalDate, todayLocal, diffDays } from "@/lib/date-utils";
+import { calcularQuantidadeReal } from "@/lib/quantidade-utils";
+
 
 interface PedidoLike {
   id: string;
