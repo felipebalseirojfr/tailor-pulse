@@ -65,7 +65,6 @@ function openPdfPreview(pdf: any, filename: string, targetWindow?: Window | null
           <div class="title">${safeFilename}</div>
           <div class="actions">
             <button class="primary" onclick="document.getElementById('ficha').contentWindow.print()">Imprimir</button>
-            <a href="${pdfUrl}" download="${safeFilename}">Baixar PDF</a>
           </div>
         </div>
         <iframe id="ficha" src="${pdfUrl}" title="Ficha de corte"></iframe>
