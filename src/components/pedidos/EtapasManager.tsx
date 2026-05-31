@@ -14,6 +14,7 @@ export interface Etapa {
   data_inicio_prevista?: Date;
   data_termino_prevista?: Date;
   terceiro_id?: string | null;
+  observacoes?: string | null;
 }
 
 interface EtapasManagerProps {
