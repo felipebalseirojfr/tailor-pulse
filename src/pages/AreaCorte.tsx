@@ -346,26 +346,24 @@ export default function AreaCorte() {
                           variant="outline"
                           className="w-full h-8 text-xs"
                           disabled={fichaGerandoId === p.id}
-                          onClick={async () => {
+                          onClick={() => {
                             try {
                               setFichaGerandoId(p.id);
-                              const resultado = await salvarFichaCortePDF(
-                                p.id,
-                                criarNomeFichaCortePDF(p.codigo_pedido, p.produto_modelo),
-                              );
-                              if (resultado.status === "cancelled") return;
-                              toast(resultado.status === "saved" ? {
-                                title: "Ficha de corte salva",
-                                description: resultado.filename,
-                              } : {
-                                title: "Arquivo pronto",
-                                description: "Se não aparecer automaticamente, clique em Baixar.",
-                                action: (
-                                  <ToastAction altText="Baixar ficha" onClick={() => baixarUrlFichaCorte(resultado.url, resultado.filename)}>
-                                    Baixar
-                                  </ToastAction>
-                                ),
+                              const { blob, filename } = criarBlobFichaCortePDF({
+                                ...p,
+                                data_inicio: p.data_inicio || p.etapa_corte_inicio,
                               });
+                              const url = URL.createObjectURL(blob);
+                              const link = document.createElement("a");
+                              link.href = url;
+                              link.download = filename;
+                              link.rel = "noopener";
+                              link.style.display = "none";
+                              document.body.appendChild(link);
+                              link.click();
+                              link.remove();
+                              window.setTimeout(() => URL.revokeObjectURL(url), 60000);
+                              toast({ title: "Download iniciado", description: filename });
                             } catch (e: any) {
                               toast({ title: "Erro ao baixar ficha", description: e?.message, variant: "destructive" });
                             } finally {
