@@ -155,6 +155,19 @@ export default function NovoPedido() {
         }
       }
 
+      const tiposPersonalizacaoEtapas = etapas
+        .map((e) => e.tipo_etapa)
+        .filter((t) => ["estamparia", "bordado", "caseado", "lavanderia"].includes(t));
+      const obsPersonalizacao: Record<string, string> = {};
+      etapas.forEach((e) => {
+        if (
+          ["estamparia", "bordado", "caseado", "lavanderia"].includes(e.tipo_etapa) &&
+          e.observacoes && e.observacoes.trim()
+        ) {
+          obsPersonalizacao[e.tipo_etapa] = e.observacoes.trim();
+        }
+      });
+
       const { data: pedidoData, error } = await supabase.from("pedidos").insert([
         {
           cliente_id: formData.cliente_id,
@@ -168,9 +181,9 @@ export default function NovoPedido() {
           data_inicio: formData.data_inicio,
           prazo_final: formData.prazo_final,
           responsavel_comercial_id: user.id,
-          tem_personalizacao: formData.tipos_personalizacao.length > 0,
-          tipos_personalizacao: formData.tipos_personalizacao,
-          observacoes_personalizacao: formData.observacoes_personalizacao,
+          tem_personalizacao: tiposPersonalizacaoEtapas.length > 0,
+          tipos_personalizacao: tiposPersonalizacaoEtapas,
+          observacoes_personalizacao: obsPersonalizacao,
           grade_tamanhos: formData.grade_tamanhos,
           arquivos: arquivosUpload,
           status_geral: 'aguardando_inicio',
@@ -197,6 +210,7 @@ export default function NovoPedido() {
           data_inicio_prevista: toLocalISODate(etapa.data_inicio_prevista),
           data_termino_prevista: toLocalISODate(etapa.data_termino_prevista),
           terceiro_id: etapa.terceiro_id || null,
+          observacoes: etapa.observacoes?.trim() || null,
         }));
 
         const { error: etapasError } = await supabase
