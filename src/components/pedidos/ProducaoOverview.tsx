@@ -116,14 +116,37 @@ export function ProducaoOverview({ pedidos, onPedidoClick }: Props) {
 
   const volumetria = useMemo(() => {
     const inicioMes = new Date(hoje.getFullYear(), hoje.getMonth(), 1);
+    const fimMes = new Date(hoje.getFullYear(), hoje.getMonth() + 1, 1);
+
+    // Data de conclusão = data_termino da etapa "entrega" concluída
+    // (fallback: maior data_termino entre etapas concluídas)
+    const dataConclusao = (p: PedidoLike): Date | null => {
+      const etapas = p.etapas_producao || [];
+      const entrega = etapas.find(
+        (e) => e.tipo_etapa === "entrega" && e.status === "concluido" && e.data_termino,
+      );
+      if (entrega?.data_termino) return new Date(entrega.data_termino);
+      const concluidas = etapas
+        .filter((e) => e.status === "concluido" && e.data_termino)
+        .map((e) => new Date(e.data_termino as string).getTime());
+      return concluidas.length ? new Date(Math.max(...concluidas)) : null;
+    };
+
     const concluidosMes = pedidos.filter((p) => {
-      if (p.status_geral !== "concluido" || !p.updated_at) return false;
-      return new Date(p.updated_at) >= inicioMes;
+      if (p.status_geral !== "concluido") return false;
+      const dt = dataConclusao(p);
+      return !!dt && dt >= inicioMes && dt < fimMes;
     });
-    const novosMes = pedidos.filter((p) => p.created_at && new Date(p.created_at) >= inicioMes);
-    const pecas = concluidosMes.reduce((acc, p) => acc + (p.quantidade_total || 0), 0);
+    const novosMes = pedidos.filter(
+      (p) => p.created_at && new Date(p.created_at) >= inicioMes && new Date(p.created_at) < fimMes,
+    );
+    const pecas = concluidosMes.reduce(
+      (acc, p) => acc + calcularQuantidadeReal(p.grade_tamanhos, p.quantidade_total || 0),
+      0,
+    );
     return { entregues: concluidosMes.length, pecas, novos: novosMes.length, concluidos: concluidosMes.length };
   }, [pedidos, hoje]);
+
 
   const handleClickPedido = (p: PedidoLike) => {
     setEtapaSelecionada(null);
