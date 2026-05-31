@@ -32,13 +32,15 @@ function escapeHtml(s: string) {
 
 function openPdfPreview(pdf: any, filename: string, targetWindow?: Window | null) {
   const blob = pdf.output("blob");
-  const pdfUrl = URL.createObjectURL(blob);
   const win = targetWindow || window.open("", "_blank");
 
   if (!win) {
-    URL.revokeObjectURL(pdfUrl);
     throw new Error("O navegador bloqueou a abertura da ficha. Libere pop-ups para visualizar e imprimir.");
   }
+
+  // Create the blob URL using the target window's URL so it's same-origin with the wrapper document.
+  const winURL: typeof URL = (win as any).URL || URL;
+  const pdfUrl = winURL.createObjectURL(blob);
 
   const safeFilename = escapeHtml(filename);
   win.document.open();
@@ -54,24 +56,27 @@ function openPdfPreview(pdf: any, filename: string, targetWindow?: Window | null
           .toolbar { height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; background: #ffffff; border-bottom: 1px solid #d1d5db; }
           .title { min-width: 0; font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
           .actions { display: flex; gap: 8px; flex-shrink: 0; }
-          button, a { border: 1px solid #9ca3af; border-radius: 6px; background: #ffffff; color: #111827; padding: 8px 12px; font-size: 13px; font-weight: 700; text-decoration: none; cursor: pointer; }
+          button, a { border: 1px solid #9ca3af; border-radius: 6px; background: #ffffff; color: #111827; padding: 8px 12px; font-size: 13px; font-weight: 700; text-decoration: none; cursor: pointer; display: inline-flex; align-items: center; }
           button.primary { border-color: #0284c7; background: #0284c7; color: #ffffff; }
-          iframe { width: 100vw; height: calc(100vh - 56px); border: 0; display: block; background: #ffffff; }
-          @media print { .toolbar { display: none; } iframe { height: 100vh; } }
+          embed, iframe { width: 100vw; height: calc(100vh - 56px); border: 0; display: block; background: #ffffff; }
+          @media print { .toolbar { display: none; } embed, iframe { height: 100vh; } }
         </style>
       </head>
       <body>
         <div class="toolbar">
           <div class="title">${safeFilename}</div>
           <div class="actions">
-            <button class="primary" onclick="document.getElementById('ficha').contentWindow.print()">Imprimir</button>
+            <a href="${pdfUrl}" download="${safeFilename}">Baixar</a>
+            <button class="primary" onclick="window.print()">Imprimir</button>
           </div>
         </div>
-        <iframe id="ficha" src="${pdfUrl}" title="Ficha de corte"></iframe>
+        <embed id="ficha" src="${pdfUrl}" type="application/pdf" />
       </body>
     </html>`);
   win.document.close();
-  win.addEventListener("beforeunload", () => URL.revokeObjectURL(pdfUrl), { once: true });
+  win.addEventListener("beforeunload", () => {
+    try { winURL.revokeObjectURL(pdfUrl); } catch {}
+  }, { once: true });
 }
 
 async function loadImageForPdf(url: string, timeoutMs = 2500): Promise<{ dataUrl: string; format: "PNG" | "JPEG" } | null> {
