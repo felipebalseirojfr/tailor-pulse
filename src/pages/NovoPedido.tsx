@@ -291,7 +291,7 @@ export default function NovoPedido() {
         tipo_peca: formData.tipo_peca,
         quantidade_total: quantidadeTotalCalculada,
         aviamentos: formData.aviamentos,
-        tipos_personalizacao: formData.tipos_personalizacao,
+        tipos_personalizacao: tiposPersonalizacaoEtapas,
       });
 
       const mensagemArquivos = arquivosUpload.length > 0 
