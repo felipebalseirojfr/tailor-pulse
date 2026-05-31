@@ -56,6 +56,8 @@ export interface FichaCortePDFDados {
   cliente?: { nome?: string | null } | null;
   referencias_codigos?: string[];
   observacoes_etapas?: string[];
+  foto_modelo_pdf_data_url?: string | null;
+  foto_modelo_pdf_format?: "PNG" | "JPEG";
 }
 
 export function criarBlobFichaCortePDF(dados: FichaCortePDFDados) {
@@ -110,12 +112,16 @@ export function criarBlobFichaCortePDF(dados: FichaCortePDFDados) {
   }
 
   pdf.rect(rightX, blockTop, rightW, blockH);
-  pdf.setFillColor(230, 230, 230);
-  pdf.rect(rightX + 1, blockTop + 1, rightW - 2, blockH - 2, "F");
-  pdf.setFontSize(9);
-  pdf.setTextColor(100);
-  pdf.text("Foto no pedido", rightX + rightW / 2, blockTop + blockH / 2, { align: "center" });
-  pdf.setTextColor(0);
+  if (dados.foto_modelo_pdf_data_url) {
+    pdf.addImage(dados.foto_modelo_pdf_data_url, dados.foto_modelo_pdf_format || "JPEG", rightX + 2, blockTop + 2, rightW - 4, blockH - 4, undefined, "FAST");
+  } else {
+    pdf.setFillColor(230, 230, 230);
+    pdf.rect(rightX + 1, blockTop + 1, rightW - 2, blockH - 2, "F");
+    pdf.setFontSize(9);
+    pdf.setTextColor(100);
+    pdf.text("Foto não carregada", rightX + rightW / 2, blockTop + blockH / 2, { align: "center" });
+    pdf.setTextColor(0);
+  }
   y = blockTop + blockH + 4;
 
   const dateH = 12;
@@ -178,13 +184,27 @@ export function criarBlobFichaCortePDF(dados: FichaCortePDFDados) {
   }
   y += tRowH + 5;
 
+  const etapaObs = (dados.observacoes_etapas || []).filter(isFilled);
+  if (etapaObs.length) {
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(11);
+    pdf.text("ORIENTAÇÃO DA ETAPA:", margin, y);
+    y += 4;
+    const destaqueLines = pdf.splitTextToSize(etapaObs.join("\n"), innerW - 6);
+    const destaqueH = Math.max(18, destaqueLines.length * 5 + 8);
+    pdf.setLineWidth(0.35);
+    pdf.rect(margin, y, innerW, destaqueH);
+    pdf.setFont("helvetica", "bold");
+    pdf.setFontSize(12);
+    pdf.text(destaqueLines, margin + 3, y + 6);
+    y += destaqueH + 5;
+  }
+
   pdf.setFont("helvetica", "bold");
   pdf.setFontSize(9);
   pdf.text("Observações:", margin, y);
   y += 2;
-  const obsLines = dados.observacoes_etapas?.length
-    ? pdf.splitTextToSize(dados.observacoes_etapas.join("\n"), innerW - 4)
-    : [];
+  const obsLines: string[] = [];
   const obsH = Math.max(28, obsLines.length * 4 + 6);
   pdf.rect(margin, y, innerW, obsH);
   if (obsLines.length) {
