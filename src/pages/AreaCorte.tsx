@@ -362,22 +362,15 @@ export default function AreaCorte() {
                             try {
                               setFichaGerandoId(p.id);
                               const filename = criarNomeFichaCortePDF(p.codigo_pedido, p.produto_modelo);
-                              const precisaAbaFallback = isDentroDoPreviewIframe() || typeof (window as any).showSaveFilePicker !== "function";
-                              const abaFicha = precisaAbaFallback ? prepararAbaDaFicha(filename) : null;
-                              const resultado = await salvarFichaCortePDFNoDisco(filename, () => {
-                                const { blob } = criarBlobFichaCortePDF({
-                                  ...p,
-                                  data_inicio: p.data_inicio || p.etapa_corte_inicio,
-                                });
-                                return blob;
-                              }, abaFicha);
+                              const { blob } = criarBlobFichaCortePDF({
+                                ...p,
+                                data_inicio: p.data_inicio || p.etapa_corte_inicio,
+                              });
+                              const resultado = baixarBlobFichaCortePDF(blob, filename);
 
-                              if (resultado.status === "cancelled") return;
                               toast({
-                                title: resultado.status === "saved" ? "Ficha salva" : "Ficha aberta",
-                                description: resultado.status === "saved"
-                                  ? `${resultado.filename} foi salva no local escolhido.`
-                                  : "A ficha foi aberta em uma nova aba. Use Ctrl+S ou o botão de baixar do visualizador se quiser salvar.",
+                                title: "Download iniciado",
+                                description: `${resultado.filename} foi enviado para a pasta de downloads.`,
                               });
                             } catch (e: any) {
                               toast({ title: "Erro ao baixar ficha", description: e?.message, variant: "destructive" });
