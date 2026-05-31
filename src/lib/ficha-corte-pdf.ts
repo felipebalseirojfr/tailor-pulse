@@ -70,7 +70,33 @@ export async function salvarBlobFichaCortePDF(blob: Blob, filename: string) {
   return { status: "opened" as const, filename: safeFilename, url };
 }
 
-export async function salvarFichaCortePDFNoDisco(filename: string, criarBlob: () => Blob) {
+function abrirBlobFichaCorteEmJanela(blob: Blob, filename: string, targetWindow?: Window | null) {
+  const safeFilename = ensurePdfFilename(filename);
+  const url = URL.createObjectURL(blob);
+  const win = targetWindow || window.open("", "_blank", "noopener,noreferrer");
+
+  if (win) {
+    win.document.open();
+    win.document.write(`<!doctype html>
+      <html lang="pt-BR">
+        <head><meta charset="utf-8" /><title>${escapeHtml(safeFilename)}</title></head>
+        <body style="margin:0;background:#f3f4f6;font-family:Arial,sans-serif">
+          <div style="height:52px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 14px;background:#fff;border-bottom:1px solid #d1d5db">
+            <strong style="font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(safeFilename)}</strong>
+            <a href="${url}" download="${escapeHtml(safeFilename)}" style="border:1px solid #0284c7;background:#0284c7;color:#fff;padding:8px 12px;border-radius:6px;text-decoration:none;font-weight:700;font-size:13px">Baixar PDF</a>
+          </div>
+          <embed src="${url}" type="application/pdf" style="width:100vw;height:calc(100vh - 52px);border:0;background:#fff" />
+        </body>
+      </html>`);
+    win.document.close();
+  } else {
+    baixarUrlFichaCorte(url, safeFilename);
+  }
+
+  window.setTimeout(() => URL.revokeObjectURL(url), 10 * 60 * 1000);
+}
+
+export async function salvarFichaCortePDFNoDisco(filename: string, criarBlob: () => Blob, fallbackWindow?: Window | null) {
   const safeFilename = ensurePdfFilename(filename);
   const picker = (window as any).showSaveFilePicker;
 
@@ -85,19 +111,20 @@ export async function salvarFichaCortePDFNoDisco(filename: string, criarBlob: ()
       const writable = await handle.createWritable();
       await writable.write(blob);
       await writable.close();
+      fallbackWindow?.close();
       return { status: "saved" as const, filename: handle.name || safeFilename };
     } catch (error: any) {
-      if (error?.name === "AbortError") return { status: "cancelled" as const };
+      if (error?.name === "AbortError") {
+        fallbackWindow?.close();
+        return { status: "cancelled" as const };
+      }
       console.warn("Save picker falhou; abrindo a ficha em nova aba.", error);
     }
   }
 
   const blob = criarBlob();
-  const url = URL.createObjectURL(blob);
-  const win = window.open(url, "_blank", "noopener,noreferrer");
-  if (!win) baixarUrlFichaCorte(url, safeFilename);
-  window.setTimeout(() => URL.revokeObjectURL(url), 10 * 60 * 1000);
-  return { status: win ? "opened" as const : "download_started" as const, filename: safeFilename, url };
+  abrirBlobFichaCorteEmJanela(blob, safeFilename, fallbackWindow);
+  return { status: "opened" as const, filename: safeFilename };
 }
 
 export interface FichaCortePDFDados {
