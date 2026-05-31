@@ -36,10 +36,38 @@ export function baixarUrlFichaCorte(url: string, filename: string) {
   link.href = url;
   link.download = ensurePdfFilename(filename);
   link.rel = "noopener";
+  link.target = "_blank";
   link.style.display = "none";
   document.body.appendChild(link);
   link.click();
-  window.setTimeout(() => link.remove(), 0);
+  window.setTimeout(() => link.remove(), 10 * 60 * 1000);
+}
+
+export async function salvarBlobFichaCortePDF(blob: Blob, filename: string) {
+  const safeFilename = ensurePdfFilename(filename);
+  const picker = (window as any).showSaveFilePicker;
+
+  if (typeof picker === "function" && window.isSecureContext) {
+    try {
+      const handle = await picker.call(window, {
+        suggestedName: safeFilename,
+        types: [{ description: "Arquivo PDF", accept: { "application/pdf": [".pdf"] } }],
+        excludeAcceptAllOption: false,
+      });
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      return { status: "saved" as const, filename: handle.name || safeFilename };
+    } catch (error: any) {
+      if (error?.name === "AbortError") return { status: "cancelled" as const };
+      console.warn("Save picker indisponível; usando abertura direta da ficha.", error);
+    }
+  }
+
+  const url = URL.createObjectURL(blob);
+  baixarUrlFichaCorte(url, safeFilename);
+  window.setTimeout(() => URL.revokeObjectURL(url), 10 * 60 * 1000);
+  return { status: "opened" as const, filename: safeFilename, url };
 }
 
 export interface FichaCortePDFDados {
