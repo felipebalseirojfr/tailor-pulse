@@ -51,30 +51,7 @@ export function baixarBlobFichaCortePDF(blob: Blob, filename: string) {
 }
 
 export async function salvarBlobFichaCortePDF(blob: Blob, filename: string) {
-  const safeFilename = ensurePdfFilename(filename);
-  const picker = (window as any).showSaveFilePicker;
-
-  if (typeof picker === "function" && window.isSecureContext) {
-    try {
-      const handle = await picker.call(window, {
-        suggestedName: safeFilename,
-        types: [{ description: "Arquivo PDF", accept: { "application/pdf": [".pdf"] } }],
-        excludeAcceptAllOption: false,
-      });
-      const writable = await handle.createWritable();
-      await writable.write(blob);
-      await writable.close();
-      return { status: "saved" as const, filename: handle.name || safeFilename };
-    } catch (error: any) {
-      if (error?.name === "AbortError") return { status: "cancelled" as const };
-      console.warn("Save picker indisponível; usando abertura direta da ficha.", error);
-    }
-  }
-
-  const url = URL.createObjectURL(blob);
-  baixarUrlFichaCorte(url, safeFilename);
-  window.setTimeout(() => URL.revokeObjectURL(url), 10 * 60 * 1000);
-  return { status: "opened" as const, filename: safeFilename, url };
+  return baixarBlobFichaCortePDF(blob, filename);
 }
 
 function abrirBlobFichaCorteEmJanela(blob: Blob, filename: string, targetWindow?: Window | null) {
@@ -105,33 +82,9 @@ function abrirBlobFichaCorteEmJanela(blob: Blob, filename: string, targetWindow?
 
 export async function salvarFichaCortePDFNoDisco(filename: string, criarBlob: () => Blob, fallbackWindow?: Window | null) {
   const safeFilename = ensurePdfFilename(filename);
-  const picker = (window as any).showSaveFilePicker;
-
-  if (!fallbackWindow && typeof picker === "function" && window.isSecureContext) {
-    try {
-      const handle = await picker.call(window, {
-        suggestedName: safeFilename,
-        types: [{ description: "Arquivo PDF", accept: { "application/pdf": [".pdf"] } }],
-        excludeAcceptAllOption: false,
-      });
-      const blob = criarBlob();
-      const writable = await handle.createWritable();
-      await writable.write(blob);
-      await writable.close();
-      fallbackWindow?.close();
-      return { status: "saved" as const, filename: handle.name || safeFilename };
-    } catch (error: any) {
-      if (error?.name === "AbortError") {
-        fallbackWindow?.close();
-        return { status: "cancelled" as const };
-      }
-      console.warn("Save picker falhou; abrindo a ficha em nova aba.", error);
-    }
-  }
-
+  fallbackWindow?.close();
   const blob = criarBlob();
-  abrirBlobFichaCorteEmJanela(blob, safeFilename, fallbackWindow);
-  return { status: "opened" as const, filename: safeFilename };
+  return baixarBlobFichaCortePDF(blob, safeFilename);
 }
 
 export interface FichaCortePDFDados {
