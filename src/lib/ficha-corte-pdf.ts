@@ -226,9 +226,19 @@ export async function gerarFichaCortePDF(pedidoId: string) {
   pdf.setFontSize(9);
   pdf.text("Observações:", margin, y);
   y += 2;
-  const obsH = 28;
-  pdf.rect(margin, y, pageW - margin * 2, obsH);
+  const innerObsW = pageW - margin * 2;
+  const obsLines = observacoesEtapas.length
+    ? pdf.splitTextToSize(observacoesEtapas.join("\n"), innerObsW - 4)
+    : [];
+  const obsH = Math.max(28, obsLines.length * 4 + 6);
+  pdf.rect(margin, y, innerObsW, obsH);
+  if (obsLines.length) {
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(8.5);
+    pdf.text(obsLines, margin + 2, y + 5);
+  }
   y += obsH + 8;
+
 
   // Rodapé / assinatura
   pdf.setFont("helvetica", "normal");
