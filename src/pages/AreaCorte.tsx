@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Scissors, ArrowUp, ArrowLeft, Loader2, Clock, Calendar as CalendarIcon, ChevronDown, History, MessageSquare, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { parseLocalDate } from "@/lib/date-utils";
-import { criarBlobFichaCortePDF, loadImageForPdf } from "@/lib/ficha-corte-pdf";
+import { criarBlobFichaCortePDF, criarNomeFichaCortePDF, loadImageForPdf, salvarFichaCortePDFNoDisco } from "@/lib/ficha-corte-pdf";
 
 const ORDEM_TAMANHOS = ["1","2","4","6","8","10","12","14","PP","P","M","G","GG","XGG","XGG1","XGG2","XGG3"];
 
@@ -358,24 +358,25 @@ export default function AreaCorte() {
                           variant="outline"
                           className="w-full h-8 text-xs"
                           disabled={fichaGerandoId === p.id}
-                          onClick={() => {
+                          onClick={async () => {
                             try {
                               setFichaGerandoId(p.id);
-                              const { blob, filename } = criarBlobFichaCortePDF({
-                                ...p,
-                                data_inicio: p.data_inicio || p.etapa_corte_inicio,
+                              const filename = criarNomeFichaCortePDF(p.codigo_pedido, p.produto_modelo);
+                              const resultado = await salvarFichaCortePDFNoDisco(filename, () => {
+                                const { blob } = criarBlobFichaCortePDF({
+                                  ...p,
+                                  data_inicio: p.data_inicio || p.etapa_corte_inicio,
+                                });
+                                return blob;
                               });
-                              const url = URL.createObjectURL(blob);
-                              const link = document.createElement("a");
-                              link.href = url;
-                              link.download = filename;
-                              link.rel = "noopener";
-                              link.style.display = "none";
-                              document.body.appendChild(link);
-                              link.click();
-                              link.remove();
-                              window.setTimeout(() => URL.revokeObjectURL(url), 60000);
-                              toast({ title: "Download iniciado", description: filename });
+
+                              if (resultado.status === "cancelled") return;
+                              toast({
+                                title: resultado.status === "saved" ? "Ficha salva" : "Ficha aberta",
+                                description: resultado.status === "saved"
+                                  ? `${resultado.filename} foi salva no local escolhido.`
+                                  : "A ficha foi aberta em uma nova aba. Use Ctrl+S ou o botão de baixar do visualizador se quiser salvar.",
+                              });
                             } catch (e: any) {
                               toast({ title: "Erro ao baixar ficha", description: e?.message, variant: "destructive" });
                             } finally {
