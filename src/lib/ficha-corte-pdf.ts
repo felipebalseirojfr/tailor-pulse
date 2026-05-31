@@ -21,6 +21,48 @@ function sanitize(s: string) {
   return s.replace(/[^\w\-]+/g, "_").replace(/_+/g, "_").replace(/^_|_$/g, "");
 }
 
+function ensurePdfFilename(filename: string) {
+  const cleaned = filename.trim() || "ficha-corte.pdf";
+  return cleaned.toLowerCase().endsWith(".pdf") ? cleaned : `${cleaned}.pdf`;
+}
+
+export function criarNomeFichaCortePDF(codigoPedido?: string | null, produtoModelo?: string | null) {
+  return ensurePdfFilename(`ficha-corte-${sanitize(codigoPedido || "OP")}-${sanitize(produtoModelo || "peca")}`);
+}
+
+export function baixarUrlFichaCorte(url: string, filename: string) {
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = ensurePdfFilename(filename);
+  link.rel = "noopener";
+  link.style.display = "none";
+  document.body.appendChild(link);
+  link.click();
+  window.setTimeout(() => link.remove(), 0);
+}
+
+async function escolherLocalParaSalvar(suggestedFilename: string) {
+  const picker = (window as any).showSaveFilePicker;
+  if (typeof picker !== "function") return { handle: null, cancelled: false };
+
+  try {
+    const handle = await picker.call(window, {
+      suggestedName: ensurePdfFilename(suggestedFilename),
+      types: [
+        {
+          description: "Arquivo PDF",
+          accept: { "application/pdf": [".pdf"] },
+        },
+      ],
+      excludeAcceptAllOption: false,
+    });
+    return { handle, cancelled: false };
+  } catch (error: any) {
+    if (error?.name === "AbortError") return { handle: null, cancelled: true };
+    return { handle: null, cancelled: false };
+  }
+}
+
 function escapeHtml(s: string) {
   return s
     .replace(/&/g, "&amp;")
@@ -311,7 +353,31 @@ async function montarFichaCortePDF(pedidoId: string) {
 
 export async function gerarFichaCortePDF(pedidoId: string) {
   const { pdf, filename } = await montarFichaCortePDF(pedidoId);
-  pdf.save(filename);
+  const blob = pdf.output("blob");
+  const url = URL.createObjectURL(blob);
+  baixarUrlFichaCorte(url, filename);
+  window.setTimeout(() => URL.revokeObjectURL(url), 10 * 60 * 1000);
+  return { status: "download_started" as const, filename, url };
+}
+
+export async function salvarFichaCortePDF(pedidoId: string, suggestedFilename = "ficha-corte.pdf") {
+  const saveTarget = await escolherLocalParaSalvar(suggestedFilename);
+  if (saveTarget.cancelled) return { status: "cancelled" as const };
+
+  const { pdf, filename } = await montarFichaCortePDF(pedidoId);
+  const blob = pdf.output("blob");
+
+  if (saveTarget.handle) {
+    const writable = await saveTarget.handle.createWritable();
+    await writable.write(blob);
+    await writable.close();
+    return { status: "saved" as const, filename: saveTarget.handle.name || filename };
+  }
+
+  const url = URL.createObjectURL(blob);
+  baixarUrlFichaCorte(url, filename);
+  window.setTimeout(() => URL.revokeObjectURL(url), 10 * 60 * 1000);
+  return { status: "download_started" as const, filename, url };
 }
 
 export async function abrirFichaCortePDF(pedidoId: string, targetWindow?: Window | null) {

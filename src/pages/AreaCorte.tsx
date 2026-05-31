@@ -14,10 +14,11 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { ToastAction } from "@/components/ui/toast";
 import { Scissors, ArrowUp, ArrowLeft, Loader2, Clock, Calendar as CalendarIcon, ChevronDown, History, MessageSquare, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { parseLocalDate } from "@/lib/date-utils";
-import { gerarFichaCortePDF } from "@/lib/ficha-corte-pdf";
+import { baixarUrlFichaCorte, criarNomeFichaCortePDF, salvarFichaCortePDF } from "@/lib/ficha-corte-pdf";
 
 const ORDEM_TAMANHOS = ["1","2","4","6","8","10","12","14","PP","P","M","G","GG","XGG","XGG1","XGG2","XGG3"];
 
@@ -315,8 +316,23 @@ export default function AreaCorte() {
                           onClick={async () => {
                             try {
                               setFichaGerandoId(p.id);
-                              await gerarFichaCortePDF(p.id);
-                              toast({ title: "Ficha de corte baixada" });
+                              const resultado = await salvarFichaCortePDF(
+                                p.id,
+                                criarNomeFichaCortePDF(p.codigo_pedido, p.produto_modelo),
+                              );
+                              if (resultado.status === "cancelled") return;
+                              toast(resultado.status === "saved" ? {
+                                title: "Ficha de corte salva",
+                                description: resultado.filename,
+                              } : {
+                                title: "Arquivo pronto",
+                                description: "Se não aparecer automaticamente, clique em Baixar.",
+                                action: (
+                                  <ToastAction altText="Baixar ficha" onClick={() => baixarUrlFichaCorte(resultado.url, resultado.filename)}>
+                                    Baixar
+                                  </ToastAction>
+                                ),
+                              });
                             } catch (e: any) {
                               toast({ title: "Erro ao baixar ficha", description: e?.message, variant: "destructive" });
                             } finally {
