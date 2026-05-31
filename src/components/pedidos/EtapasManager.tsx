@@ -183,6 +183,33 @@ export default function EtapasManager({ etapas, onChange }: EtapasManagerProps) 
           </div>
         </Card>
       )}
+
+      {etapas.length > 0 && (
+        <Card className="p-4 space-y-3">
+          <div>
+            <Label className="text-base">Observações por Etapa</Label>
+            <p className="text-sm text-muted-foreground mt-1">
+              Adicione instruções específicas para cada etapa selecionada (ex: separar frente para estamparia). Essas observações aparecem na ficha de corte.
+            </p>
+          </div>
+          <div className="space-y-3">
+            {[...etapas].sort((a, b) => a.ordem - b.ordem).map((etapa) => {
+              const label = tiposEtapaDisponiveis.find(t => t.value === etapa.tipo_etapa)?.label || etapa.tipo_etapa;
+              return (
+                <div key={etapa.id} className="space-y-1.5">
+                  <Label className="text-sm">{etapa.ordem}. {label}</Label>
+                  <Textarea
+                    value={etapa.observacoes || ""}
+                    onChange={(e) => updateObservacoes(etapa.tipo_etapa, e.target.value)}
+                    rows={2}
+                    placeholder={`Observação para ${label.toLowerCase()} (opcional)`}
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
     </div>
   );
 }
