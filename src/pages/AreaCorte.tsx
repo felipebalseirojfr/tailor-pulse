@@ -133,7 +133,7 @@ export default function AreaCorte() {
 
     const { data: peds, error: pedErr } = await supabase
       .from("pedidos")
-      .select("id, codigo_pedido, codigo_produto_cliente, tipo_peca, produto_modelo, cor_tecido, prazo_final, quantidade_total, grade_tamanhos, grade_corte_real, comentario_corte, corte_prioritario, cliente:clientes(nome)")
+      .select("id, codigo_pedido, codigo_produto_cliente, tipo_peca, produto_modelo, tecido, cor_tecido, data_inicio, prazo_final, quantidade_total, grade_tamanhos, grade_corte_real, comentario_corte, corte_prioritario, cliente:clientes(nome)")
       .in("id", pedidoIds);
 
     if (pedErr) {
@@ -157,11 +157,25 @@ export default function AreaCorte() {
       if (isFilled((r as any).codigo_referencia)) refsByPedido[pid].push((r as any).codigo_referencia.trim());
     }
 
+    const { data: etapasObs } = await supabase
+      .from("etapas_producao")
+      .select("pedido_id, tipo_etapa, observacoes, ordem")
+      .in("pedido_id", pedidoIds)
+      .order("ordem");
+    const obsByPedido: Record<string, string[]> = {};
+    for (const etapa of etapasObs || []) {
+      const item = etapa as any;
+      if (!isFilled(item.observacoes)) continue;
+      if (!obsByPedido[item.pedido_id]) obsByPedido[item.pedido_id] = [];
+      obsByPedido[item.pedido_id].push(`• ${ETAPA_LABELS[item.tipo_etapa] || item.tipo_etapa}: ${String(item.observacoes).trim()}`);
+    }
+
     const list: PedidoCorte[] = (peds || []).map((p: any) => {
       return {
         ...p,
         etapa_corte_inicio: etapaByPedido[p.id]?.data_inicio || etapaByPedido[p.id]?.created_at || null,
         referencias_codigos: buildReferenciaCodigos(p, (refsByPedido[p.id] || []).map((codigo_referencia) => ({ codigo_referencia }))),
+        observacoes_etapas: obsByPedido[p.id] || [],
       };
     });
 
