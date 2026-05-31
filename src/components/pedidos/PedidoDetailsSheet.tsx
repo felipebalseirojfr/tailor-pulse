@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { CheckCircle2, ChevronRight, Edit2, Save, X, ChevronLeft, ExternalLink, Trash2, Scissors, Printer, Copy, Download } from "lucide-react";
+import { CheckCircle2, ChevronRight, Edit2, Save, X, ChevronLeft, ExternalLink, Trash2, Scissors, Printer, Copy } from "lucide-react";
 import { AvancarEtapaDialog } from "./AvancarEtapaDialog";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -642,7 +642,7 @@ export function PedidoDetailsSheet({
           <Separator />
           <div className="space-y-3">
             <Button variant="outline" className="w-full" onClick={() => setShowFichaCorte(true)}>
-              <Scissors className="mr-2 h-4 w-4" />Gerar Ficha de Corte
+              <Scissors className="mr-2 h-4 w-4" />Ver Ficha de Corte
             </Button>
             {pedido.qr_code_ref && (
               <QRCodeDisplay qrCodeRef={pedido.qr_code_ref} produtoModelo={pedido.produto_modelo} pedidoId={pedido.id} codigoPedido={pedido.codigo_pedido || undefined} />
@@ -702,30 +702,18 @@ export function PedidoDetailsSheet({
           <div className="overflow-auto">
             <FichaCorte ref={fichaCorteRef} produtoModelo={pedido.produto_modelo} tipoPeca={pedido.tipo_peca} tecido={pedido.tecido || ""} codigoPedido={pedido.codigo_pedido || pedido.id.slice(0, 8)} gradeTamanhos={pedido.grade_tamanhos || {}} quantidadeTotal={pedido.quantidade_total} observacoes={(() => {
               const base = pedido.observacoes_pedido || "";
-              const obsPers = ((pedido as any).observacoes_personalizacao || {}) as Record<string, string>;
-              const linhas = Object.entries(obsPers)
-                .filter(([_, v]) => v && String(v).trim())
-                .map(([k, v]) => `• ${k.charAt(0).toUpperCase() + k.slice(1)}: ${v}`);
-              if (!linhas.length) return base;
-              const header = "Separação para personalização:";
-              return [base, base ? "" : null, header, ...linhas].filter(Boolean).join("\n");
+              const linhas = etapas
+                .filter((etapa: any) => etapa.observacoes && String(etapa.observacoes).trim())
+                .map((etapa: any) => `• ${getEtapaLabel(etapa.tipo_etapa)}: ${String(etapa.observacoes).trim()}`);
+              return [base, base && linhas.length ? "" : null, ...linhas].filter(Boolean).join("\n");
             })()} clienteNome={pedido.clientes?.nome || ""} fotoModeloUrl={(pedido as any).foto_modelo_url} />
           </div>
           <AlertDialogFooter className="print:hidden">
             <AlertDialogCancel>Fechar</AlertDialogCancel>
             <Button
-              onClick={async () => {
-                const { downloadFichaCortePDF } = await import("@/lib/ficha-corte-download");
-                if (fichaCorteRef.current) {
-                  try {
-                    await downloadFichaCortePDF(fichaCorteRef.current, pedido.codigo_pedido || pedido.id.slice(0, 8));
-                  } catch {
-                    toast.error("Não foi possível gerar o PDF.");
-                  }
-                }
-              }}
+              onClick={() => window.print()}
             >
-              <Download className="mr-2 h-4 w-4" />Baixar PDF
+              <Printer className="mr-2 h-4 w-4" />Imprimir
             </Button>
           </AlertDialogFooter>
         </AlertDialogContent>
