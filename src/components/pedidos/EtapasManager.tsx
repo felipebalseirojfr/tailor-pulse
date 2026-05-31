@@ -81,6 +81,11 @@ export default function EtapasManager({ etapas, onChange }: EtapasManagerProps) 
     onChange(etapas.map(e => e.tipo_etapa === tipoEtapa ? { ...e, terceiro_id: terceiroId } : e));
   };
 
+  const updateObservacoes = (tipoEtapa: string, observacoes: string) => {
+    onChange(etapas.map(e => e.tipo_etapa === tipoEtapa ? { ...e, observacoes } : e));
+  };
+
+
   const getTerceirosForEtapa = (tipoEtapa: string) =>
     terceiros.filter(t => t.tipo_etapa === tipoEtapa);
 
