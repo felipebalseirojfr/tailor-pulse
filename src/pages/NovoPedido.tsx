@@ -552,52 +552,8 @@ export default function NovoPedido() {
               </div>
             </div>
 
-            <div className="space-y-3">
-              <Label>Personalização</Label>
-              <p className="text-sm text-muted-foreground">
-                Selecione os tipos de personalização necessários
-              </p>
-              <div className="grid gap-3 md:grid-cols-2">
-                {[
-                  { id: "estamparia", label: "Estamparia", hasObs: true },
-                  { id: "bordado", label: "Bordado", hasObs: true },
-                  { id: "caseado", label: "Caseado", hasObs: false },
-                  { id: "lavanderia", label: "Lavanderia", hasObs: false },
-                ].map((item) => {
-                  const checked = formData.tipos_personalizacao.includes(item.id);
-                  return (
-                    <div key={item.id} className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id={item.id}
-                          checked={checked}
-                          onCheckedChange={() => handlePersonalizacaoToggle(item.id)}
-                        />
-                        <Label htmlFor={item.id} className="font-normal cursor-pointer">
-                          {item.label}
-                        </Label>
-                      </div>
-                      {checked && item.hasObs && (
-                        <Input
-                          placeholder={`Observação para ${item.label.toLowerCase()} (ex: separar frente para estamparia)`}
-                          value={formData.observacoes_personalizacao[item.id] || ""}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              observacoes_personalizacao: {
-                                ...formData.observacoes_personalizacao,
-                                [item.id]: e.target.value,
-                              },
-                            })
-                          }
-                          className="ml-6"
-                        />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+
+
 
             <div className="space-y-3">
               <Label>Aviamentos</Label>
