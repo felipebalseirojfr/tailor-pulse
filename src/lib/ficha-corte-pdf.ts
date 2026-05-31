@@ -304,7 +304,7 @@ function openPdfPreview(pdf: any, filename: string, targetWindow?: Window | null
   }, { once: true });
 }
 
-async function loadImageForPdf(url: string, timeoutMs = 2500): Promise<{ dataUrl: string; format: "PNG" | "JPEG" } | null> {
+export async function loadImageForPdf(url: string, timeoutMs = 2500): Promise<{ dataUrl: string; format: "PNG" | "JPEG" } | null> {
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
   try {
