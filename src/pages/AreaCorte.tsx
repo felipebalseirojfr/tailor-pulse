@@ -92,6 +92,28 @@ function formatBR(d: string | null) {
   return parseLocalDate(d.slice(0, 10)).toLocaleDateString("pt-BR");
 }
 
+function isDentroDoPreviewIframe() {
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true;
+  }
+}
+
+function prepararAbaDaFicha(filename: string) {
+  const win = window.open("", "_blank");
+  if (!win) return null;
+  try {
+    win.opener = null;
+    win.document.open();
+    win.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${filename}</title></head><body style="margin:0;display:grid;place-items:center;min-height:100vh;font-family:Arial,sans-serif;background:#f3f4f6;color:#111827"><strong>Preparando ficha de corte...</strong></body></html>`);
+    win.document.close();
+  } catch {
+    // Mantém a aba aberta para receber o PDF no fallback.
+  }
+  return win;
+}
+
 export default function AreaCorte() {
   const { pedidoId } = useParams();
   const navigate = useNavigate();
@@ -362,13 +384,15 @@ export default function AreaCorte() {
                             try {
                               setFichaGerandoId(p.id);
                               const filename = criarNomeFichaCortePDF(p.codigo_pedido, p.produto_modelo);
+                              const precisaAbaFallback = isDentroDoPreviewIframe() || typeof (window as any).showSaveFilePicker !== "function";
+                              const abaFicha = precisaAbaFallback ? prepararAbaDaFicha(filename) : null;
                               const resultado = await salvarFichaCortePDFNoDisco(filename, () => {
                                 const { blob } = criarBlobFichaCortePDF({
                                   ...p,
                                   data_inicio: p.data_inicio || p.etapa_corte_inicio,
                                 });
                                 return blob;
-                              });
+                              }, abaFicha);
 
                               if (resultado.status === "cancelled") return;
                               toast({
