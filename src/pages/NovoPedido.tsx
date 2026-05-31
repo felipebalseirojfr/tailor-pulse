@@ -55,8 +55,8 @@ export default function NovoPedido() {
     quantidade_total: "",
     data_inicio: __toLocalISO(new Date()),
     prazo_final: "",
-    tem_personalizacao: false,
-    tipos_personalizacao: [] as string[],
+
+
 
     grade_tamanhos: {} as Record<string, number>,
     preco_venda: "",
