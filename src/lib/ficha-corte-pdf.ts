@@ -66,6 +66,30 @@ export async function gerarFichaCortePDF(pedidoId: string) {
   }
   const referencias = codigos.join(", ");
 
+  const ETAPA_LABELS: Record<string, string> = {
+    pilotagem: "Pilotagem",
+    compra_de_insumos: "Compra de Insumos",
+    liberacao_corte: "Liberação de Corte",
+    corte: "Corte",
+    lavanderia: "Lavanderia",
+    costura: "Costura",
+    caseado: "Caseado",
+    estamparia: "Estamparia",
+    bordado: "Bordado",
+    acabamento: "Acabamento",
+    aplicacao_travete: "Aplicação de Travete",
+    entrega: "Entrega",
+  };
+  const { data: etapasData } = await supabase
+    .from("etapas_producao")
+    .select("tipo_etapa, observacoes, ordem")
+    .eq("pedido_id", pedidoId)
+    .order("ordem");
+  const observacoesEtapas = (etapasData || [])
+    .filter((e: any) => isFilled(e.observacoes))
+    .map((e: any) => `• ${ETAPA_LABELS[e.tipo_etapa] || e.tipo_etapa}: ${String(e.observacoes).trim()}`);
+
+
   const { jsPDF } = await import("jspdf");
   const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageW = pdf.internal.pageSize.getWidth();
