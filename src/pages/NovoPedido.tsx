@@ -55,9 +55,9 @@ export default function NovoPedido() {
     quantidade_total: "",
     data_inicio: __toLocalISO(new Date()),
     prazo_final: "",
-    tem_personalizacao: false,
-    tipos_personalizacao: [] as string[],
-    observacoes_personalizacao: {} as Record<string, string>,
+
+
+
     grade_tamanhos: {} as Record<string, number>,
     preco_venda: "",
     composicao_tecido: "",
@@ -155,6 +155,19 @@ export default function NovoPedido() {
         }
       }
 
+      const tiposPersonalizacaoEtapas = etapas
+        .map((e) => e.tipo_etapa)
+        .filter((t) => ["estamparia", "bordado", "caseado", "lavanderia"].includes(t));
+      const obsPersonalizacao: Record<string, string> = {};
+      etapas.forEach((e) => {
+        if (
+          ["estamparia", "bordado", "caseado", "lavanderia"].includes(e.tipo_etapa) &&
+          e.observacoes && e.observacoes.trim()
+        ) {
+          obsPersonalizacao[e.tipo_etapa] = e.observacoes.trim();
+        }
+      });
+
       const { data: pedidoData, error } = await supabase.from("pedidos").insert([
         {
           cliente_id: formData.cliente_id,
@@ -168,9 +181,9 @@ export default function NovoPedido() {
           data_inicio: formData.data_inicio,
           prazo_final: formData.prazo_final,
           responsavel_comercial_id: user.id,
-          tem_personalizacao: formData.tipos_personalizacao.length > 0,
-          tipos_personalizacao: formData.tipos_personalizacao,
-          observacoes_personalizacao: formData.observacoes_personalizacao,
+          tem_personalizacao: tiposPersonalizacaoEtapas.length > 0,
+          tipos_personalizacao: tiposPersonalizacaoEtapas,
+          observacoes_personalizacao: obsPersonalizacao,
           grade_tamanhos: formData.grade_tamanhos,
           arquivos: arquivosUpload,
           status_geral: 'aguardando_inicio',
@@ -197,6 +210,7 @@ export default function NovoPedido() {
           data_inicio_prevista: toLocalISODate(etapa.data_inicio_prevista),
           data_termino_prevista: toLocalISODate(etapa.data_termino_prevista),
           terceiro_id: etapa.terceiro_id || null,
+          observacoes: etapa.observacoes?.trim() || null,
         }));
 
         const { error: etapasError } = await supabase
@@ -277,7 +291,7 @@ export default function NovoPedido() {
         tipo_peca: formData.tipo_peca,
         quantidade_total: quantidadeTotalCalculada,
         aviamentos: formData.aviamentos,
-        tipos_personalizacao: formData.tipos_personalizacao,
+        tipos_personalizacao: tiposPersonalizacaoEtapas,
       });
 
       const mensagemArquivos = arquivosUpload.length > 0 
@@ -309,19 +323,8 @@ export default function NovoPedido() {
     });
   };
 
-  const handlePersonalizacaoToggle = (tipo: string) => {
-    setFormData((prev) => {
-      const tipos = prev.tipos_personalizacao.includes(tipo)
-        ? prev.tipos_personalizacao.filter((t) => t !== tipo)
-        : [...prev.tipos_personalizacao, tipo];
-      
-      return {
-        ...prev,
-        tipos_personalizacao: tipos,
-        tem_personalizacao: tipos.length > 0,
-      };
-    });
-  };
+
+
 
   const handleAviamentosToggle = (tipo: string) => {
     setFormData((prev) => {
@@ -552,52 +555,8 @@ export default function NovoPedido() {
               </div>
             </div>
 
-            <div className="space-y-3">
-              <Label>Personalização</Label>
-              <p className="text-sm text-muted-foreground">
-                Selecione os tipos de personalização necessários
-              </p>
-              <div className="grid gap-3 md:grid-cols-2">
-                {[
-                  { id: "estamparia", label: "Estamparia", hasObs: true },
-                  { id: "bordado", label: "Bordado", hasObs: true },
-                  { id: "caseado", label: "Caseado", hasObs: false },
-                  { id: "lavanderia", label: "Lavanderia", hasObs: false },
-                ].map((item) => {
-                  const checked = formData.tipos_personalizacao.includes(item.id);
-                  return (
-                    <div key={item.id} className="space-y-2">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox
-                          id={item.id}
-                          checked={checked}
-                          onCheckedChange={() => handlePersonalizacaoToggle(item.id)}
-                        />
-                        <Label htmlFor={item.id} className="font-normal cursor-pointer">
-                          {item.label}
-                        </Label>
-                      </div>
-                      {checked && item.hasObs && (
-                        <Input
-                          placeholder={`Observação para ${item.label.toLowerCase()} (ex: separar frente para estamparia)`}
-                          value={formData.observacoes_personalizacao[item.id] || ""}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              observacoes_personalizacao: {
-                                ...formData.observacoes_personalizacao,
-                                [item.id]: e.target.value,
-                              },
-                            })
-                          }
-                          className="ml-6"
-                        />
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
+
+
 
             <div className="space-y-3">
               <Label>Aviamentos</Label>

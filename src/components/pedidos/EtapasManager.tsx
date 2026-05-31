@@ -3,6 +3,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Check } from "lucide-react";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -13,6 +14,7 @@ export interface Etapa {
   data_inicio_prevista?: Date;
   data_termino_prevista?: Date;
   terceiro_id?: string | null;
+  observacoes?: string | null;
 }
 
 interface EtapasManagerProps {
@@ -78,6 +80,11 @@ export default function EtapasManager({ etapas, onChange }: EtapasManagerProps) 
   const updateTerceiro = (tipoEtapa: string, terceiroId: string | null) => {
     onChange(etapas.map(e => e.tipo_etapa === tipoEtapa ? { ...e, terceiro_id: terceiroId } : e));
   };
+
+  const updateObservacoes = (tipoEtapa: string, observacoes: string) => {
+    onChange(etapas.map(e => e.tipo_etapa === tipoEtapa ? { ...e, observacoes } : e));
+  };
+
 
   const getTerceirosForEtapa = (tipoEtapa: string) =>
     terceiros.filter(t => t.tipo_etapa === tipoEtapa);
@@ -170,6 +177,33 @@ export default function EtapasManager({ etapas, onChange }: EtapasManagerProps) 
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+              );
+            })}
+          </div>
+        </Card>
+      )}
+
+      {etapas.length > 0 && (
+        <Card className="p-4 space-y-3">
+          <div>
+            <Label className="text-base">Observações por Etapa</Label>
+            <p className="text-sm text-muted-foreground mt-1">
+              Adicione instruções específicas para cada etapa selecionada (ex: separar frente para estamparia). Essas observações aparecem na ficha de corte.
+            </p>
+          </div>
+          <div className="space-y-3">
+            {[...etapas].sort((a, b) => a.ordem - b.ordem).map((etapa) => {
+              const label = tiposEtapaDisponiveis.find(t => t.value === etapa.tipo_etapa)?.label || etapa.tipo_etapa;
+              return (
+                <div key={etapa.id} className="space-y-1.5">
+                  <Label className="text-sm">{etapa.ordem}. {label}</Label>
+                  <Textarea
+                    value={etapa.observacoes || ""}
+                    onChange={(e) => updateObservacoes(etapa.tipo_etapa, e.target.value)}
+                    rows={2}
+                    placeholder={`Observação para ${label.toLowerCase()} (opcional)`}
+                  />
                 </div>
               );
             })}

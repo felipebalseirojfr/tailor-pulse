@@ -66,6 +66,30 @@ export async function gerarFichaCortePDF(pedidoId: string) {
   }
   const referencias = codigos.join(", ");
 
+  const ETAPA_LABELS: Record<string, string> = {
+    pilotagem: "Pilotagem",
+    compra_de_insumos: "Compra de Insumos",
+    liberacao_corte: "Liberação de Corte",
+    corte: "Corte",
+    lavanderia: "Lavanderia",
+    costura: "Costura",
+    caseado: "Caseado",
+    estamparia: "Estamparia",
+    bordado: "Bordado",
+    acabamento: "Acabamento",
+    aplicacao_travete: "Aplicação de Travete",
+    entrega: "Entrega",
+  };
+  const { data: etapasData } = await supabase
+    .from("etapas_producao")
+    .select("tipo_etapa, observacoes, ordem")
+    .eq("pedido_id", pedidoId)
+    .order("ordem");
+  const observacoesEtapas = (etapasData || [])
+    .filter((e: any) => isFilled(e.observacoes))
+    .map((e: any) => `• ${ETAPA_LABELS[e.tipo_etapa] || e.tipo_etapa}: ${String(e.observacoes).trim()}`);
+
+
   const { jsPDF } = await import("jspdf");
   const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
   const pageW = pdf.internal.pageSize.getWidth();
@@ -202,9 +226,19 @@ export async function gerarFichaCortePDF(pedidoId: string) {
   pdf.setFontSize(9);
   pdf.text("Observações:", margin, y);
   y += 2;
-  const obsH = 28;
-  pdf.rect(margin, y, pageW - margin * 2, obsH);
+  const innerObsW = pageW - margin * 2;
+  const obsLines = observacoesEtapas.length
+    ? pdf.splitTextToSize(observacoesEtapas.join("\n"), innerObsW - 4)
+    : [];
+  const obsH = Math.max(28, obsLines.length * 4 + 6);
+  pdf.rect(margin, y, innerObsW, obsH);
+  if (obsLines.length) {
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(8.5);
+    pdf.text(obsLines, margin + 2, y + 5);
+  }
   y += obsH + 8;
+
 
   // Rodapé / assinatura
   pdf.setFont("helvetica", "normal");
