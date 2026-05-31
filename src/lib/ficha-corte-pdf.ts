@@ -36,11 +36,18 @@ export function baixarUrlFichaCorte(url: string, filename: string) {
   link.href = url;
   link.download = ensurePdfFilename(filename);
   link.rel = "noopener";
-  link.target = "_blank";
   link.style.display = "none";
   document.body.appendChild(link);
   link.click();
   window.setTimeout(() => link.remove(), 10 * 60 * 1000);
+}
+
+export function baixarBlobFichaCortePDF(blob: Blob, filename: string) {
+  const safeFilename = ensurePdfFilename(filename);
+  const url = URL.createObjectURL(blob);
+  baixarUrlFichaCorte(url, safeFilename);
+  window.setTimeout(() => URL.revokeObjectURL(url), 15 * 60 * 1000);
+  return { status: "downloaded" as const, filename: safeFilename };
 }
 
 export async function salvarBlobFichaCortePDF(blob: Blob, filename: string) {
