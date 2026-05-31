@@ -155,8 +155,10 @@ export function criarBlobFichaCortePDF(dados: FichaCortePDFDados) {
     const qtd = Number(grade[t] || 0);
     totalEsperado += qtd;
     cx = margin;
-    for (const value of [t, String(qtd), "", ""]) {
-      const width = colWidths[[t, String(qtd), "", ""].indexOf(value)];
+    const values = [t, String(qtd), "", ""];
+    for (let i = 0; i < values.length; i++) {
+      const width = colWidths[i];
+      const value = values[i];
       pdf.rect(cx, y, width, tRowH);
       pdf.text(value, cx + width / 2, y + 5.5, { align: "center" });
       cx += width;
