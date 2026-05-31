@@ -14,10 +14,10 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { Scissors, ArrowUp, ArrowLeft, Loader2, Clock, Calendar as CalendarIcon, ChevronDown, History, MessageSquare, Eye } from "lucide-react";
+import { Scissors, ArrowUp, ArrowLeft, Loader2, Clock, Calendar as CalendarIcon, ChevronDown, History, MessageSquare, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { parseLocalDate } from "@/lib/date-utils";
-import { abrirFichaCortePDF } from "@/lib/ficha-corte-pdf";
+import { gerarFichaCortePDF } from "@/lib/ficha-corte-pdf";
 
 const ORDEM_TAMANHOS = ["1","2","4","6","8","10","12","14","PP","P","M","G","GG","XGG","XGG1","XGG2","XGG3"];
 
@@ -313,15 +313,12 @@ export default function AreaCorte() {
                           className="w-full h-8 text-xs"
                           disabled={fichaGerandoId === p.id}
                           onClick={async () => {
-                            let previewWindow: Window | null = null;
                             try {
-                              previewWindow = window.open("", "_blank");
                               setFichaGerandoId(p.id);
-                              await abrirFichaCortePDF(p.id, previewWindow);
-                              toast({ title: "Ficha de corte aberta" });
+                              await gerarFichaCortePDF(p.id);
+                              toast({ title: "Ficha de corte baixada" });
                             } catch (e: any) {
-                              previewWindow?.close();
-                              toast({ title: "Erro ao abrir ficha", description: e?.message, variant: "destructive" });
+                              toast({ title: "Erro ao baixar ficha", description: e?.message, variant: "destructive" });
                             } finally {
                               setFichaGerandoId(null);
                             }
@@ -330,9 +327,9 @@ export default function AreaCorte() {
                           {fichaGerandoId === p.id ? (
                             <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
                           ) : (
-                            <Eye className="h-3.5 w-3.5 mr-1.5" />
+                            <Download className="h-3.5 w-3.5 mr-1.5" />
                           )}
-                          {fichaGerandoId === p.id ? "Abrindo..." : "Ver / Imprimir Ficha"}
+                          {fichaGerandoId === p.id ? "Baixando..." : "Baixar Ficha de Corte"}
                         </Button>
                       </div>
                     </CardContent>
