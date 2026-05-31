@@ -323,19 +323,8 @@ export default function NovoPedido() {
     });
   };
 
-  const handlePersonalizacaoToggle = (tipo: string) => {
-    setFormData((prev) => {
-      const tipos = prev.tipos_personalizacao.includes(tipo)
-        ? prev.tipos_personalizacao.filter((t) => t !== tipo)
-        : [...prev.tipos_personalizacao, tipo];
-      
-      return {
-        ...prev,
-        tipos_personalizacao: tipos,
-        tem_personalizacao: tipos.length > 0,
-      };
-    });
-  };
+
+
 
   const handleAviamentosToggle = (tipo: string) => {
     setFormData((prev) => {
