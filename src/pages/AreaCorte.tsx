@@ -14,11 +14,10 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { ToastAction } from "@/components/ui/toast";
 import { Scissors, ArrowUp, ArrowLeft, Loader2, Clock, Calendar as CalendarIcon, ChevronDown, History, MessageSquare, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { parseLocalDate } from "@/lib/date-utils";
-import { baixarUrlFichaCorte, criarNomeFichaCortePDF, salvarFichaCortePDF } from "@/lib/ficha-corte-pdf";
+import { criarBlobFichaCortePDF } from "@/lib/ficha-corte-pdf";
 
 const ORDEM_TAMANHOS = ["1","2","4","6","8","10","12","14","PP","P","M","G","GG","XGG","XGG1","XGG2","XGG3"];
 
@@ -34,6 +33,21 @@ const isFilled = (value: unknown) => {
   return Boolean(text && text !== "-" && text !== "—");
 };
 
+const ETAPA_LABELS: Record<string, string> = {
+  pilotagem: "Pilotagem",
+  compra_de_insumos: "Compra de Insumos",
+  liberacao_corte: "Liberação de Corte",
+  corte: "Corte",
+  lavanderia: "Lavanderia",
+  costura: "Costura",
+  caseado: "Caseado",
+  estamparia: "Estamparia",
+  bordado: "Bordado",
+  acabamento: "Acabamento",
+  aplicacao_travete: "Aplicação de Travete",
+  entrega: "Entrega",
+};
+
 const buildReferenciaCodigos = (pedido: { tipo_peca?: string | null; codigo_produto_cliente?: string | null }, refs: unknown[] = []) => {
   const codigos = refs.map((ref: any) => ref?.codigo_referencia).filter(isFilled) as string[];
   if (codigos.length > 0) return codigos;
@@ -45,8 +59,12 @@ const buildReferenciaCodigos = (pedido: { tipo_peca?: string | null; codigo_prod
 interface PedidoCorte {
   id: string;
   codigo_pedido: string | null;
+  codigo_produto_cliente?: string | null;
+  tipo_peca?: string | null;
   produto_modelo: string;
+  tecido?: string | null;
   cor_tecido: string | null;
+  data_inicio?: string | null;
   prazo_final: string;
   quantidade_total: number;
   grade_tamanhos: Record<string, number> | null;
@@ -56,6 +74,7 @@ interface PedidoCorte {
   cliente: { nome: string } | null;
   etapa_corte_inicio: string | null;
   referencias_codigos: string[];
+  observacoes_etapas: string[];
 }
 
 
@@ -114,7 +133,7 @@ export default function AreaCorte() {
 
     const { data: peds, error: pedErr } = await supabase
       .from("pedidos")
-      .select("id, codigo_pedido, codigo_produto_cliente, tipo_peca, produto_modelo, cor_tecido, prazo_final, quantidade_total, grade_tamanhos, grade_corte_real, comentario_corte, corte_prioritario, cliente:clientes(nome)")
+      .select("id, codigo_pedido, codigo_produto_cliente, tipo_peca, produto_modelo, tecido, cor_tecido, data_inicio, prazo_final, quantidade_total, grade_tamanhos, grade_corte_real, comentario_corte, corte_prioritario, cliente:clientes(nome)")
       .in("id", pedidoIds);
 
     if (pedErr) {
@@ -138,11 +157,25 @@ export default function AreaCorte() {
       if (isFilled((r as any).codigo_referencia)) refsByPedido[pid].push((r as any).codigo_referencia.trim());
     }
 
+    const { data: etapasObs } = await supabase
+      .from("etapas_producao")
+      .select("pedido_id, tipo_etapa, observacoes, ordem")
+      .in("pedido_id", pedidoIds)
+      .order("ordem");
+    const obsByPedido: Record<string, string[]> = {};
+    for (const etapa of etapasObs || []) {
+      const item = etapa as any;
+      if (!isFilled(item.observacoes)) continue;
+      if (!obsByPedido[item.pedido_id]) obsByPedido[item.pedido_id] = [];
+      obsByPedido[item.pedido_id].push(`• ${ETAPA_LABELS[item.tipo_etapa] || item.tipo_etapa}: ${String(item.observacoes).trim()}`);
+    }
+
     const list: PedidoCorte[] = (peds || []).map((p: any) => {
       return {
         ...p,
         etapa_corte_inicio: etapaByPedido[p.id]?.data_inicio || etapaByPedido[p.id]?.created_at || null,
         referencias_codigos: buildReferenciaCodigos(p, (refsByPedido[p.id] || []).map((codigo_referencia) => ({ codigo_referencia }))),
+        observacoes_etapas: obsByPedido[p.id] || [],
       };
     });
 
@@ -313,26 +346,24 @@ export default function AreaCorte() {
                           variant="outline"
                           className="w-full h-8 text-xs"
                           disabled={fichaGerandoId === p.id}
-                          onClick={async () => {
+                          onClick={() => {
                             try {
                               setFichaGerandoId(p.id);
-                              const resultado = await salvarFichaCortePDF(
-                                p.id,
-                                criarNomeFichaCortePDF(p.codigo_pedido, p.produto_modelo),
-                              );
-                              if (resultado.status === "cancelled") return;
-                              toast(resultado.status === "saved" ? {
-                                title: "Ficha de corte salva",
-                                description: resultado.filename,
-                              } : {
-                                title: "Arquivo pronto",
-                                description: "Se não aparecer automaticamente, clique em Baixar.",
-                                action: (
-                                  <ToastAction altText="Baixar ficha" onClick={() => baixarUrlFichaCorte(resultado.url, resultado.filename)}>
-                                    Baixar
-                                  </ToastAction>
-                                ),
+                              const { blob, filename } = criarBlobFichaCortePDF({
+                                ...p,
+                                data_inicio: p.data_inicio || p.etapa_corte_inicio,
                               });
+                              const url = URL.createObjectURL(blob);
+                              const link = document.createElement("a");
+                              link.href = url;
+                              link.download = filename;
+                              link.rel = "noopener";
+                              link.style.display = "none";
+                              document.body.appendChild(link);
+                              link.click();
+                              link.remove();
+                              window.setTimeout(() => URL.revokeObjectURL(url), 60000);
+                              toast({ title: "Download iniciado", description: filename });
                             } catch (e: any) {
                               toast({ title: "Erro ao baixar ficha", description: e?.message, variant: "destructive" });
                             } finally {

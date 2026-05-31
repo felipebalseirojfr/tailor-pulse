@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { parseLocalDate } from "@/lib/date-utils";
+import { jsPDF } from "jspdf";
 
 const ORDEM_TAMANHOS = ["1","2","4","6","8","10","12","14","PP","P","M","G","GG","XGG","XGG1","XGG2","XGG3"];
 const sortTamanhos = (sizes: string[]) =>
@@ -39,6 +40,168 @@ export function baixarUrlFichaCorte(url: string, filename: string) {
   document.body.appendChild(link);
   link.click();
   window.setTimeout(() => link.remove(), 0);
+}
+
+export interface FichaCortePDFDados {
+  codigo_pedido?: string | null;
+  codigo_produto_cliente?: string | null;
+  produto_modelo?: string | null;
+  tipo_peca?: string | null;
+  tecido?: string | null;
+  cor_tecido?: string | null;
+  data_inicio?: string | null;
+  prazo_final?: string | null;
+  quantidade_total?: number | null;
+  grade_tamanhos?: Record<string, number> | null;
+  cliente?: { nome?: string | null } | null;
+  referencias_codigos?: string[];
+  observacoes_etapas?: string[];
+}
+
+export function criarBlobFichaCortePDF(dados: FichaCortePDFDados) {
+  const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const pageW = pdf.internal.pageSize.getWidth();
+  const pageH = pdf.internal.pageSize.getHeight();
+  const margin = 12;
+  let y = margin;
+
+  const codigos = dados.referencias_codigos?.filter(isFilled) || [];
+  const fallback = isFilled(dados.tipo_peca) ? dados.tipo_peca : dados.codigo_produto_cliente;
+  const referencias = (codigos.length ? codigos : fallback ? [String(fallback)] : []).join(", ");
+
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(13);
+  pdf.text("JFR Confecções", margin, y + 5);
+  pdf.setFontSize(16);
+  pdf.text("FICHA DE CORTE", pageW / 2, y + 5, { align: "center" });
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(9);
+  pdf.text(new Date().toLocaleDateString("pt-BR"), pageW - margin, y + 5, { align: "right" });
+  y += 9;
+  pdf.setLineWidth(0.4);
+  pdf.line(margin, y, pageW - margin, y);
+  y += 4;
+
+  const blockTop = y;
+  const leftW = (pageW - margin * 2) * 0.58;
+  const rightX = margin + leftW + 4;
+  const rightW = pageW - margin - rightX;
+  const blockH = 70;
+
+  pdf.setLineWidth(0.2);
+  pdf.rect(margin, blockTop, leftW, blockH);
+  const rows: Array<[string, string]> = [
+    ["Referência:", referencias || "—"],
+    ["Nº OP:", dados.codigo_pedido || "—"],
+    ["Nome da Peça:", dados.produto_modelo || "—"],
+    ["Cliente:", dados.cliente?.nome || "—"],
+    ["Cor do Tecido:", dados.cor_tecido || "—"],
+    ["Tecido:", dados.tecido || "—"],
+  ];
+  pdf.setFontSize(9);
+  let ry = blockTop + 6;
+  const rowH = (blockH - 4) / rows.length;
+  for (const [k, v] of rows) {
+    pdf.setFont("helvetica", "bold");
+    pdf.text(k, margin + 3, ry);
+    pdf.setFont("helvetica", "normal");
+    pdf.text(pdf.splitTextToSize(v, leftW - 35), margin + 32, ry);
+    ry += rowH;
+  }
+
+  pdf.rect(rightX, blockTop, rightW, blockH);
+  pdf.setFillColor(230, 230, 230);
+  pdf.rect(rightX + 1, blockTop + 1, rightW - 2, blockH - 2, "F");
+  pdf.setFontSize(9);
+  pdf.setTextColor(100);
+  pdf.text("Foto no pedido", rightX + rightW / 2, blockTop + blockH / 2, { align: "center" });
+  pdf.setTextColor(0);
+  y = blockTop + blockH + 4;
+
+  const dateH = 12;
+  pdf.rect(margin, y, pageW - margin * 2, dateH);
+  const colW = (pageW - margin * 2) / 3;
+  pdf.setFontSize(9);
+  pdf.setFont("helvetica", "bold");
+  pdf.text("Data de Início:", margin + 3, y + 5);
+  pdf.text("Prazo de Entrega:", margin + colW + 3, y + 5);
+  pdf.text("Conclusão do Corte:", margin + colW * 2 + 3, y + 5);
+  pdf.setFont("helvetica", "normal");
+  pdf.text(fmtBR(dados.data_inicio), margin + 3, y + 10);
+  pdf.text(fmtBR(dados.prazo_final), margin + colW + 3, y + 10);
+  y += dateH + 4;
+
+  const grade = (dados.grade_tamanhos || {}) as Record<string, number>;
+  const tamanhos = sortTamanhos(Object.keys(grade).filter((k) => Number(grade[k]) > 0));
+  const innerW = pageW - margin * 2;
+  const colWidths = [innerW * 0.22, innerW * 0.28, innerW * 0.28, innerW * 0.22];
+  const headers = ["Tamanho", "Grade Esperada", "Grade Cortada", "Diferença"];
+  const headerH = 7;
+  const tRowH = 8;
+  pdf.setFillColor(240, 240, 240);
+  pdf.rect(margin, y, innerW, headerH, "F");
+  pdf.setFont("helvetica", "bold");
+  let cx = margin;
+  for (let i = 0; i < headers.length; i++) {
+    pdf.rect(cx, y, colWidths[i], headerH);
+    pdf.text(headers[i], cx + colWidths[i] / 2, y + 5, { align: "center" });
+    cx += colWidths[i];
+  }
+  y += headerH;
+  pdf.setFont("helvetica", "normal");
+
+  let totalEsperado = 0;
+  for (const t of tamanhos) {
+    const qtd = Number(grade[t] || 0);
+    totalEsperado += qtd;
+    cx = margin;
+    const values = [t, String(qtd), "", ""];
+    for (let i = 0; i < values.length; i++) {
+      const width = colWidths[i];
+      const value = values[i];
+      pdf.rect(cx, y, width, tRowH);
+      pdf.text(value, cx + width / 2, y + 5.5, { align: "center" });
+      cx += width;
+    }
+    y += tRowH;
+  }
+
+  pdf.setFillColor(248, 248, 248);
+  pdf.rect(margin, y, innerW, tRowH, "F");
+  pdf.setFont("helvetica", "bold");
+  cx = margin;
+  const totals = ["TOTAL", String(totalEsperado || dados.quantidade_total || 0), "", ""];
+  for (let i = 0; i < totals.length; i++) {
+    pdf.rect(cx, y, colWidths[i], tRowH);
+    pdf.text(totals[i], cx + colWidths[i] / 2, y + 5.5, { align: "center" });
+    cx += colWidths[i];
+  }
+  y += tRowH + 5;
+
+  pdf.setFont("helvetica", "bold");
+  pdf.setFontSize(9);
+  pdf.text("Observações:", margin, y);
+  y += 2;
+  const obsLines = dados.observacoes_etapas?.length
+    ? pdf.splitTextToSize(dados.observacoes_etapas.join("\n"), innerW - 4)
+    : [];
+  const obsH = Math.max(28, obsLines.length * 4 + 6);
+  pdf.rect(margin, y, innerW, obsH);
+  if (obsLines.length) {
+    pdf.setFont("helvetica", "normal");
+    pdf.setFontSize(8.5);
+    pdf.text(obsLines, margin + 2, y + 5);
+  }
+  y += obsH + 8;
+
+  pdf.setFont("helvetica", "normal");
+  pdf.setFontSize(10);
+  const sigY = Math.max(y, pageH - margin - 8);
+  pdf.text("Responsável pelo Corte: ______________________________", margin, sigY);
+  pdf.text("Data: ___/___/_____", pageW - margin, sigY, { align: "right" });
+
+  const filename = criarNomeFichaCortePDF(dados.codigo_pedido, dados.produto_modelo);
+  return { blob: pdf.output("blob") as Blob, filename };
 }
 
 async function escolherLocalParaSalvar(suggestedFilename: string) {
