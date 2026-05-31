@@ -313,12 +313,14 @@ export default function AreaCorte() {
                           className="w-full h-8 text-xs"
                           disabled={fichaGerandoId === p.id}
                           onClick={async () => {
+                            let previewWindow: Window | null = null;
                             try {
-                              const previewWindow = window.open("", "_blank");
+                              previewWindow = window.open("", "_blank");
                               setFichaGerandoId(p.id);
                               await abrirFichaCortePDF(p.id, previewWindow);
                               toast({ title: "Ficha de corte aberta" });
                             } catch (e: any) {
+                              previewWindow?.close();
                               toast({ title: "Erro ao abrir ficha", description: e?.message, variant: "destructive" });
                             } finally {
                               setFichaGerandoId(null);
