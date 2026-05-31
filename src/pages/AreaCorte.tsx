@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Scissors, ArrowUp, ArrowLeft, Loader2, Clock, Calendar as CalendarIcon, ChevronDown, History, MessageSquare, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { parseLocalDate } from "@/lib/date-utils";
-import { gerarFichaCortePDF } from "@/lib/ficha-corte-pdf";
+import { criarNomeFichaCortePDF, salvarFichaCortePDF } from "@/lib/ficha-corte-pdf";
 
 const ORDEM_TAMANHOS = ["1","2","4","6","8","10","12","14","PP","P","M","G","GG","XGG","XGG1","XGG2","XGG3"];
 
@@ -315,8 +315,15 @@ export default function AreaCorte() {
                           onClick={async () => {
                             try {
                               setFichaGerandoId(p.id);
-                              await gerarFichaCortePDF(p.id);
-                              toast({ title: "Ficha de corte baixada" });
+                              const resultado = await salvarFichaCortePDF(
+                                p.id,
+                                criarNomeFichaCortePDF(p.codigo_pedido, p.produto_modelo),
+                              );
+                              if (resultado.status === "cancelled") return;
+                              toast({
+                                title: resultado.status === "saved" ? "Ficha de corte salva" : "Download iniciado",
+                                description: resultado.status === "saved" ? resultado.filename : "Confira a pasta de downloads do navegador.",
+                              });
                             } catch (e: any) {
                               toast({ title: "Erro ao baixar ficha", description: e?.message, variant: "destructive" });
                             } finally {
