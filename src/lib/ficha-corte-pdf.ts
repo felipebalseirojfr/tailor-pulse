@@ -70,6 +70,36 @@ export async function salvarBlobFichaCortePDF(blob: Blob, filename: string) {
   return { status: "opened" as const, filename: safeFilename, url };
 }
 
+export async function salvarFichaCortePDFNoDisco(filename: string, criarBlob: () => Blob) {
+  const safeFilename = ensurePdfFilename(filename);
+  const picker = (window as any).showSaveFilePicker;
+
+  if (typeof picker === "function" && window.isSecureContext) {
+    try {
+      const handle = await picker.call(window, {
+        suggestedName: safeFilename,
+        types: [{ description: "Arquivo PDF", accept: { "application/pdf": [".pdf"] } }],
+        excludeAcceptAllOption: false,
+      });
+      const blob = criarBlob();
+      const writable = await handle.createWritable();
+      await writable.write(blob);
+      await writable.close();
+      return { status: "saved" as const, filename: handle.name || safeFilename };
+    } catch (error: any) {
+      if (error?.name === "AbortError") return { status: "cancelled" as const };
+      console.warn("Save picker falhou; abrindo a ficha em nova aba.", error);
+    }
+  }
+
+  const blob = criarBlob();
+  const url = URL.createObjectURL(blob);
+  const win = window.open(url, "_blank", "noopener,noreferrer");
+  if (!win) baixarUrlFichaCorte(url, safeFilename);
+  window.setTimeout(() => URL.revokeObjectURL(url), 10 * 60 * 1000);
+  return { status: win ? "opened" as const : "download_started" as const, filename: safeFilename, url };
+}
+
 export interface FichaCortePDFDados {
   codigo_pedido?: string | null;
   codigo_produto_cliente?: string | null;
