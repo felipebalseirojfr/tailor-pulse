@@ -36,95 +36,29 @@ export function baixarUrlFichaCorte(url: string, filename: string) {
   link.href = url;
   link.download = ensurePdfFilename(filename);
   link.rel = "noopener";
-  link.target = "_blank";
   link.style.display = "none";
   document.body.appendChild(link);
   link.click();
   window.setTimeout(() => link.remove(), 10 * 60 * 1000);
 }
 
-export async function salvarBlobFichaCortePDF(blob: Blob, filename: string) {
+export function baixarBlobFichaCortePDF(blob: Blob, filename: string) {
   const safeFilename = ensurePdfFilename(filename);
-  const picker = (window as any).showSaveFilePicker;
-
-  if (typeof picker === "function" && window.isSecureContext) {
-    try {
-      const handle = await picker.call(window, {
-        suggestedName: safeFilename,
-        types: [{ description: "Arquivo PDF", accept: { "application/pdf": [".pdf"] } }],
-        excludeAcceptAllOption: false,
-      });
-      const writable = await handle.createWritable();
-      await writable.write(blob);
-      await writable.close();
-      return { status: "saved" as const, filename: handle.name || safeFilename };
-    } catch (error: any) {
-      if (error?.name === "AbortError") return { status: "cancelled" as const };
-      console.warn("Save picker indisponível; usando abertura direta da ficha.", error);
-    }
-  }
-
   const url = URL.createObjectURL(blob);
   baixarUrlFichaCorte(url, safeFilename);
-  window.setTimeout(() => URL.revokeObjectURL(url), 10 * 60 * 1000);
-  return { status: "opened" as const, filename: safeFilename, url };
+  window.setTimeout(() => URL.revokeObjectURL(url), 15 * 60 * 1000);
+  return { status: "downloaded" as const, filename: safeFilename };
 }
 
-function abrirBlobFichaCorteEmJanela(blob: Blob, filename: string, targetWindow?: Window | null) {
-  const safeFilename = ensurePdfFilename(filename);
-  const url = URL.createObjectURL(blob);
-  const win = targetWindow || window.open("", "_blank", "noopener,noreferrer");
-
-  if (win) {
-    win.document.open();
-    win.document.write(`<!doctype html>
-      <html lang="pt-BR">
-        <head><meta charset="utf-8" /><title>${escapeHtml(safeFilename)}</title></head>
-        <body style="margin:0;background:#f3f4f6;font-family:Arial,sans-serif">
-          <div style="height:52px;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:8px 14px;background:#fff;border-bottom:1px solid #d1d5db">
-            <strong style="font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(safeFilename)}</strong>
-            <a href="${url}" download="${escapeHtml(safeFilename)}" style="border:1px solid #0284c7;background:#0284c7;color:#fff;padding:8px 12px;border-radius:6px;text-decoration:none;font-weight:700;font-size:13px">Baixar PDF</a>
-          </div>
-          <embed src="${url}" type="application/pdf" style="width:100vw;height:calc(100vh - 52px);border:0;background:#fff" />
-        </body>
-      </html>`);
-    win.document.close();
-  } else {
-    baixarUrlFichaCorte(url, safeFilename);
-  }
-
-  window.setTimeout(() => URL.revokeObjectURL(url), 10 * 60 * 1000);
+export async function salvarBlobFichaCortePDF(blob: Blob, filename: string) {
+  return baixarBlobFichaCortePDF(blob, filename);
 }
 
 export async function salvarFichaCortePDFNoDisco(filename: string, criarBlob: () => Blob, fallbackWindow?: Window | null) {
   const safeFilename = ensurePdfFilename(filename);
-  const picker = (window as any).showSaveFilePicker;
-
-  if (!fallbackWindow && typeof picker === "function" && window.isSecureContext) {
-    try {
-      const handle = await picker.call(window, {
-        suggestedName: safeFilename,
-        types: [{ description: "Arquivo PDF", accept: { "application/pdf": [".pdf"] } }],
-        excludeAcceptAllOption: false,
-      });
-      const blob = criarBlob();
-      const writable = await handle.createWritable();
-      await writable.write(blob);
-      await writable.close();
-      fallbackWindow?.close();
-      return { status: "saved" as const, filename: handle.name || safeFilename };
-    } catch (error: any) {
-      if (error?.name === "AbortError") {
-        fallbackWindow?.close();
-        return { status: "cancelled" as const };
-      }
-      console.warn("Save picker falhou; abrindo a ficha em nova aba.", error);
-    }
-  }
-
+  fallbackWindow?.close();
   const blob = criarBlob();
-  abrirBlobFichaCorteEmJanela(blob, safeFilename, fallbackWindow);
-  return { status: "opened" as const, filename: safeFilename };
+  return baixarBlobFichaCortePDF(blob, safeFilename);
 }
 
 export interface FichaCortePDFDados {
@@ -309,86 +243,6 @@ export function criarBlobFichaCortePDF(dados: FichaCortePDFDados) {
   return { blob: pdf.output("blob") as Blob, filename };
 }
 
-async function escolherLocalParaSalvar(suggestedFilename: string) {
-  const picker = (window as any).showSaveFilePicker;
-  if (typeof picker !== "function") return { handle: null, cancelled: false };
-
-  try {
-    const handle = await picker.call(window, {
-      suggestedName: ensurePdfFilename(suggestedFilename),
-      types: [
-        {
-          description: "Arquivo PDF",
-          accept: { "application/pdf": [".pdf"] },
-        },
-      ],
-      excludeAcceptAllOption: false,
-    });
-    return { handle, cancelled: false };
-  } catch (error: any) {
-    if (error?.name === "AbortError") return { handle: null, cancelled: true };
-    return { handle: null, cancelled: false };
-  }
-}
-
-function escapeHtml(s: string) {
-  return s
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-function openPdfPreview(pdf: any, filename: string, targetWindow?: Window | null) {
-  const blob = pdf.output("blob");
-  const win = targetWindow || window.open("", "_blank");
-
-  if (!win) {
-    throw new Error("O navegador bloqueou a abertura da ficha. Libere pop-ups para visualizar e imprimir.");
-  }
-
-  // Create the blob URL using the target window's URL so it's same-origin with the wrapper document.
-  const winURL: typeof URL = (win as any).URL || URL;
-  const pdfUrl = winURL.createObjectURL(blob);
-
-  const safeFilename = escapeHtml(filename);
-  win.document.open();
-  win.document.write(`<!doctype html>
-    <html lang="pt-BR">
-      <head>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>${safeFilename}</title>
-        <style>
-          * { box-sizing: border-box; }
-          body { margin: 0; font-family: Arial, sans-serif; background: #f3f4f6; color: #111827; }
-          .toolbar { height: 56px; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 14px; background: #ffffff; border-bottom: 1px solid #d1d5db; }
-          .title { min-width: 0; font-size: 14px; font-weight: 700; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-          .actions { display: flex; gap: 8px; flex-shrink: 0; }
-          button, a { border: 1px solid #9ca3af; border-radius: 6px; background: #ffffff; color: #111827; padding: 8px 12px; font-size: 13px; font-weight: 700; text-decoration: none; cursor: pointer; display: inline-flex; align-items: center; }
-          button.primary { border-color: #0284c7; background: #0284c7; color: #ffffff; }
-          embed, iframe { width: 100vw; height: calc(100vh - 56px); border: 0; display: block; background: #ffffff; }
-          @media print { .toolbar { display: none; } embed, iframe { height: 100vh; } }
-        </style>
-      </head>
-      <body>
-        <div class="toolbar">
-          <div class="title">${safeFilename}</div>
-          <div class="actions">
-            <a href="${pdfUrl}" download="${safeFilename}">Baixar</a>
-            <button class="primary" onclick="window.print()">Imprimir</button>
-          </div>
-        </div>
-        <embed id="ficha" src="${pdfUrl}" type="application/pdf" />
-      </body>
-    </html>`);
-  win.document.close();
-  win.addEventListener("beforeunload", () => {
-    try { winURL.revokeObjectURL(pdfUrl); } catch {}
-  }, { once: true });
-}
-
 export async function loadImageForPdf(url: string, timeoutMs = 2500): Promise<{ dataUrl: string; format: "PNG" | "JPEG" } | null> {
   const controller = new AbortController();
   const timeout = window.setTimeout(() => controller.abort(), timeoutMs);
@@ -398,39 +252,32 @@ export async function loadImageForPdf(url: string, timeoutMs = 2500): Promise<{ 
     const blob = await response.blob();
     if (!blob.type.startsWith("image/")) return null;
 
-    const mime = blob.type.toLowerCase();
-    const format: "PNG" | "JPEG" | null = mime.includes("png") ? "PNG" : mime.includes("jpeg") || mime.includes("jpg") ? "JPEG" : null;
-    if (!format) {
-      const objectUrl = URL.createObjectURL(blob);
-      try {
-        const dataUrl = await new Promise<string>((resolve, reject) => {
-          const image = new Image();
-          image.onload = () => {
-            const canvas = document.createElement("canvas");
-            canvas.width = image.naturalWidth || image.width;
-            canvas.height = image.naturalHeight || image.height;
-            const ctx = canvas.getContext("2d");
-            if (!ctx) return reject(new Error("Não foi possível preparar a foto para PDF"));
-            ctx.drawImage(image, 0, 0);
-            resolve(canvas.toDataURL("image/jpeg", 0.92));
-          };
-          image.onerror = reject;
-          image.src = objectUrl;
-        });
-        return { dataUrl, format: "JPEG" };
-      } finally {
-        URL.revokeObjectURL(objectUrl);
-      }
+    const objectUrl = URL.createObjectURL(blob);
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => {
+          const sourceW = image.naturalWidth || image.width;
+          const sourceH = image.naturalHeight || image.height;
+          const maxSide = 900;
+          const scale = Math.min(1, maxSide / Math.max(sourceW, sourceH));
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.max(1, Math.round(sourceW * scale));
+          canvas.height = Math.max(1, Math.round(sourceH * scale));
+          const ctx = canvas.getContext("2d");
+          if (!ctx) return reject(new Error("Não foi possível preparar a foto para PDF"));
+          ctx.fillStyle = "#ffffff";
+          ctx.fillRect(0, 0, canvas.width, canvas.height);
+          ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL("image/jpeg", 0.9));
+        };
+        image.onerror = reject;
+        image.src = objectUrl;
+      });
+      return { dataUrl, format: "JPEG" };
+    } finally {
+      URL.revokeObjectURL(objectUrl);
     }
-
-    const dataUrl = await new Promise<string>((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onloadend = () => resolve(String(reader.result));
-      reader.onerror = reject;
-      reader.readAsDataURL(blob);
-    });
-
-    return { dataUrl, format };
   } catch {
     return null;
   } finally {
@@ -654,26 +501,13 @@ export async function gerarFichaCortePDF(pedidoId: string) {
 }
 
 export async function salvarFichaCortePDF(pedidoId: string, suggestedFilename = "ficha-corte.pdf") {
-  const saveTarget = await escolherLocalParaSalvar(suggestedFilename);
-  if (saveTarget.cancelled) return { status: "cancelled" as const };
-
   const { pdf, filename } = await montarFichaCortePDF(pedidoId);
   const blob = pdf.output("blob");
-
-  if (saveTarget.handle) {
-    const writable = await saveTarget.handle.createWritable();
-    await writable.write(blob);
-    await writable.close();
-    return { status: "saved" as const, filename: saveTarget.handle.name || filename };
-  }
-
-  const url = URL.createObjectURL(blob);
-  baixarUrlFichaCorte(url, filename);
-  window.setTimeout(() => URL.revokeObjectURL(url), 10 * 60 * 1000);
-  return { status: "download_started" as const, filename, url };
+  return baixarBlobFichaCortePDF(blob, suggestedFilename || filename);
 }
 
 export async function abrirFichaCortePDF(pedidoId: string, targetWindow?: Window | null) {
   const { pdf, filename } = await montarFichaCortePDF(pedidoId);
-  openPdfPreview(pdf, filename, targetWindow);
+  targetWindow?.close();
+  return baixarBlobFichaCortePDF(pdf.output("blob"), filename);
 }

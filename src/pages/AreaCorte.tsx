@@ -17,7 +17,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Scissors, ArrowUp, ArrowLeft, Loader2, Clock, Calendar as CalendarIcon, ChevronDown, History, MessageSquare, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { parseLocalDate } from "@/lib/date-utils";
-import { criarBlobFichaCortePDF, criarNomeFichaCortePDF, loadImageForPdf, salvarFichaCortePDFNoDisco } from "@/lib/ficha-corte-pdf";
+import { baixarBlobFichaCortePDF, criarBlobFichaCortePDF, criarNomeFichaCortePDF, loadImageForPdf } from "@/lib/ficha-corte-pdf";
 
 const ORDEM_TAMANHOS = ["1","2","4","6","8","10","12","14","PP","P","M","G","GG","XGG","XGG1","XGG2","XGG3"];
 
@@ -90,28 +90,6 @@ function diffDias(fromIso: string | null): number {
 function formatBR(d: string | null) {
   if (!d) return "—";
   return parseLocalDate(d.slice(0, 10)).toLocaleDateString("pt-BR");
-}
-
-function isDentroDoPreviewIframe() {
-  try {
-    return window.self !== window.top;
-  } catch {
-    return true;
-  }
-}
-
-function prepararAbaDaFicha(filename: string) {
-  const win = window.open("", "_blank");
-  if (!win) return null;
-  try {
-    win.opener = null;
-    win.document.open();
-    win.document.write(`<!doctype html><html lang="pt-BR"><head><meta charset="utf-8"><title>${filename}</title></head><body style="margin:0;display:grid;place-items:center;min-height:100vh;font-family:Arial,sans-serif;background:#f3f4f6;color:#111827"><strong>Preparando ficha de corte...</strong></body></html>`);
-    win.document.close();
-  } catch {
-    // Mantém a aba aberta para receber o PDF no fallback.
-  }
-  return win;
 }
 
 export default function AreaCorte() {
@@ -384,22 +362,15 @@ export default function AreaCorte() {
                             try {
                               setFichaGerandoId(p.id);
                               const filename = criarNomeFichaCortePDF(p.codigo_pedido, p.produto_modelo);
-                              const precisaAbaFallback = isDentroDoPreviewIframe() || typeof (window as any).showSaveFilePicker !== "function";
-                              const abaFicha = precisaAbaFallback ? prepararAbaDaFicha(filename) : null;
-                              const resultado = await salvarFichaCortePDFNoDisco(filename, () => {
-                                const { blob } = criarBlobFichaCortePDF({
-                                  ...p,
-                                  data_inicio: p.data_inicio || p.etapa_corte_inicio,
-                                });
-                                return blob;
-                              }, abaFicha);
+                              const { blob } = criarBlobFichaCortePDF({
+                                ...p,
+                                data_inicio: p.data_inicio || p.etapa_corte_inicio,
+                              });
+                              const resultado = baixarBlobFichaCortePDF(blob, filename);
 
-                              if (resultado.status === "cancelled") return;
                               toast({
-                                title: resultado.status === "saved" ? "Ficha salva" : "Ficha aberta",
-                                description: resultado.status === "saved"
-                                  ? `${resultado.filename} foi salva no local escolhido.`
-                                  : "A ficha foi aberta em uma nova aba. Use Ctrl+S ou o botão de baixar do visualizador se quiser salvar.",
+                                title: "Download iniciado",
+                                description: `${resultado.filename} foi enviado para a pasta de downloads.`,
                               });
                             } catch (e: any) {
                               toast({ title: "Erro ao baixar ficha", description: e?.message, variant: "destructive" });
