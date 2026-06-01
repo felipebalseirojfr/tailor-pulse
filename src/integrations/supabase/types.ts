@@ -1626,6 +1626,131 @@ export type Database = {
           },
         ]
       }
+      tecidos: {
+        Row: {
+          ativo: boolean
+          composicao: string
+          created_at: string
+          gramatura_g_m2: number
+          id: string
+          largura_m: number
+          nome: string
+          observacoes: string | null
+          rendimento_m_kg: number
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          composicao: string
+          created_at?: string
+          gramatura_g_m2: number
+          id?: string
+          largura_m: number
+          nome: string
+          observacoes?: string | null
+          rendimento_m_kg: number
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          composicao?: string
+          created_at?: string
+          gramatura_g_m2?: number
+          id?: string
+          largura_m?: number
+          nome?: string
+          observacoes?: string | null
+          rendimento_m_kg?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      tecidos_fornecedores_precos: {
+        Row: {
+          ativo: boolean
+          created_at: string
+          fornecedor_id: string
+          id: string
+          preco_por_kg: number
+          tecido_variacao_id: string
+          ultima_atualizacao: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          created_at?: string
+          fornecedor_id: string
+          id?: string
+          preco_por_kg: number
+          tecido_variacao_id: string
+          ultima_atualizacao?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          created_at?: string
+          fornecedor_id?: string
+          id?: string
+          preco_por_kg?: number
+          tecido_variacao_id?: string
+          ultima_atualizacao?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tecidos_fornecedores_precos_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tecidos_fornecedores_precos_tecido_variacao_id_fkey"
+            columns: ["tecido_variacao_id"]
+            isOneToOne: false
+            referencedRelation: "tecidos_variacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tecidos_variacoes: {
+        Row: {
+          ativo: boolean
+          cor: string
+          created_at: string
+          estoque_kg: number
+          id: string
+          tecido_id: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cor: string
+          created_at?: string
+          estoque_kg?: number
+          id?: string
+          tecido_id: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cor?: string
+          created_at?: string
+          estoque_kg?: number
+          id?: string
+          tecido_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tecidos_variacoes_tecido_id_fkey"
+            columns: ["tecido_id"]
+            isOneToOne: false
+            referencedRelation: "tecidos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       terceiros: {
         Row: {
           ativo: boolean | null

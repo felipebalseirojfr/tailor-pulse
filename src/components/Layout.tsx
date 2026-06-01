@@ -18,6 +18,7 @@ import {
   Home as HomeIcon,
   Scissors,
   Truck,
+  Shirt,
 
 
 
@@ -171,6 +172,7 @@ export default function Layout({ children }: LayoutProps) {
     { name: "Corte", href: "/area-corte", icon: Scissors, roles: ["admin", "corte"] },
     { name: "Clientes / Terceiros", href: "/clientes", icon: Users, roles: ["admin", "commercial"] },
     { name: "Fornecedores", href: "/catalogo/fornecedores", icon: Truck, roles: ["admin", "commercial", "viewer"] },
+    { name: "Tecidos", href: "/catalogo/tecidos", icon: Shirt, roles: ["admin", "commercial", "viewer"] },
     { name: "Calendário", href: "/calendario", icon: CalendarIcon, roles: NON_CORTE },
     { name: "Usuários", href: "/usuarios", icon: UserCog, roles: ["admin"] },
   ];

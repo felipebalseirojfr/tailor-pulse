@@ -27,6 +27,8 @@ import NotFound from "./pages/NotFound";
 import ScanResultado from "./pages/ScanResultado";
 import AreaCorte from "./pages/AreaCorte";
 import Fornecedores from "./pages/Fornecedores";
+import Tecidos from "./pages/Tecidos";
+import TecidoDetalhe from "./pages/TecidoDetalhe";
 
 
 const queryClient = new QueryClient();
@@ -61,6 +63,8 @@ const App = () => (
             <Route path="/area-corte" element={<Layout><AreaCorte /></Layout>} />
             <Route path="/area-corte/:pedidoId" element={<Layout><AreaCorte /></Layout>} />
             <Route path="/catalogo/fornecedores" element={<Layout><Fornecedores /></Layout>} />
+            <Route path="/catalogo/tecidos" element={<Layout><Tecidos /></Layout>} />
+            <Route path="/catalogo/tecidos/:id" element={<Layout><TecidoDetalhe /></Layout>} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>
