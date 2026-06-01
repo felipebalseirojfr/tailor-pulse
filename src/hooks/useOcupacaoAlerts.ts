@@ -101,18 +101,6 @@ export const useOcupacaoAlerts = () => {
           refetch();
         }
       )
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "referencias",
-        },
-        () => {
-          // Recalcular ocupação quando referências mudam
-          refetch();
-        }
-      )
       .subscribe();
 
     return () => {
