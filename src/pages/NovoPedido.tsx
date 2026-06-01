@@ -192,6 +192,9 @@ export default function NovoPedido() {
           composicao_tecido: formData.composicao_tecido || null,
           observacoes_pedido: formData.observacoes_pedido || null,
           foto_modelo_url: formData.foto_modelo_url || null,
+          etiqueta_composicao_responsavel: formData.aviamentos.includes("Etiq de composição")
+            ? (formData.etiqueta_composicao_responsavel || null)
+            : null,
         },
       ]).select();
 
