@@ -328,7 +328,16 @@ export default function Clientes() {
     <Card className={clientesComPedidos.has(cliente.id) ? "border-primary/30" : ""}>
       <CardHeader>
         <div className="flex items-start justify-between">
-          <CardTitle className="text-lg">{cliente.nome}</CardTitle>
+          <div className="flex items-center gap-2 flex-wrap">
+            <CardTitle className="text-lg">{cliente.nome}</CardTitle>
+            {cliente.abreviacao_2_letras ? (
+              <Badge variant="secondary" className="font-mono">{cliente.abreviacao_2_letras}</Badge>
+            ) : (
+              <Badge variant="outline" className="border-yellow-500/60 text-yellow-600 dark:text-yellow-400 gap-1" title="Abreviação pendente — necessária para gerar códigos de referência">
+                <AlertTriangle className="h-3 w-3" /> Abreviação pendente
+              </Badge>
+            )}
+          </div>
           <div className="flex gap-2">
             <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleEditCliente(cliente)}><Pencil className="h-4 w-4" /></Button>
             <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive" onClick={() => handleDeleteClienteClick(cliente)}><Trash2 className="h-4 w-4" /></Button>
@@ -339,6 +348,7 @@ export default function Clientes() {
         {cliente.contato && <div className="flex items-center gap-2 text-sm"><User className="h-4 w-4 text-muted-foreground" /><span>{cliente.contato}</span></div>}
         {cliente.email && <div className="flex items-center gap-2 text-sm"><Mail className="h-4 w-4 text-muted-foreground" /><span className="truncate">{cliente.email}</span></div>}
         {cliente.telefone && <div className="flex items-center gap-2 text-sm"><Phone className="h-4 w-4 text-muted-foreground" /><span>{cliente.telefone}</span></div>}
+        {cliente.cnpj && <div className="text-xs text-muted-foreground">CNPJ: {cliente.cnpj}</div>}
         {!cliente.contato && !cliente.email && !cliente.telefone && <p className="text-sm text-muted-foreground">Sem informações de contato</p>}
       </CardContent>
     </Card>
