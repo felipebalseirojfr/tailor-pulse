@@ -15,6 +15,7 @@ import NovoPedido from "./pages/NovoPedido";
 import EditarPedido from "./pages/EditarPedido";
 import DetalhesPedido from "./pages/DetalhesPedido";
 import Clientes from "./pages/Clientes";
+import ReferenciaDetalhe from "./pages/ReferenciaDetalhe";
 import Calendario from "./pages/Calendario";
 import ScanQR from "./pages/ScanQR";
 import Fechamentos from "./pages/Fechamentos";
