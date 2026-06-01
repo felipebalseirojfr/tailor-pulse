@@ -560,46 +560,8 @@ export default function Pedidos() {
         </div>
       )}
 
-      {/* Etiquetas de composição a produzir internamente */}
-      {!modoTV && (() => {
-        const pedidosEtiqFabrica = pedidos.filter(
-          (p) =>
-            p.status_geral !== "concluido" &&
-            Array.isArray(p.aviamentos) &&
-            p.aviamentos.includes("Etiq de composição") &&
-            p.etiqueta_composicao_responsavel === "fabrica"
-        );
-        if (pedidosEtiqFabrica.length === 0) return null;
-        const totalPecas = pedidosEtiqFabrica.reduce((sum, p) => sum + (p.quantidade_total || 0), 0);
-        return (
-          <Card className="border-primary/30 bg-primary/5">
-            <CardContent className="p-4 space-y-3">
-              <div className="flex items-center justify-between gap-2 flex-wrap">
-                <div>
-                  <h3 className="text-base font-semibold">Etiquetas de composição a fazer internamente</h3>
-                  <p className="text-xs text-muted-foreground">
-                    {pedidosEtiqFabrica.length} pedido(s) · {totalPecas} peça(s) no total
-                  </p>
-                </div>
-              </div>
-              <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
-                {pedidosEtiqFabrica.map((p) => (
-                  <button
-                    key={p.id}
-                    onClick={() => { setSelectedPedido(p); setSheetOpen(true); }}
-                    className="text-left rounded-md border bg-background p-2 hover:border-primary transition-colors"
-                  >
-                    <div className="text-sm font-medium truncate">{p.clientes?.nome || "Cliente"} — {p.produto_modelo}</div>
-                    <div className="text-xs text-muted-foreground truncate">
-                      #{p.id.slice(0, 8)} · {p.tipo_peca} · {p.quantidade_total} pç
-                    </div>
-                  </button>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        );
-      })()}
+
+
 
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className={`space-y-6 ${modoTV ? 'px-6' : ''}`}>
