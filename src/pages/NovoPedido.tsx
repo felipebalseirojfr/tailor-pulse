@@ -63,6 +63,7 @@ export default function NovoPedido() {
     composicao_tecido: "",
     observacoes_pedido: "",
     foto_modelo_url: "" as string | null | "",
+    etiqueta_composicao_responsavel: "" as "" | "cliente" | "fabrica",
   });
 
   const composicoesComuns = [
