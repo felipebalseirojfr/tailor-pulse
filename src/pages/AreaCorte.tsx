@@ -148,17 +148,7 @@ export default function AreaCorte() {
     const etapaByPedido: Record<string, any> = {};
     for (const e of etapas || []) etapaByPedido[(e as any).pedido_id] = e;
 
-    // Buscar referências (códigos REF) de cada pedido
-    const { data: refs } = await supabase
-      .from("referencias")
-      .select("pedido_id, codigo_referencia")
-      .in("pedido_id", pedidoIds);
     const refsByPedido: Record<string, string[]> = {};
-    for (const r of refs || []) {
-      const pid = (r as any).pedido_id;
-      if (!refsByPedido[pid]) refsByPedido[pid] = [];
-      if (isFilled((r as any).codigo_referencia)) refsByPedido[pid].push((r as any).codigo_referencia.trim());
-    }
 
     const { data: etapasObs } = await supabase
       .from("etapas_producao")
@@ -426,11 +416,7 @@ function ExecucaoCorte({ pedidoId, onDone }: { pedidoId: string; onDone: () => v
       onDone();
       return;
     }
-    const { data: refs } = await supabase
-      .from("referencias")
-      .select("codigo_referencia")
-      .eq("pedido_id", pedidoId);
-    const referencias_codigos = buildReferenciaCodigos(data as any, refs || []);
+    const referencias_codigos = buildReferenciaCodigos(data as any, []);
     const p: PedidoCorte = { ...(data as any), etapa_corte_inicio: null, referencias_codigos };
     setPedido(p);
     const real = (p.grade_corte_real || {}) as Record<string, number>;
@@ -722,17 +708,7 @@ function HistoricoCorte() {
       .not("grade_corte_real", "is", null);
     if (pErr) { console.error(pErr); setLoading(false); return; }
 
-    // Buscar referências (códigos REF) por pedido
-    const { data: refs } = await supabase
-      .from("referencias")
-      .select("pedido_id, codigo_referencia")
-      .in("pedido_id", pedidoIds);
     const refsByPedido: Record<string, string[]> = {};
-    for (const r of refs || []) {
-      const pid = (r as any).pedido_id;
-      if (!refsByPedido[pid]) refsByPedido[pid] = [];
-      if ((r as any).codigo_referencia) refsByPedido[pid].push((r as any).codigo_referencia);
-    }
 
     const pedMap: Record<string, any> = {};
     for (const p of peds || []) pedMap[(p as any).id] = p;

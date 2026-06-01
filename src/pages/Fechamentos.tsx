@@ -62,20 +62,13 @@ export default function Fechamentos() {
 
     const fechamentoRows = ((data ?? []) as any[]).filter((r) => pedidosAtivos.has(r.pedido_id));
     const pedidoIds = [...new Set(fechamentoRows.map((r) => r.pedido_id).filter(Boolean))];
-    const referenciaIds = [...new Set(fechamentoRows.map((r) => r.referencia_id).filter(Boolean))];
     const clienteIds = [...new Set(fechamentoRows.map((r) => r.cliente_id).filter(Boolean))];
 
-    const [pedidosRes, referenciasRes] = await Promise.all([
-      pedidoIds.length
-        ? supabase.from("pedidos").select("id, codigo_pedido, produto_modelo, tipo_peca, cliente_id").in("id", pedidoIds)
-        : Promise.resolve({ data: [] as any[] }),
-      referenciaIds.length
-        ? supabase.from("referencias").select("id, codigo_referencia").in("id", referenciaIds)
-        : Promise.resolve({ data: [] as any[] }),
-    ]);
+    const pedidosRes = pedidoIds.length
+      ? await supabase.from("pedidos").select("id, codigo_pedido, produto_modelo, tipo_peca, cliente_id").in("id", pedidoIds)
+      : { data: [] as any[] };
 
     const pedidosMap = new Map((pedidosRes.data ?? []).map((p: any) => [p.id, p]));
-    const referenciasMap = new Map((referenciasRes.data ?? []).map((r: any) => [r.id, r]));
     const clienteIdsAll = [...new Set([
       ...clienteIds,
       ...((pedidosRes.data ?? []).map((p: any) => p.cliente_id).filter(Boolean)),
@@ -94,7 +87,7 @@ export default function Fechamentos() {
         cliente_nome: clientesMap.get(cliId)?.nome,
         pedido_codigo: pedido?.codigo_pedido,
         produto_modelo: pedido?.produto_modelo || pedido?.tipo_peca,
-        referencia_codigo: referenciasMap.get(r.referencia_id)?.codigo_referencia,
+        referencia_codigo: undefined,
       };
     });
     setRows(mapped);

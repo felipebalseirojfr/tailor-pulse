@@ -553,13 +553,6 @@ export type Database = {
             referencedRelation: "terceiros"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "fk_referencia"
-            columns: ["referencia_id"]
-            isOneToOne: false
-            referencedRelation: "referencias"
-            referencedColumns: ["id"]
-          },
         ]
       }
       fabric_price_history: {
@@ -1665,62 +1658,6 @@ export type Database = {
             columns: ["parent_quote_id"]
             isOneToOne: false
             referencedRelation: "quotes"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      referencias: {
-        Row: {
-          codigo_referencia: string
-          created_at: string | null
-          data_inicio_producao: string | null
-          data_termino: string | null
-          etapa_producao: Database["public"]["Enums"]["etapa_referencia"]
-          id: string
-          observacoes: string | null
-          pedido_id: string
-          quantidade: number
-          tecido_material: string | null
-          updated_at: string | null
-          valor_total: number | null
-          valor_unitario: number | null
-        }
-        Insert: {
-          codigo_referencia: string
-          created_at?: string | null
-          data_inicio_producao?: string | null
-          data_termino?: string | null
-          etapa_producao?: Database["public"]["Enums"]["etapa_referencia"]
-          id?: string
-          observacoes?: string | null
-          pedido_id: string
-          quantidade?: number
-          tecido_material?: string | null
-          updated_at?: string | null
-          valor_total?: number | null
-          valor_unitario?: number | null
-        }
-        Update: {
-          codigo_referencia?: string
-          created_at?: string | null
-          data_inicio_producao?: string | null
-          data_termino?: string | null
-          etapa_producao?: Database["public"]["Enums"]["etapa_referencia"]
-          id?: string
-          observacoes?: string | null
-          pedido_id?: string
-          quantidade?: number
-          tecido_material?: string | null
-          updated_at?: string | null
-          valor_total?: number | null
-          valor_unitario?: number | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "fk_pedido"
-            columns: ["pedido_id"]
-            isOneToOne: false
-            referencedRelation: "pedidos"
             referencedColumns: ["id"]
           },
         ]
