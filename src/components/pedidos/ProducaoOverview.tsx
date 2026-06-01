@@ -102,7 +102,15 @@ export function ProducaoOverview({ pedidos, onPedidoClick }: Props) {
       return ultima ? diffDays(ultima, hoje) > 2 : false;
     });
 
-    return { atrasados, entregaProxima, aguardandoEtapa, semMovimentacao };
+    const etiquetaComposicao = pedidos.filter(
+      (p) =>
+        p.status_geral !== "concluido" &&
+        Array.isArray(p.aviamentos) &&
+        p.aviamentos.includes("Etiq de composição") &&
+        p.etiqueta_composicao_responsavel === "fabrica",
+    );
+
+    return { atrasados, entregaProxima, aguardandoEtapa, semMovimentacao, etiquetaComposicao };
   }, [pedidos, hoje]);
 
   const producaoPorEtapa = useMemo(() => {
