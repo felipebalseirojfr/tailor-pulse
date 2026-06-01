@@ -53,7 +53,7 @@ interface Pedido {
   updated_at: string;
   tecido?: string;
   aviamentos?: string[];
-  etiqueta_composicao_responsavel?: "cliente" | "fabrica" | null;
+  etiqueta_composicao_responsavel?: string | null;
   clientes: {
     nome: string;
   };
