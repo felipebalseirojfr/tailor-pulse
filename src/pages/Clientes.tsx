@@ -517,6 +517,10 @@ export default function Clientes() {
             <UsersRound className="h-4 w-4" />
             Terceiros ({terceiros.length})
           </TabsTrigger>
+          <TabsTrigger value="tipos_peca" className="gap-2">
+            <Shirt className="h-4 w-4" />
+            Tipos de Peça ({tiposPecaAtivos.length})
+          </TabsTrigger>
         </TabsList>
 
         {/* ABA CLIENTES */}
