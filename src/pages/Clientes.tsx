@@ -145,11 +145,23 @@ export default function Clientes() {
   const [salvandoTerceiro, setSalvandoTerceiro] = useState(false);
   const [filtroEtapa, setFiltroEtapa] = useState("todos");
 
+  // ── Tipos de Peça ──
+  const [tiposPeca, setTiposPeca] = useState<TipoPeca[]>([]);
+  const [loadingTiposPeca, setLoadingTiposPeca] = useState(true);
+  const [buscaTipoPeca, setBuscaTipoPeca] = useState("");
+  const [mostrarInativosTipo, setMostrarInativosTipo] = useState(false);
+  const [dialogTipoPecaOpen, setDialogTipoPecaOpen] = useState(false);
+  const [editingTipoPeca, setEditingTipoPeca] = useState<TipoPeca | null>(null);
+  const [formTipoPeca, setFormTipoPeca] = useState({ nome: "", abreviacao_2_letras: "", ativo: true });
+  const [abrevManual, setAbrevManual] = useState(false);
+  const [salvandoTipoPeca, setSalvandoTipoPeca] = useState(false);
+
   const { toast } = useToast();
 
   useEffect(() => {
     fetchClientes();
     fetchTerceiros();
+    fetchTiposPeca();
 
     const clientesChannel = supabase
       .channel('clientes-changes-page')
@@ -160,6 +172,18 @@ export default function Clientes() {
 
     return () => { supabase.removeChannel(clientesChannel); };
   }, []);
+
+  const fetchTiposPeca = async () => {
+    try {
+      const { data, error } = await (supabase.from("tipos_peca") as any).select("*").order("nome");
+      if (error) throw error;
+      setTiposPeca((data || []) as TipoPeca[]);
+    } catch (error) {
+      console.error("Erro ao buscar tipos de peça:", error);
+    } finally {
+      setLoadingTiposPeca(false);
+    }
+  };
 
   const fetchClientes = async () => {
     try {
