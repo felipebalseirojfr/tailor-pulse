@@ -69,8 +69,7 @@ export function CalendarSidebar() {
         data_inicio_prevista,
         pedido_id,
         referencia_id,
-        pedidos!inner ( id, codigo_pedido, produto_modelo, cliente:clientes(nome) ),
-        referencias ( codigo_referencia )
+        pedidos!inner ( id, codigo_pedido, produto_modelo, cliente:clientes(nome) )
       `)
       .neq("status", "concluido");
 
@@ -92,7 +91,7 @@ export function CalendarSidebar() {
           codigo_pedido: e.pedidos?.codigo_pedido ?? null,
           produto_modelo: e.pedidos?.produto_modelo ?? null,
           cliente_nome: e.pedidos?.cliente?.nome ?? null,
-          codigo_referencia: e.referencias?.codigo_referencia ?? null,
+          codigo_referencia: null,
         } as EtapaPendente;
       })
       .filter(Boolean) as EtapaPendente[];
