@@ -242,10 +242,13 @@ export type Database = {
       }
       clientes: {
         Row: {
+          abreviacao_2_letras: string | null
           active: boolean
+          cnpj: string | null
           contato: string | null
           created_at: string | null
           email: string | null
+          endereco: string | null
           id: string
           nome: string
           observacoes_gerais: string | null
@@ -255,10 +258,13 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          abreviacao_2_letras?: string | null
           active?: boolean
+          cnpj?: string | null
           contato?: string | null
           created_at?: string | null
           email?: string | null
+          endereco?: string | null
           id?: string
           nome: string
           observacoes_gerais?: string | null
@@ -268,10 +274,13 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          abreviacao_2_letras?: string | null
           active?: boolean
+          cnpj?: string | null
           contato?: string | null
           created_at?: string | null
           email?: string | null
+          endereco?: string | null
           id?: string
           nome?: string
           observacoes_gerais?: string | null
