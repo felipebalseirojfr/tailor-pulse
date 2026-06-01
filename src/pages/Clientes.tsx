@@ -377,6 +377,99 @@ export default function Clientes() {
   const etapasComTerceiros = [...new Set(terceiros.map((t) => t.tipo_etapa))];
   const terceirosFiltrados = filtroEtapa === "todos" ? terceiros : terceiros.filter((t) => t.tipo_etapa === filtroEtapa);
 
+  // ── Tipos de Peça handlers ──
+  const abrirNovoTipoPeca = () => {
+    setEditingTipoPeca(null);
+    setFormTipoPeca({ nome: "", abreviacao_2_letras: "", ativo: true });
+    setAbrevManual(false);
+    setDialogTipoPecaOpen(true);
+  };
+
+  const abrirEditarTipoPeca = (tipo: TipoPeca) => {
+    setEditingTipoPeca(tipo);
+    setFormTipoPeca({ nome: tipo.nome, abreviacao_2_letras: tipo.abreviacao_2_letras, ativo: tipo.ativo });
+    setAbrevManual(true);
+    setDialogTipoPecaOpen(true);
+  };
+
+  const handleNomeTipoPecaChange = (nome: string) => {
+    setFormTipoPeca((prev) => {
+      const next = { ...prev, nome };
+      if (!abrevManual) {
+        next.abreviacao_2_letras = sugerirAbreviacao(nome);
+      }
+      return next;
+    });
+  };
+
+  const handleAbrevTipoPecaChange = (val: string) => {
+    const clean = val.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 2);
+    setAbrevManual(clean.length > 0);
+    setFormTipoPeca((prev) => ({ ...prev, abreviacao_2_letras: clean }));
+    if (clean.length === 0) {
+      // re-activate auto suggestion
+      setAbrevManual(false);
+      setFormTipoPeca((prev) => ({ ...prev, abreviacao_2_letras: sugerirAbreviacao(prev.nome) }));
+    }
+  };
+
+  const salvarTipoPeca = async () => {
+    const nome = formTipoPeca.nome.trim();
+    const abrev = formTipoPeca.abreviacao_2_letras.trim().toUpperCase();
+    if (!nome) {
+      toast({ title: "Informe o nome do tipo de peça.", variant: "destructive" });
+      return;
+    }
+    if (!/^[A-Z]{2}$/.test(abrev)) {
+      toast({ title: "Abreviação inválida", description: "Use exatamente 2 letras maiúsculas (A-Z).", variant: "destructive" });
+      return;
+    }
+    const conflitoNome = tiposPeca.find(
+      (t) => t.nome.toLowerCase() === nome.toLowerCase() && t.id !== editingTipoPeca?.id
+    );
+    if (conflitoNome) {
+      toast({ title: "Nome duplicado", description: `Já existe um tipo de peça com o nome "${conflitoNome.nome}".`, variant: "destructive" });
+      return;
+    }
+    const conflitoAbrev = tiposPeca.find(
+      (t) => t.abreviacao_2_letras === abrev && t.id !== editingTipoPeca?.id
+    );
+    if (conflitoAbrev) {
+      toast({ title: "Abreviação já em uso", description: `Esta abreviação já está em uso pelo tipo "${conflitoAbrev.nome}".`, variant: "destructive" });
+      return;
+    }
+
+    setSalvandoTipoPeca(true);
+    try {
+      const payload = { nome, abreviacao_2_letras: abrev, ativo: formTipoPeca.ativo };
+      if (editingTipoPeca) {
+        const { error } = await (supabase.from("tipos_peca") as any).update(payload).eq("id", editingTipoPeca.id);
+        if (error) throw error;
+        toast({ title: "Tipo de peça atualizado!" });
+      } else {
+        const { error } = await (supabase.from("tipos_peca") as any).insert(payload);
+        if (error) throw error;
+        toast({ title: "Tipo de peça cadastrado!" });
+      }
+      setDialogTipoPecaOpen(false);
+      fetchTiposPeca();
+    } catch (error: any) {
+      toast({ title: "Erro ao salvar", description: error.message, variant: "destructive" });
+    } finally {
+      setSalvandoTipoPeca(false);
+    }
+  };
+
+  const toggleAtivoTipoPeca = async (tipo: TipoPeca) => {
+    const { error } = await (supabase.from("tipos_peca") as any).update({ ativo: !tipo.ativo }).eq("id", tipo.id);
+    if (!error) fetchTiposPeca();
+  };
+
+  const tiposPecaAtivos = tiposPeca.filter((t) => t.ativo);
+  const tiposPecaFiltrados = tiposPeca
+    .filter((t) => mostrarInativosTipo || t.ativo)
+    .filter((t) => !buscaTipoPeca.trim() || t.nome.toLowerCase().includes(buscaTipoPeca.trim().toLowerCase()));
+
   const ClienteCard = ({ cliente }: { cliente: Cliente }) => (
     <Card className={clientesComPedidos.has(cliente.id) ? "border-primary/30" : ""}>
       <CardHeader>
