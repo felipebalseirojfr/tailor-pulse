@@ -540,6 +540,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "etapas_producao_referencia_id_fkey"
+            columns: ["referencia_id"]
+            isOneToOne: false
+            referencedRelation: "referencias"
+            referencedColumns: ["id"]
+          },
+          {
             foreignKeyName: "etapas_producao_responsavel_id_fkey"
             columns: ["responsavel_id"]
             isOneToOne: false
@@ -696,7 +703,15 @@ export type Database = {
           status_nf?: Database["public"]["Enums"]["status_nf_fechamento"]
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "fechamentos_referencia_id_fkey"
+            columns: ["referencia_id"]
+            isOneToOne: false
+            referencedRelation: "referencias"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       fornecedores: {
         Row: {
@@ -1662,6 +1677,80 @@ export type Database = {
           },
         ]
       }
+      referencias: {
+        Row: {
+          ativo: boolean
+          cliente_id: string
+          codigo: string
+          created_at: string
+          criado_por: string | null
+          descricao: string | null
+          id: string
+          modelagem_origem_id: string | null
+          sequencial: number
+          status: string
+          tipo_peca_id: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          cliente_id: string
+          codigo: string
+          created_at?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          modelagem_origem_id?: string | null
+          sequencial: number
+          status?: string
+          tipo_peca_id: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          cliente_id?: string
+          codigo?: string
+          created_at?: string
+          criado_por?: string | null
+          descricao?: string | null
+          id?: string
+          modelagem_origem_id?: string | null
+          sequencial?: number
+          status?: string
+          tipo_peca_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referencias_cliente_id_fkey"
+            columns: ["cliente_id"]
+            isOneToOne: false
+            referencedRelation: "clientes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referencias_criado_por_fkey"
+            columns: ["criado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referencias_modelagem_origem_id_fkey"
+            columns: ["modelagem_origem_id"]
+            isOneToOne: false
+            referencedRelation: "referencias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referencias_tipo_peca_id_fkey"
+            columns: ["tipo_peca_id"]
+            isOneToOne: false
+            referencedRelation: "tipos_peca"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tecidos: {
         Row: {
           ativo: boolean
@@ -1890,6 +1979,10 @@ export type Database = {
         Returns: boolean
       }
       next_quote_number: { Args: never; Returns: string }
+      proximo_sequencial_referencia: {
+        Args: { _cliente_id: string; _tipo_peca_id: string }
+        Returns: number
+      }
     }
     Enums: {
       app_role:
