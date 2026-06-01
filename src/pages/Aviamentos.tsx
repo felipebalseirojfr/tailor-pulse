@@ -105,6 +105,42 @@ export default function Aviamentos() {
   const [novoFornCnpj, setNovoFornCnpj] = useState("");
   const [savingForn, setSavingForn] = useState(false);
 
+  const [quickOpen, setQuickOpen] = useState(false);
+  const [quickItem, setQuickItem] = useState<AviamentoAgg | null>(null);
+  const [quickPrecos, setQuickPrecos] = useState<Array<{ fornecedor_nome: string; preco_por_unidade: number; ativo: boolean }>>([]);
+  const [quickLoading, setQuickLoading] = useState(false);
+
+  const openQuickView = async (a: AviamentoAgg) => {
+    setQuickItem(a);
+    setQuickOpen(true);
+    setQuickLoading(true);
+    setQuickPrecos([]);
+    const { data } = await supabase
+      .from("aviamentos_fornecedores_precos" as any)
+      .select("preco_por_unidade, ativo, fornecedor_id")
+      .eq("aviamento_id", a.id);
+    const rows = (data || []) as unknown as Array<{ preco_por_unidade: number; ativo: boolean; fornecedor_id: string }>;
+    const missingIds = Array.from(new Set(rows.map((r) => r.fornecedor_id))).filter(
+      (id) => !fornecedores.some((f) => f.id === id)
+    );
+    let extraMap = new Map<string, string>();
+    if (missingIds.length) {
+      const { data: extras } = await supabase
+        .from("fornecedores" as any)
+        .select("id, nome")
+        .in("id", missingIds);
+      ((extras || []) as unknown as FornecedorOpt[]).forEach((f) => extraMap.set(f.id, f.nome));
+    }
+    const enriched = rows.map((r) => ({
+      preco_por_unidade: Number(r.preco_por_unidade),
+      ativo: r.ativo,
+      fornecedor_nome:
+        fornecedores.find((f) => f.id === r.fornecedor_id)?.nome ?? extraMap.get(r.fornecedor_id) ?? "—",
+    }));
+    setQuickPrecos(enriched);
+    setQuickLoading(false);
+  };
+
   const formatCnpj = (v: string) => {
     const d = v.replace(/\D/g, "").slice(0, 14);
     return d
@@ -354,7 +390,7 @@ export default function Aviamentos() {
                 <TableRow
                   key={a.id}
                   className="cursor-pointer"
-                  onClick={() => navigate(`/catalogo/aviamentos/${a.id}`)}
+                  onClick={() => openQuickView(a)}
                 >
                   <TableCell className="font-medium">{a.nome}</TableCell>
                   <TableCell><Badge variant="secondary">{a.categoria}</Badge></TableCell>
@@ -609,6 +645,95 @@ export default function Aviamentos() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={quickOpen} onOpenChange={setQuickOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {quickItem?.nome}
+              {quickItem && (
+                <Badge variant={quickItem.ativo ? "default" : "outline"} className="ml-1">
+                  {quickItem.ativo ? "Ativo" : "Inativo"}
+                </Badge>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          {quickItem && (
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-xs text-muted-foreground">Categoria</p>
+                  <p className="font-medium">{quickItem.categoria}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Unidade</p>
+                  <p className="font-medium">{unidadeLabel(quickItem.unidade)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Tamanho/Medida</p>
+                  <p className="font-medium">{quickItem.tamanho_medida || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Cor</p>
+                  <p className="font-medium">{quickItem.cor || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Estoque</p>
+                  <p className="font-medium">
+                    {Number(quickItem.estoque).toLocaleString("pt-BR")} {unidadeLabel(quickItem.unidade)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Faixa de preço</p>
+                  <p className="font-medium">{priceRange(quickItem)}</p>
+                </div>
+              </div>
+
+              {quickItem.observacoes && (
+                <div className="text-sm">
+                  <p className="text-xs text-muted-foreground">Observações</p>
+                  <p className="whitespace-pre-wrap">{quickItem.observacoes}</p>
+                </div>
+              )}
+
+              <div>
+                <p className="text-xs text-muted-foreground mb-2">Fornecedores e preços</p>
+                {quickLoading ? (
+                  <p className="text-sm text-muted-foreground">Carregando...</p>
+                ) : quickPrecos.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Nenhum fornecedor vinculado.</p>
+                ) : (
+                  <div className="rounded-md border divide-y">
+                    {quickPrecos.map((p, i) => (
+                      <div key={i} className="flex items-center justify-between px-3 py-2 text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{p.fornecedor_nome}</span>
+                          {!p.ativo && <Badge variant="outline" className="text-xs">Inativo</Badge>}
+                        </div>
+                        <span>{fmtMoney(p.preco_por_unidade)} / {unidadeLabel(quickItem.unidade)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setQuickOpen(false)}>Fechar</Button>
+            <Button
+              onClick={() => {
+                if (quickItem) {
+                  setQuickOpen(false);
+                  navigate(`/catalogo/aviamentos/${quickItem.id}`);
+                }
+              }}
+            >
+              Abrir detalhes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
