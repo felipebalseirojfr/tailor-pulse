@@ -18,6 +18,7 @@ import {
   Home as HomeIcon,
   Scissors,
   Truck,
+  Shirt,
 
 
 
