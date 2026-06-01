@@ -172,10 +172,9 @@ export default function Aviamentos() {
       .single();
     setSaving(false);
     if (error) return toast.error(error.message || "Erro ao salvar");
-    const newId = (data as any)?.id as string;
     toast.success("Aviamento criado");
     setOpen(false);
-    navigate(`/catalogo/aviamentos/${newId}`);
+    load();
   };
 
   const priceRange = (a: AviamentoAgg) => {
