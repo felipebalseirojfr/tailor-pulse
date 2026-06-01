@@ -126,6 +126,14 @@ export default function Tecidos() {
 
   useEffect(() => {
     load();
+    (async () => {
+      const { data } = await supabase
+        .from("fornecedores" as any)
+        .select("id, nome")
+        .eq("ativo", true)
+        .order("nome", { ascending: true });
+      setFornecedores(((data || []) as unknown as FornecedorOpt[]));
+    })();
   }, []);
 
   // Auto-calc rendimento
