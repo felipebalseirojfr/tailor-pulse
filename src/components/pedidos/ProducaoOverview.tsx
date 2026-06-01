@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   AlertTriangle, Clock, Timer, PauseCircle, Flame, Layers, Calendar,
-  CheckCircle2, Package, Plus, ArrowRight,
+  CheckCircle2, Package, Plus, ArrowRight, Tag,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
