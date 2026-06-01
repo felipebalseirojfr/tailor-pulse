@@ -1877,6 +1877,33 @@ export type Database = {
         }
         Relationships: []
       }
+      tipos_peca: {
+        Row: {
+          abreviacao_2_letras: string
+          ativo: boolean
+          created_at: string
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          abreviacao_2_letras: string
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          abreviacao_2_letras?: string
+          ativo?: boolean
+          created_at?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string | null
