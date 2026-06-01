@@ -19,6 +19,8 @@ interface PedidoLike {
   created_at?: string;
   updated_at?: string;
   grade_tamanhos?: Record<string, number> | null;
+  aviamentos?: string[] | null;
+  etiqueta_composicao_responsavel?: string | null;
   clientes?: { nome: string } | null;
   etapas_producao?: Array<{
     tipo_etapa: string;
