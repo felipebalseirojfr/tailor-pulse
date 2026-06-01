@@ -219,7 +219,7 @@ export function ProducaoOverview({ pedidos, onPedidoClick }: Props) {
           <Flame className="h-5 w-5 text-destructive" />
           <h2 className="text-xl font-bold tracking-tight text-foreground">Alertas Críticos</h2>
         </div>
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           <AlertaCard
             icon={AlertTriangle}
             label="Prazo vencido"
@@ -251,6 +251,14 @@ export function ProducaoOverview({ pedidos, onPedidoClick }: Props) {
             tone="warning"
             items={alertas.semMovimentacao}
             onClick={() => setAlertaSelecionado({ titulo: "Sem movimentação há mais de 2 dias", items: alertas.semMovimentacao })}
+          />
+          <AlertaCard
+            icon={Tag}
+            label="Etiquetas de composição a fazer"
+            count={alertas.etiquetaComposicao.length}
+            tone="warning"
+            items={alertas.etiquetaComposicao}
+            onClick={() => setAlertaSelecionado({ titulo: "Etiquetas de composição a fazer internamente", items: alertas.etiquetaComposicao })}
           />
         </div>
       </section>
