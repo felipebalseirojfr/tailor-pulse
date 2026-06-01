@@ -633,6 +633,95 @@ export default function Aviamentos() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={quickOpen} onOpenChange={setQuickOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              {quickItem?.nome}
+              {quickItem && (
+                <Badge variant={quickItem.ativo ? "default" : "outline"} className="ml-1">
+                  {quickItem.ativo ? "Ativo" : "Inativo"}
+                </Badge>
+              )}
+            </DialogTitle>
+          </DialogHeader>
+          {quickItem && (
+            <div className="space-y-4 py-2">
+              <div className="grid grid-cols-2 gap-3 text-sm">
+                <div>
+                  <p className="text-xs text-muted-foreground">Categoria</p>
+                  <p className="font-medium">{quickItem.categoria}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Unidade</p>
+                  <p className="font-medium">{unidadeLabel(quickItem.unidade)}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Tamanho/Medida</p>
+                  <p className="font-medium">{quickItem.tamanho_medida || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Cor</p>
+                  <p className="font-medium">{quickItem.cor || "—"}</p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Estoque</p>
+                  <p className="font-medium">
+                    {Number(quickItem.estoque).toLocaleString("pt-BR")} {unidadeLabel(quickItem.unidade)}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs text-muted-foreground">Faixa de preço</p>
+                  <p className="font-medium">{priceRange(quickItem)}</p>
+                </div>
+              </div>
+
+              {quickItem.observacoes && (
+                <div className="text-sm">
+                  <p className="text-xs text-muted-foreground">Observações</p>
+                  <p className="whitespace-pre-wrap">{quickItem.observacoes}</p>
+                </div>
+              )}
+
+              <div>
+                <p className="text-xs text-muted-foreground mb-2">Fornecedores e preços</p>
+                {quickLoading ? (
+                  <p className="text-sm text-muted-foreground">Carregando...</p>
+                ) : quickPrecos.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Nenhum fornecedor vinculado.</p>
+                ) : (
+                  <div className="rounded-md border divide-y">
+                    {quickPrecos.map((p, i) => (
+                      <div key={i} className="flex items-center justify-between px-3 py-2 text-sm">
+                        <div className="flex items-center gap-2">
+                          <span className="font-medium">{p.fornecedor_nome}</span>
+                          {!p.ativo && <Badge variant="outline" className="text-xs">Inativo</Badge>}
+                        </div>
+                        <span>{fmtMoney(p.preco_por_unidade)} / {unidadeLabel(quickItem.unidade)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setQuickOpen(false)}>Fechar</Button>
+            <Button
+              onClick={() => {
+                if (quickItem) {
+                  setQuickOpen(false);
+                  navigate(`/catalogo/aviamentos/${quickItem.id}`);
+                }
+              }}
+            >
+              Abrir detalhes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
+
