@@ -16,12 +16,25 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -31,7 +44,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Plus, Search, Shirt, RefreshCw } from "lucide-react";
+import { Plus, Search, Shirt, RefreshCw, Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useUserRoles } from "@/hooks/useUserRoles";
 
 interface Tecido {
