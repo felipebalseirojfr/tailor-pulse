@@ -93,6 +93,48 @@ export type Database = {
           },
         ]
       }
+      aviamentos: {
+        Row: {
+          ativo: boolean
+          categoria: string
+          cor: string | null
+          created_at: string
+          estoque: number
+          id: string
+          nome: string
+          observacoes: string | null
+          tamanho_medida: string | null
+          unidade: Database["public"]["Enums"]["unidade_medida_aviamento"]
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          categoria: string
+          cor?: string | null
+          created_at?: string
+          estoque?: number
+          id?: string
+          nome: string
+          observacoes?: string | null
+          tamanho_medida?: string | null
+          unidade: Database["public"]["Enums"]["unidade_medida_aviamento"]
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          categoria?: string
+          cor?: string | null
+          created_at?: string
+          estoque?: number
+          id?: string
+          nome?: string
+          observacoes?: string | null
+          tamanho_medida?: string | null
+          unidade?: Database["public"]["Enums"]["unidade_medida_aviamento"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       aviamentos_catalog: {
         Row: {
           active: boolean
@@ -122,6 +164,54 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      aviamentos_fornecedores_precos: {
+        Row: {
+          ativo: boolean
+          aviamento_id: string
+          created_at: string
+          fornecedor_id: string
+          id: string
+          preco_por_unidade: number
+          ultima_atualizacao: string
+          updated_at: string
+        }
+        Insert: {
+          ativo?: boolean
+          aviamento_id: string
+          created_at?: string
+          fornecedor_id: string
+          id?: string
+          preco_por_unidade: number
+          ultima_atualizacao?: string
+          updated_at?: string
+        }
+        Update: {
+          ativo?: boolean
+          aviamento_id?: string
+          created_at?: string
+          fornecedor_id?: string
+          id?: string
+          preco_por_unidade?: number
+          ultima_atualizacao?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "aviamentos_fornecedores_precos_aviamento_id_fkey"
+            columns: ["aviamento_id"]
+            isOneToOne: false
+            referencedRelation: "aviamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "aviamentos_fornecedores_precos_fornecedor_id_fkey"
+            columns: ["fornecedor_id"]
+            isOneToOne: false
+            referencedRelation: "fornecedores"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       capacidade_mensal: {
         Row: {
@@ -1892,6 +1982,13 @@ export type Database = {
         | "bordado"
         | "compra_de_insumos"
         | "aplicacao_travete"
+      unidade_medida_aviamento:
+        | "peca"
+        | "kg"
+        | "metro"
+        | "cone"
+        | "metragem"
+        | "rolo"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2088,6 +2185,14 @@ export const Constants = {
         "bordado",
         "compra_de_insumos",
         "aplicacao_travete",
+      ],
+      unidade_medida_aviamento: [
+        "peca",
+        "kg",
+        "metro",
+        "cone",
+        "metragem",
+        "rolo",
       ],
     },
   },
