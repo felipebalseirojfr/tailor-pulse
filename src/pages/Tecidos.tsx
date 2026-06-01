@@ -43,6 +43,11 @@ interface TecidoComAgregados extends Tecido {
   estoque_total: number;
 }
 
+interface FornecedorOpt {
+  id: string;
+  nome: string;
+}
+
 const emptyForm = {
   nome: "",
   composicao: "",
@@ -51,6 +56,9 @@ const emptyForm = {
   rendimento_m_kg: "",
   observacoes: "",
   ativo: true,
+  fornecedor_id: "",
+  cor_inicial: "",
+  preco_por_kg: "",
 };
 
 function calcRendimento(gramatura: number, largura: number): number {
