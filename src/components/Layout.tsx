@@ -173,7 +173,7 @@ export default function Layout({ children }: LayoutProps) {
     { name: "Fechamento", href: "/pcp/fechamentos", icon: PackageCheck, roles: ["admin", "commercial", "production", "pcp_closer", "backoffice_fiscal"] },
     { name: "Fila das Etapas", href: "/fila-etapas", icon: ListOrdered, roles: ["admin", "commercial", "production"] },
     { name: "Corte", href: "/area-corte", icon: Scissors, roles: ["admin", "corte"] },
-    { name: "Clientes / Terceiros", href: "/clientes", icon: Users, roles: ["admin", "commercial"] },
+    { name: "Cadastros", href: "/clientes", icon: Users, roles: ["admin", "commercial"] },
     { name: "Fornecedores", href: "/catalogo/fornecedores", icon: Truck, roles: ["admin", "commercial", "viewer"] },
     { name: "Tecidos", href: "/catalogo/tecidos", icon: Shirt, roles: ["admin", "commercial", "viewer"] },
     { name: "Aviamentos", href: "/catalogo/aviamentos", icon: Tag, roles: ["admin", "commercial", "viewer"] },
