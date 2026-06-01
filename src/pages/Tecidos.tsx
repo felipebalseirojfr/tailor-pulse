@@ -108,6 +108,33 @@ export default function Tecidos() {
   const [form, setForm] = useState(emptyForm);
   const [rendimentoTouched, setRendimentoTouched] = useState(false);
   const [fornecedores, setFornecedores] = useState<FornecedorOpt[]>([]);
+  const [fornPopoverOpen, setFornPopoverOpen] = useState(false);
+  const [novoFornOpen, setNovoFornOpen] = useState(false);
+  const [novoFornNome, setNovoFornNome] = useState("");
+  const [savingForn, setSavingForn] = useState(false);
+
+  const handleCreateFornecedor = async () => {
+    const nome = novoFornNome.trim();
+    if (!nome) return toast.error("Informe o nome do fornecedor");
+    setSavingForn(true);
+    const { data, error } = await supabase
+      .from("fornecedores" as any)
+      .insert({ nome, ativo: true })
+      .select("id, nome")
+      .single();
+    setSavingForn(false);
+    if (error) {
+      toast.error(error.message || "Erro ao criar fornecedor");
+      return;
+    }
+    const novo = data as unknown as FornecedorOpt;
+    setFornecedores((prev) => [...prev, novo].sort((a, b) => a.nome.localeCompare(b.nome)));
+    setForm((f) => ({ ...f, fornecedor_id: novo.id }));
+    setNovoFornNome("");
+    setNovoFornOpen(false);
+    setFornPopoverOpen(false);
+    toast.success("Fornecedor cadastrado");
+  };
 
   const load = async () => {
     setLoading(true);
