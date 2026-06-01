@@ -16,12 +16,25 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet";
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   Table,
   TableBody,
@@ -31,7 +44,8 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { toast } from "sonner";
-import { Plus, Search, Shirt, RefreshCw } from "lucide-react";
+import { Plus, Search, Shirt, RefreshCw, Check, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { useUserRoles } from "@/hooks/useUserRoles";
 
 interface Tecido {
@@ -94,6 +108,33 @@ export default function Tecidos() {
   const [form, setForm] = useState(emptyForm);
   const [rendimentoTouched, setRendimentoTouched] = useState(false);
   const [fornecedores, setFornecedores] = useState<FornecedorOpt[]>([]);
+  const [fornPopoverOpen, setFornPopoverOpen] = useState(false);
+  const [novoFornOpen, setNovoFornOpen] = useState(false);
+  const [novoFornNome, setNovoFornNome] = useState("");
+  const [savingForn, setSavingForn] = useState(false);
+
+  const handleCreateFornecedor = async () => {
+    const nome = novoFornNome.trim();
+    if (!nome) return toast.error("Informe o nome do fornecedor");
+    setSavingForn(true);
+    const { data, error } = await supabase
+      .from("fornecedores" as any)
+      .insert({ nome, ativo: true })
+      .select("id, nome")
+      .single();
+    setSavingForn(false);
+    if (error) {
+      toast.error(error.message || "Erro ao criar fornecedor");
+      return;
+    }
+    const novo = data as unknown as FornecedorOpt;
+    setFornecedores((prev) => [...prev, novo].sort((a, b) => a.nome.localeCompare(b.nome)));
+    setForm((f) => ({ ...f, fornecedor_id: novo.id }));
+    setNovoFornNome("");
+    setNovoFornOpen(false);
+    setFornPopoverOpen(false);
+    toast.success("Fornecedor cadastrado");
+  };
 
   const load = async () => {
     setLoading(true);
@@ -449,24 +490,82 @@ export default function Tecidos() {
               </div>
               <div>
                 <Label>Fornecedor</Label>
-                <Select
-                  value={form.fornecedor_id || "none"}
-                  onValueChange={(v) =>
-                    setForm({ ...form, fornecedor_id: v === "none" ? "" : v })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um fornecedor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Nenhum</SelectItem>
-                    {fornecedores.map((f) => (
-                      <SelectItem key={f.id} value={f.id}>
-                        {f.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={fornPopoverOpen} onOpenChange={setFornPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      role="combobox"
+                      className="w-full justify-between font-normal"
+                    >
+                      {form.fornecedor_id
+                        ? fornecedores.find((f) => f.id === form.fornecedor_id)?.nome ?? "Selecione..."
+                        : "Selecione ou busque..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Buscar fornecedor..." />
+                      <CommandList>
+                        <CommandEmpty>
+                          <div className="py-3 text-center text-sm">
+                            Nenhum fornecedor encontrado.
+                          </div>
+                        </CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem
+                            value="__nenhum__"
+                            onSelect={() => {
+                              setForm({ ...form, fornecedor_id: "" });
+                              setFornPopoverOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                !form.fornecedor_id ? "opacity-100" : "opacity-0",
+                              )}
+                            />
+                            Nenhum
+                          </CommandItem>
+                          {fornecedores.map((f) => (
+                            <CommandItem
+                              key={f.id}
+                              value={f.nome}
+                              onSelect={() => {
+                                setForm({ ...form, fornecedor_id: f.id });
+                                setFornPopoverOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  form.fornecedor_id === f.id ? "opacity-100" : "opacity-0",
+                                )}
+                              />
+                              {f.nome}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                        <div className="border-t p-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="w-full justify-start"
+                            onClick={() => {
+                              setNovoFornOpen(true);
+                              setFornPopoverOpen(false);
+                            }}
+                          >
+                            <Plus className="mr-2 h-4 w-4" />
+                            Cadastrar novo fornecedor
+                          </Button>
+                        </div>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
               {form.fornecedor_id && (
                 <div className="grid grid-cols-2 gap-3">
@@ -511,6 +610,40 @@ export default function Tecidos() {
           </SheetFooter>
         </SheetContent>
       </Sheet>
+
+      <Dialog open={novoFornOpen} onOpenChange={setNovoFornOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Novo Fornecedor</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label>Nome *</Label>
+            <Input
+              value={novoFornNome}
+              onChange={(e) => setNovoFornNome(e.target.value)}
+              placeholder="Nome do fornecedor"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleCreateFornecedor();
+                }
+              }}
+            />
+            <p className="text-xs text-muted-foreground">
+              Você pode completar os outros dados depois em Catálogo &gt; Fornecedores.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNovoFornOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCreateFornecedor} disabled={savingForn}>
+              {savingForn ? "Salvando..." : "Cadastrar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
