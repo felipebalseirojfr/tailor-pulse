@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import {
   AlertTriangle, Clock, Timer, PauseCircle, Flame, Layers, Calendar,
-  CheckCircle2, Package, Plus, ArrowRight,
+  CheckCircle2, Package, Plus, ArrowRight, Tag,
 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -19,6 +19,8 @@ interface PedidoLike {
   created_at?: string;
   updated_at?: string;
   grade_tamanhos?: Record<string, number> | null;
+  aviamentos?: string[] | null;
+  etiqueta_composicao_responsavel?: string | null;
   clientes?: { nome: string } | null;
   etapas_producao?: Array<{
     tipo_etapa: string;
@@ -100,7 +102,15 @@ export function ProducaoOverview({ pedidos, onPedidoClick }: Props) {
       return ultima ? diffDays(ultima, hoje) > 2 : false;
     });
 
-    return { atrasados, entregaProxima, aguardandoEtapa, semMovimentacao };
+    const etiquetaComposicao = pedidos.filter(
+      (p) =>
+        p.status_geral !== "concluido" &&
+        Array.isArray(p.aviamentos) &&
+        p.aviamentos.includes("Etiq de composição") &&
+        p.etiqueta_composicao_responsavel === "fabrica",
+    );
+
+    return { atrasados, entregaProxima, aguardandoEtapa, semMovimentacao, etiquetaComposicao };
   }, [pedidos, hoje]);
 
   const producaoPorEtapa = useMemo(() => {
@@ -209,7 +219,7 @@ export function ProducaoOverview({ pedidos, onPedidoClick }: Props) {
           <Flame className="h-5 w-5 text-destructive" />
           <h2 className="text-xl font-bold tracking-tight text-foreground">Alertas Críticos</h2>
         </div>
-        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
           <AlertaCard
             icon={AlertTriangle}
             label="Prazo vencido"
@@ -241,6 +251,14 @@ export function ProducaoOverview({ pedidos, onPedidoClick }: Props) {
             tone="warning"
             items={alertas.semMovimentacao}
             onClick={() => setAlertaSelecionado({ titulo: "Sem movimentação há mais de 2 dias", items: alertas.semMovimentacao })}
+          />
+          <AlertaCard
+            icon={Tag}
+            label="Etiquetas de composição a fazer"
+            count={alertas.etiquetaComposicao.length}
+            tone="warning"
+            items={alertas.etiquetaComposicao}
+            onClick={() => setAlertaSelecionado({ titulo: "Etiquetas de composição a fazer internamente", items: alertas.etiquetaComposicao })}
           />
         </div>
       </section>
