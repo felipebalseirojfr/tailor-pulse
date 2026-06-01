@@ -586,6 +586,20 @@ export default function Clientes() {
     .filter((t) => mostrarInativosTipo || t.ativo)
     .filter((t) => !buscaTipoPeca.trim() || t.nome.toLowerCase().includes(buscaTipoPeca.trim().toLowerCase()));
 
+  const referenciasAtivas = referencias.filter((r) => r.ativo);
+  const referenciasFiltradas = referencias
+    .filter((r) => mostrarInativosRef || r.ativo)
+    .filter((r) => filtroClienteRef === "todos" || r.cliente_id === filtroClienteRef)
+    .filter((r) => filtroTipoRef === "todos" || r.tipo_peca_id === filtroTipoRef)
+    .filter((r) => {
+      const q = buscaRef.trim().toLowerCase();
+      if (!q) return true;
+      return r.codigo.toLowerCase().includes(q) || (r.descricao || "").toLowerCase().includes(q);
+    });
+  const clientesById = new Map(clientes.map((c) => [c.id, c]));
+  const tiposById = new Map(tiposPeca.map((t) => [t.id, t]));
+  const refById = new Map(referencias.map((r) => [r.id, r]));
+
   const ClienteCard = ({ cliente }: { cliente: Cliente }) => (
     <Card className={clientesComPedidos.has(cliente.id) ? "border-primary/30" : ""}>
       <CardHeader>
