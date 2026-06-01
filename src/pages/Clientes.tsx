@@ -92,6 +92,35 @@ interface Terceiro {
   ativo: boolean;
 }
 
+interface TipoPeca {
+  id: string;
+  nome: string;
+  abreviacao_2_letras: string;
+  ativo: boolean;
+}
+
+const sugerirAbreviacao = (nome: string): string => {
+  const norm = nome
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toUpperCase()
+    .replace(/[^A-Z]/g, "");
+  if (!norm) return "";
+  const vogais = new Set(["A", "E", "I", "O", "U"]);
+  const consoantes = norm.split("").filter((c) => !vogais.has(c));
+  let result = "";
+  if (consoantes.length >= 2) {
+    result = consoantes[0] + consoantes[1];
+  } else if (consoantes.length === 1) {
+    const firstVogal = norm.split("").find((c) => vogais.has(c)) || "";
+    result = consoantes[0] + firstVogal;
+  } else {
+    result = norm.slice(0, 2);
+  }
+  while (result.length < 2) result += "X";
+  return result.slice(0, 2);
+};
+
 export default function Clientes() {
   // ── Clientes ──
   const [clientes, setClientes] = useState<Cliente[]>([]);
