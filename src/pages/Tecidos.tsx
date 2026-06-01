@@ -16,6 +16,13 @@ import {
   SheetFooter,
 } from "@/components/ui/sheet";
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
   Table,
   TableBody,
   TableCell,
@@ -43,6 +50,11 @@ interface TecidoComAgregados extends Tecido {
   estoque_total: number;
 }
 
+interface FornecedorOpt {
+  id: string;
+  nome: string;
+}
+
 const emptyForm = {
   nome: "",
   composicao: "",
@@ -51,6 +63,9 @@ const emptyForm = {
   rendimento_m_kg: "",
   observacoes: "",
   ativo: true,
+  fornecedor_id: "",
+  cor_inicial: "",
+  preco_por_kg: "",
 };
 
 function calcRendimento(gramatura: number, largura: number): number {
@@ -78,6 +93,7 @@ export default function Tecidos() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [rendimentoTouched, setRendimentoTouched] = useState(false);
+  const [fornecedores, setFornecedores] = useState<FornecedorOpt[]>([]);
 
   const load = async () => {
     setLoading(true);
@@ -117,6 +133,14 @@ export default function Tecidos() {
 
   useEffect(() => {
     load();
+    (async () => {
+      const { data } = await supabase
+        .from("fornecedores" as any)
+        .select("id, nome")
+        .eq("ativo", true)
+        .order("nome", { ascending: true });
+      setFornecedores(((data || []) as unknown as FornecedorOpt[]));
+    })();
   }, []);
 
   // Auto-calc rendimento
@@ -167,6 +191,16 @@ export default function Tecidos() {
     if (!(l > 0)) return toast.error("Largura deve ser maior que 0");
     if (!(r > 0)) return toast.error("Rendimento deve ser maior que 0");
 
+    // Optional supplier block: if a supplier is selected, cor + preço are required
+    const fornecedorId = form.fornecedor_id;
+    const corInicial = form.cor_inicial.trim();
+    const precoStr = form.preco_por_kg.trim();
+    const precoNum = parseFloat(precoStr);
+    if (fornecedorId) {
+      if (!corInicial) return toast.error("Informe a cor da variação inicial");
+      if (!(precoNum > 0)) return toast.error("Informe um preço por kg válido");
+    }
+
     setSaving(true);
     const { data, error } = await supabase
       .from("tecidos" as any)
@@ -181,15 +215,46 @@ export default function Tecidos() {
       })
       .select("id")
       .single();
-    setSaving(false);
 
     if (error) {
+      setSaving(false);
       toast.error(error.message || "Erro ao salvar");
       return;
     }
+    const newId = (data as any)?.id as string;
+
+    if (fornecedorId && newId) {
+      const { data: variacao, error: vErr } = await supabase
+        .from("tecidos_variacoes" as any)
+        .insert({ tecido_id: newId, cor: corInicial, estoque_kg: 0, ativo: true })
+        .select("id")
+        .single();
+      if (vErr) {
+        setSaving(false);
+        toast.error("Tecido criado, mas falhou ao criar variação: " + vErr.message);
+        navigate(`/catalogo/tecidos/${newId}`);
+        return;
+      }
+      const variacaoId = (variacao as any)?.id;
+      const { error: pErr } = await supabase
+        .from("tecidos_fornecedores_precos" as any)
+        .insert({
+          tecido_variacao_id: variacaoId,
+          fornecedor_id: fornecedorId,
+          preco_por_kg: precoNum,
+          ativo: true,
+        });
+      if (pErr) {
+        setSaving(false);
+        toast.error("Variação criada, mas falhou ao salvar preço: " + pErr.message);
+        navigate(`/catalogo/tecidos/${newId}`);
+        return;
+      }
+    }
+
+    setSaving(false);
     toast.success("Tecido criado");
     setOpen(false);
-    const newId = (data as any)?.id;
     if (newId) navigate(`/catalogo/tecidos/${newId}`);
     else load();
   };
@@ -374,6 +439,59 @@ export default function Tecidos() {
                 onChange={(e) => setForm({ ...form, observacoes: e.target.value })}
               />
             </div>
+
+            <div className="rounded-md border p-3 space-y-3">
+              <div>
+                <Label className="text-sm font-semibold">Fornecedor (opcional)</Label>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Já vincule um fornecedor criando uma variação inicial com preço. Você pode adicionar mais depois.
+                </p>
+              </div>
+              <div>
+                <Label>Fornecedor</Label>
+                <Select
+                  value={form.fornecedor_id || "none"}
+                  onValueChange={(v) =>
+                    setForm({ ...form, fornecedor_id: v === "none" ? "" : v })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um fornecedor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum</SelectItem>
+                    {fornecedores.map((f) => (
+                      <SelectItem key={f.id} value={f.id}>
+                        {f.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {form.fornecedor_id && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Cor inicial *</Label>
+                    <Input
+                      value={form.cor_inicial}
+                      onChange={(e) => setForm({ ...form, cor_inicial: e.target.value })}
+                      placeholder="Ex: Preto"
+                    />
+                  </div>
+                  <div>
+                    <Label>Preço por kg (R$) *</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={form.preco_por_kg}
+                      onChange={(e) => setForm({ ...form, preco_por_kg: e.target.value })}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="flex items-center justify-between rounded-md border p-3">
               <Label className="m-0">Ativo</Label>
               <Switch
