@@ -63,7 +63,7 @@ export const useCapacidadeOcupacao = (mesesFuturos: number = 6) => {
           .select(`
             id,
             status_geral,
-            referencias(quantidade)
+            quantidade_total
           `)
           .gte("prazo_final", inicioMes)
           .lt("prazo_final", proximoMes)
@@ -73,12 +73,8 @@ export const useCapacidadeOcupacao = (mesesFuturos: number = 6) => {
 
         // Calcular demanda total
         let demanda = 0;
-        pedidos?.forEach((p) => {
-          if (p.referencias && Array.isArray(p.referencias)) {
-            p.referencias.forEach((r: any) => {
-              demanda += r.quantidade || 0;
-            });
-          }
+        pedidos?.forEach((p: any) => {
+          demanda += p.quantidade_total || 0;
         });
 
         const capacidade = capacidadeMap.get(mes) || null;
