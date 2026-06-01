@@ -101,7 +101,8 @@ export default function Clientes() {
   const [editingCliente, setEditingCliente] = useState<Cliente | null>(null);
   const [deleteClienteOpen, setDeleteClienteOpen] = useState(false);
   const [clienteToDelete, setClienteToDelete] = useState<Cliente | null>(null);
-  const [formCliente, setFormCliente] = useState({ nome: "", contato: "", email: "", telefone: "" });
+  const [formCliente, setFormCliente] = useState(emptyFormCliente);
+  const [soSemAbreviacao, setSoSemAbreviacao] = useState(false);
 
   // ── Terceiros ──
   const [terceiros, setTerceiros] = useState<Terceiro[]>([]);
