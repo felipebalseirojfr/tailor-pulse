@@ -105,6 +105,30 @@ export default function Aviamentos() {
   const [novoFornCnpj, setNovoFornCnpj] = useState("");
   const [savingForn, setSavingForn] = useState(false);
 
+  const [quickOpen, setQuickOpen] = useState(false);
+  const [quickItem, setQuickItem] = useState<AviamentoAgg | null>(null);
+  const [quickPrecos, setQuickPrecos] = useState<Array<{ fornecedor_nome: string; preco_por_unidade: number; ativo: boolean }>>([]);
+  const [quickLoading, setQuickLoading] = useState(false);
+
+  const openQuickView = async (a: AviamentoAgg) => {
+    setQuickItem(a);
+    setQuickOpen(true);
+    setQuickLoading(true);
+    setQuickPrecos([]);
+    const { data } = await supabase
+      .from("aviamentos_fornecedores_precos" as any)
+      .select("preco_por_unidade, ativo, fornecedor_id")
+      .eq("aviamento_id", a.id);
+    const rows = (data || []) as unknown as Array<{ preco_por_unidade: number; ativo: boolean; fornecedor_id: string }>;
+    const enriched = rows.map((r) => ({
+      preco_por_unidade: Number(r.preco_por_unidade),
+      ativo: r.ativo,
+      fornecedor_nome: fornecedores.find((f) => f.id === r.fornecedor_id)?.nome ?? "—",
+    }));
+    setQuickPrecos(enriched);
+    setQuickLoading(false);
+  };
+
   const formatCnpj = (v: string) => {
     const d = v.replace(/\D/g, "").slice(0, 14);
     return d
