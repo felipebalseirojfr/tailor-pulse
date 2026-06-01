@@ -23,7 +23,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Users as UsersIcon, Mail, Phone, User, Pencil, Trash2, UsersRound, AlertTriangle, Shirt } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { Plus, Users as UsersIcon, Mail, Phone, User, Pencil, Trash2, UsersRound, AlertTriangle, Shirt, FileCode2 } from "lucide-react";
 import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -156,12 +157,42 @@ export default function Clientes() {
   const [abrevManual, setAbrevManual] = useState(false);
   const [salvandoTipoPeca, setSalvandoTipoPeca] = useState(false);
 
+  // ── Referências ──
+  interface Referencia {
+    id: string;
+    codigo: string;
+    cliente_id: string;
+    tipo_peca_id: string;
+    sequencial: number;
+    descricao: string | null;
+    modelagem_origem_id: string | null;
+    status: string;
+    ativo: boolean;
+  }
+  const [referencias, setReferencias] = useState<Referencia[]>([]);
+  const [loadingReferencias, setLoadingReferencias] = useState(true);
+  const [buscaRef, setBuscaRef] = useState("");
+  const [filtroClienteRef, setFiltroClienteRef] = useState("todos");
+  const [filtroTipoRef, setFiltroTipoRef] = useState("todos");
+  const [mostrarInativosRef, setMostrarInativosRef] = useState(false);
+  const [dialogRefOpen, setDialogRefOpen] = useState(false);
+  const [novaRefCliente, setNovaRefCliente] = useState("");
+  const [novaRefTipo, setNovaRefTipo] = useState("");
+  const [novaRefDescricao, setNovaRefDescricao] = useState("");
+  const [novaRefOrigem, setNovaRefOrigem] = useState<string>("__none__");
+  const [proximoSeq, setProximoSeq] = useState<number | null>(null);
+  const [salvandoRef, setSalvandoRef] = useState(false);
+
+  const navigate = useNavigate();
+  const location = useLocation();
+  const initialTab = (location.state as any)?.tab || "clientes";
   const { toast } = useToast();
 
   useEffect(() => {
     fetchClientes();
     fetchTerceiros();
     fetchTiposPeca();
+    fetchReferencias();
 
     const clientesChannel = supabase
       .channel('clientes-changes-page')
@@ -170,8 +201,93 @@ export default function Clientes() {
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(clientesChannel); };
+    const refChannel = supabase
+      .channel('referencias-changes-page')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'referencias' }, () => {
+        fetchReferencias();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(clientesChannel); supabase.removeChannel(refChannel); };
   }, []);
+
+  const fetchReferencias = async () => {
+    try {
+      const { data, error } = await (supabase.from("referencias") as any).select("*").order("codigo");
+      if (error) throw error;
+      setReferencias((data || []) as Referencia[]);
+    } catch (error) {
+      console.error("Erro ao buscar referências:", error);
+    } finally {
+      setLoadingReferencias(false);
+    }
+  };
+
+  // Atualiza preview do próximo sequencial quando cliente+tipo selecionados
+  useEffect(() => {
+    const fetchSeq = async () => {
+      if (!novaRefCliente || !novaRefTipo) { setProximoSeq(null); return; }
+      const { data } = await (supabase.rpc as any)("proximo_sequencial_referencia", {
+        _cliente_id: novaRefCliente,
+        _tipo_peca_id: novaRefTipo,
+      });
+      setProximoSeq(typeof data === "number" ? data : 1);
+    };
+    fetchSeq();
+  }, [novaRefCliente, novaRefTipo]);
+
+  const clienteSelecionado = clientes.find((c) => c.id === novaRefCliente);
+  const tipoSelecionado = tiposPeca.find((t) => t.id === novaRefTipo);
+  const clienteSemAbrev = clienteSelecionado && !clienteSelecionado.abreviacao_2_letras;
+  const codigoPreview = clienteSelecionado?.abreviacao_2_letras && tipoSelecionado && proximoSeq
+    ? `${tipoSelecionado.abreviacao_2_letras}.${clienteSelecionado.abreviacao_2_letras}.${String(proximoSeq).padStart(4, "0")}`
+    : "—";
+
+  const resetNovaRef = () => {
+    setNovaRefCliente("");
+    setNovaRefTipo("");
+    setNovaRefDescricao("");
+    setNovaRefOrigem("__none__");
+    setProximoSeq(null);
+  };
+
+  const editarClienteSemAbrev = () => {
+    if (!clienteSelecionado) return;
+    setDialogRefOpen(false);
+    handleEditCliente(clienteSelecionado as any);
+  };
+
+  const salvarReferencia = async () => {
+    if (!novaRefCliente || !novaRefTipo) return;
+    if (clienteSemAbrev) {
+      toast({ title: "Cliente sem abreviação", description: "Cadastre a abreviação do cliente antes.", variant: "destructive" });
+      return;
+    }
+    setSalvandoRef(true);
+    const { data: userData } = await supabase.auth.getUser();
+    const payload = {
+      cliente_id: novaRefCliente,
+      tipo_peca_id: novaRefTipo,
+      descricao: novaRefDescricao.trim() || null,
+      modelagem_origem_id: novaRefOrigem === "__none__" ? null : novaRefOrigem,
+      criado_por: userData?.user?.id || null,
+      // codigo e sequencial são gerados pelo trigger; passamos placeholders aceitos pelo CHECK
+      codigo: "XX.XX.0000",
+      sequencial: 0,
+    };
+    const { data, error } = await (supabase.from("referencias") as any).insert([payload]).select().single();
+    setSalvandoRef(false);
+    if (error) {
+      toast({ title: "Erro ao criar referência", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Referência criada!", description: (data as any).codigo });
+    setDialogRefOpen(false);
+    resetNovaRef();
+    fetchReferencias();
+    navigate(`/cadastros/referencias/${(data as any).id}`);
+  };
+
 
   const fetchTiposPeca = async () => {
     try {
@@ -470,6 +586,20 @@ export default function Clientes() {
     .filter((t) => mostrarInativosTipo || t.ativo)
     .filter((t) => !buscaTipoPeca.trim() || t.nome.toLowerCase().includes(buscaTipoPeca.trim().toLowerCase()));
 
+  const referenciasAtivas = referencias.filter((r) => r.ativo);
+  const referenciasFiltradas = referencias
+    .filter((r) => mostrarInativosRef || r.ativo)
+    .filter((r) => filtroClienteRef === "todos" || r.cliente_id === filtroClienteRef)
+    .filter((r) => filtroTipoRef === "todos" || r.tipo_peca_id === filtroTipoRef)
+    .filter((r) => {
+      const q = buscaRef.trim().toLowerCase();
+      if (!q) return true;
+      return r.codigo.toLowerCase().includes(q) || (r.descricao || "").toLowerCase().includes(q);
+    });
+  const clientesById = new Map(clientes.map((c) => [c.id, c]));
+  const tiposById = new Map(tiposPeca.map((t) => [t.id, t]));
+  const refById = new Map(referencias.map((r) => [r.id, r]));
+
   const ClienteCard = ({ cliente }: { cliente: Cliente }) => (
     <Card className={clientesComPedidos.has(cliente.id) ? "border-primary/30" : ""}>
       <CardHeader>
@@ -507,7 +637,7 @@ export default function Clientes() {
         <p className="text-muted-foreground">Gerencie clientes e fornecedores externos</p>
       </div>
 
-      <Tabs defaultValue="clientes">
+      <Tabs defaultValue={initialTab}>
         <TabsList className="mb-4">
           <TabsTrigger value="clientes" className="gap-2">
             <UsersIcon className="h-4 w-4" />
@@ -520,6 +650,10 @@ export default function Clientes() {
           <TabsTrigger value="tipos_peca" className="gap-2">
             <Shirt className="h-4 w-4" />
             Tipos de Peça ({tiposPecaAtivos.length})
+          </TabsTrigger>
+          <TabsTrigger value="referencias" className="gap-2">
+            <FileCode2 className="h-4 w-4" />
+            Referências ({referenciasAtivas.length})
           </TabsTrigger>
         </TabsList>
 
@@ -764,7 +898,201 @@ export default function Clientes() {
             )}
           </div>
         </TabsContent>
+
+        {/* ABA REFERÊNCIAS */}
+        <TabsContent value="referencias">
+          <div className="space-y-6">
+            <p className="text-sm text-muted-foreground">
+              Catálogo de referências (peças desenvolvidas) com código no formato XX.YY.ZZZZ
+            </p>
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-3 flex-wrap">
+                <Input
+                  placeholder="Buscar por código ou descrição..."
+                  value={buscaRef}
+                  onChange={(e) => setBuscaRef(e.target.value)}
+                  className="w-64"
+                />
+                <Select value={filtroClienteRef} onValueChange={setFiltroClienteRef}>
+                  <SelectTrigger className="w-48"><SelectValue placeholder="Cliente" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos os clientes</SelectItem>
+                    {clientes.filter((c) => c.abreviacao_2_letras).map((c) => (
+                      <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={filtroTipoRef} onValueChange={setFiltroTipoRef}>
+                  <SelectTrigger className="w-48"><SelectValue placeholder="Tipo de Peça" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="todos">Todos os tipos</SelectItem>
+                    {tiposPecaAtivos.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <label className="flex items-center gap-2 text-sm">
+                  <Switch checked={mostrarInativosRef} onCheckedChange={setMostrarInativosRef} />
+                  Mostrar inativos
+                </label>
+              </div>
+              <Button onClick={() => { resetNovaRef(); setDialogRefOpen(true); }} className="gap-2">
+                <Plus className="h-4 w-4" /> Nova Referência
+              </Button>
+            </div>
+
+            {loadingReferencias ? (
+              <div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>
+            ) : referenciasFiltradas.length === 0 ? (
+              <Card><CardContent className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                <FileCode2 className="h-12 w-12 mb-3 opacity-20" />
+                <p className="font-medium">
+                  {referencias.length === 0 ? "Nenhuma referência cadastrada ainda" : "Nenhuma referência encontrada com este filtro"}
+                </p>
+                {referencias.length === 0 && (
+                  <Button onClick={() => { resetNovaRef(); setDialogRefOpen(true); }} className="mt-4 gap-2">
+                    <Plus className="h-4 w-4" /> Nova Referência
+                  </Button>
+                )}
+              </CardContent></Card>
+            ) : (
+              <Card>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <thead className="border-b bg-muted/30">
+                      <tr className="text-left">
+                        <th className="p-3 font-medium">Código</th>
+                        <th className="p-3 font-medium">Descrição</th>
+                        <th className="p-3 font-medium">Cliente</th>
+                        <th className="p-3 font-medium">Tipo de Peça</th>
+                        <th className="p-3 font-medium">Modelagem Origem</th>
+                        <th className="p-3 font-medium">Status</th>
+                        <th className="p-3 font-medium">Ativo</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {referenciasFiltradas.map((r) => {
+                        const cli = clientesById.get(r.cliente_id);
+                        const tp = tiposById.get(r.tipo_peca_id);
+                        const origem = r.modelagem_origem_id ? refById.get(r.modelagem_origem_id) : null;
+                        return (
+                          <tr
+                            key={r.id}
+                            onClick={() => navigate(`/cadastros/referencias/${r.id}`)}
+                            className="border-b cursor-pointer hover:bg-muted/40 transition-colors"
+                          >
+                            <td className="p-3">
+                              <Badge variant="secondary" className="font-mono tracking-widest">{r.codigo}</Badge>
+                            </td>
+                            <td className="p-3">{r.descricao || <span className="text-muted-foreground">—</span>}</td>
+                            <td className="p-3">{cli?.nome || "—"}</td>
+                            <td className="p-3">{tp?.nome || "—"}</td>
+                            <td className="p-3 font-mono text-xs">{origem?.codigo || <span className="text-muted-foreground font-sans">—</span>}</td>
+                            <td className="p-3">
+                              <Badge variant="outline" className={r.status === "em_desenvolvimento" ? "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/30" : ""}>
+                                {r.status === "em_desenvolvimento" ? "Em desenvolvimento" : r.status}
+                              </Badge>
+                            </td>
+                            <td className="p-3">
+                              {r.ativo ? (
+                                <Badge variant="outline" className="bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/30">Ativo</Badge>
+                              ) : (
+                                <Badge variant="outline" className="bg-muted">Inativo</Badge>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+              </Card>
+            )}
+          </div>
+        </TabsContent>
       </Tabs>
+
+      {/* Modal Nova Referência */}
+      <Dialog open={dialogRefOpen} onOpenChange={(o) => { setDialogRefOpen(o); if (!o) resetNovaRef(); }}>
+        <DialogContent className="max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Nova Referência</DialogTitle>
+            <DialogDescription>O código será gerado automaticamente no formato XX.YY.ZZZZ</DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label>Cliente *</Label>
+              <Select value={novaRefCliente} onValueChange={setNovaRefCliente}>
+                <SelectTrigger><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
+                <SelectContent>
+                  {clientes.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      {c.nome} {c.abreviacao_2_letras ? `(${c.abreviacao_2_letras})` : "(sem abreviação)"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {clienteSemAbrev && (
+                <div className="text-sm text-destructive flex items-center justify-between gap-2 bg-destructive/10 p-2 rounded">
+                  <span>Este cliente não tem abreviação cadastrada. Cadastre a abreviação antes de criar uma referência.</span>
+                  <Button type="button" size="sm" variant="outline" onClick={editarClienteSemAbrev}>Editar cliente</Button>
+                </div>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label>Tipo de Peça *</Label>
+              <Select value={novaRefTipo} onValueChange={setNovaRefTipo}>
+                <SelectTrigger><SelectValue placeholder="Selecione o tipo de peça" /></SelectTrigger>
+                <SelectContent>
+                  {tiposPecaAtivos.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>{t.nome} ({t.abreviacao_2_letras})</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Descrição</Label>
+              <Input
+                value={novaRefDescricao}
+                onChange={(e) => setNovaRefDescricao(e.target.value)}
+                placeholder="Ex: Camisa Slim Manga Longa"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label>Modelagem Origem</Label>
+              <Select value={novaRefOrigem} onValueChange={setNovaRefOrigem}>
+                <SelectTrigger><SelectValue placeholder="Nenhuma" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="__none__">Nenhuma</SelectItem>
+                  {referenciasAtivas.map((r) => (
+                    <SelectItem key={r.id} value={r.id}>
+                      {r.codigo} — {r.descricao || tiposById.get(r.tipo_peca_id)?.nome || "—"}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">Selecione uma referência existente cuja modelagem será reaproveitada (opcional).</p>
+            </div>
+
+            <div className="rounded-md border p-3 bg-muted/30">
+              <p className="text-xs text-muted-foreground mb-1">Código gerado:</p>
+              <p className="text-2xl font-mono font-bold tracking-widest">{codigoPreview}</p>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogRefOpen(false)}>Cancelar</Button>
+            <Button
+              onClick={salvarReferencia}
+              disabled={salvandoRef || !novaRefCliente || !novaRefTipo || !!clienteSemAbrev}
+            >
+              {salvandoRef ? "Criando..." : "Criar Referência"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Modal Tipo de Peça */}
       <Dialog open={dialogTipoPecaOpen} onOpenChange={setDialogTipoPecaOpen}>

@@ -15,6 +15,7 @@ import NovoPedido from "./pages/NovoPedido";
 import EditarPedido from "./pages/EditarPedido";
 import DetalhesPedido from "./pages/DetalhesPedido";
 import Clientes from "./pages/Clientes";
+import ReferenciaDetalhe from "./pages/ReferenciaDetalhe";
 import Calendario from "./pages/Calendario";
 import ScanQR from "./pages/ScanQR";
 import Fechamentos from "./pages/Fechamentos";
@@ -59,6 +60,7 @@ const App = () => (
             <Route path="/pedidos/:id" element={<Layout><DetalhesPedido /></Layout>} />
             <Route path="/pedidos/:id/editar" element={<Layout><EditarPedido /></Layout>} />
             <Route path="/clientes" element={<Layout><Clientes /></Layout>} />
+            <Route path="/cadastros/referencias/:id" element={<Layout><ReferenciaDetalhe /></Layout>} />
             <Route path="/calendario" element={<Layout><Calendario /></Layout>} />
             <Route path="/pcp/fechamentos" element={<Layout><Fechamentos /></Layout>} />
             <Route path="/pcp/fechamentos/:id" element={<Layout><DetalhesFechamento /></Layout>} />
