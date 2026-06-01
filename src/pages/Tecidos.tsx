@@ -610,6 +610,40 @@ export default function Tecidos() {
           </SheetFooter>
         </SheetContent>
       </Sheet>
+
+      <Dialog open={novoFornOpen} onOpenChange={setNovoFornOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Novo Fornecedor</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-2 py-2">
+            <Label>Nome *</Label>
+            <Input
+              value={novoFornNome}
+              onChange={(e) => setNovoFornNome(e.target.value)}
+              placeholder="Nome do fornecedor"
+              autoFocus
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  handleCreateFornecedor();
+                }
+              }}
+            />
+            <p className="text-xs text-muted-foreground">
+              Você pode completar os outros dados depois em Catálogo &gt; Fornecedores.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNovoFornOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={handleCreateFornecedor} disabled={savingForn}>
+              {savingForn ? "Salvando..." : "Cadastrar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
