@@ -120,10 +120,22 @@ export default function Aviamentos() {
       .select("preco_por_unidade, ativo, fornecedor_id")
       .eq("aviamento_id", a.id);
     const rows = (data || []) as unknown as Array<{ preco_por_unidade: number; ativo: boolean; fornecedor_id: string }>;
+    const missingIds = Array.from(new Set(rows.map((r) => r.fornecedor_id))).filter(
+      (id) => !fornecedores.some((f) => f.id === id)
+    );
+    let extraMap = new Map<string, string>();
+    if (missingIds.length) {
+      const { data: extras } = await supabase
+        .from("fornecedores" as any)
+        .select("id, nome")
+        .in("id", missingIds);
+      ((extras || []) as unknown as FornecedorOpt[]).forEach((f) => extraMap.set(f.id, f.nome));
+    }
     const enriched = rows.map((r) => ({
       preco_por_unidade: Number(r.preco_por_unidade),
       ativo: r.ativo,
-      fornecedor_nome: fornecedores.find((f) => f.id === r.fornecedor_id)?.nome ?? "—",
+      fornecedor_nome:
+        fornecedores.find((f) => f.id === r.fornecedor_id)?.nome ?? extraMap.get(r.fornecedor_id) ?? "—",
     }));
     setQuickPrecos(enriched);
     setQuickLoading(false);
