@@ -29,6 +29,9 @@ import AreaCorte from "./pages/AreaCorte";
 import Fornecedores from "./pages/Fornecedores";
 import Tecidos from "./pages/Tecidos";
 import TecidoDetalhe from "./pages/TecidoDetalhe";
+import Aviamentos from "./pages/Aviamentos";
+import AviamentoDetalhe from "./pages/AviamentoDetalhe";
+
 
 
 const queryClient = new QueryClient();
