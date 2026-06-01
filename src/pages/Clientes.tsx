@@ -465,30 +465,37 @@ export default function Clientes() {
               <div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>
             ) : clientes.length === 0 ? (
               <Card><CardContent className="py-16 text-center"><UsersIcon className="mx-auto mb-4 h-12 w-12 text-muted-foreground" /><h3 className="mb-2 text-lg font-semibold">Nenhum cliente cadastrado</h3><Button onClick={() => setDialogClienteOpen(true)}><Plus className="mr-2 h-4 w-4" />Adicionar Cliente</Button></CardContent></Card>
-            ) : (
-              <div className="space-y-8">
-                <div>
-                  <h2 className="text-xl font-semibold mb-4">Com Pedidos Ativos</h2>
-                  {clientes.filter(c => clientesComPedidos.has(c.id)).length === 0 ? (
-                    <Card><CardContent className="py-8 text-center"><p className="text-muted-foreground">Nenhum cliente com pedidos ativos</p></CardContent></Card>
-                  ) : (
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                      {clientes.filter(c => clientesComPedidos.has(c.id)).map(c => <ClienteCard key={c.id} cliente={c} />)}
-                    </div>
-                  )}
+            ) : (() => {
+              const base = soSemAbreviacao
+                ? clientes.filter((c) => !c.abreviacao_2_letras)
+                : clientes;
+              const ativos = base.filter((c) => clientesComPedidos.has(c.id));
+              const inativos = base.filter((c) => !clientesComPedidos.has(c.id));
+              return (
+                <div className="space-y-8">
+                  <div>
+                    <h2 className="text-xl font-semibold mb-4">Com Pedidos Ativos</h2>
+                    {ativos.length === 0 ? (
+                      <Card><CardContent className="py-8 text-center"><p className="text-muted-foreground">Nenhum cliente com pedidos ativos</p></CardContent></Card>
+                    ) : (
+                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {ativos.map(c => <ClienteCard key={c.id} cliente={c} />)}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-semibold mb-4">Sem Pedido Ativo</h2>
+                    {inativos.length === 0 ? (
+                      <Card><CardContent className="py-8 text-center"><p className="text-muted-foreground">{soSemAbreviacao ? "Nenhum cliente sem abreviação nesta seção" : "Todos os clientes têm pedidos ativos"}</p></CardContent></Card>
+                    ) : (
+                      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        {inativos.map(c => <ClienteCard key={c.id} cliente={c} />)}
+                      </div>
+                    )}
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-xl font-semibold mb-4">Sem Pedido Ativo</h2>
-                  {clientes.filter(c => !clientesComPedidos.has(c.id)).length === 0 ? (
-                    <Card><CardContent className="py-8 text-center"><p className="text-muted-foreground">Todos os clientes têm pedidos ativos</p></CardContent></Card>
-                  ) : (
-                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                      {clientes.filter(c => !clientesComPedidos.has(c.id)).map(c => <ClienteCard key={c.id} cliente={c} />)}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
+              );
+            })()}
           </div>
         </TabsContent>
 
