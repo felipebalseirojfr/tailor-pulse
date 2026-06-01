@@ -160,19 +160,63 @@ export default function Clientes() {
 
   const handleSubmitCliente = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const abrev = formCliente.abreviacao_2_letras.trim().toUpperCase();
+    const cnpjMasked = formCliente.cnpj.trim();
+    const cnpjDigits = cnpjMasked.replace(/\D/g, "");
+
+    if (abrev && !/^[A-Z]{2}$/.test(abrev)) {
+      toast({ title: "Abreviação inválida", description: "Use exatamente 2 letras maiúsculas (A-Z).", variant: "destructive" });
+      return;
+    }
+    if (cnpjDigits && cnpjDigits.length !== 14) {
+      toast({ title: "CNPJ inválido", description: "O CNPJ deve ter 14 dígitos.", variant: "destructive" });
+      return;
+    }
+
+    // Friendly uniqueness checks
+    if (abrev) {
+      const conflito = clientes.find(
+        (c) => c.abreviacao_2_letras === abrev && c.id !== editingCliente?.id
+      );
+      if (conflito) {
+        toast({ title: "Abreviação já em uso", description: `Esta abreviação já está em uso pelo cliente ${conflito.nome}.`, variant: "destructive" });
+        return;
+      }
+    }
+    if (cnpjDigits) {
+      const conflitoCnpj = clientes.find(
+        (c) => c.cnpj && c.cnpj.replace(/\D/g, "") === cnpjDigits && c.id !== editingCliente?.id
+      );
+      if (conflitoCnpj) {
+        toast({ title: "CNPJ já cadastrado", description: `Este CNPJ já está cadastrado para o cliente ${conflitoCnpj.nome}.`, variant: "destructive" });
+        return;
+      }
+    }
+
+    const payload = {
+      nome: formCliente.nome,
+      contato: formCliente.contato || null,
+      email: formCliente.email || null,
+      telefone: formCliente.telefone || null,
+      abreviacao_2_letras: abrev || null,
+      cnpj: cnpjDigits ? formatCnpjMask(cnpjDigits) : null,
+      endereco: formCliente.endereco.trim() || null,
+    };
+
     try {
       if (editingCliente) {
-        const { error } = await supabase.from("clientes").update(formCliente).eq("id", editingCliente.id);
+        const { error } = await supabase.from("clientes").update(payload).eq("id", editingCliente.id);
         if (error) throw error;
         toast({ title: "Cliente atualizado!" });
       } else {
-        const { error } = await supabase.from("clientes").insert([formCliente]);
+        const { error } = await supabase.from("clientes").insert([payload]);
         if (error) throw error;
         toast({ title: "Cliente cadastrado!" });
       }
       setDialogClienteOpen(false);
       setEditingCliente(null);
-      setFormCliente({ nome: "", contato: "", email: "", telefone: "" });
+      setFormCliente(emptyFormCliente);
       fetchClientes();
     } catch (error: any) {
       toast({ title: "Erro ao salvar cliente", description: error.message, variant: "destructive" });
@@ -181,7 +225,15 @@ export default function Clientes() {
 
   const handleEditCliente = (cliente: Cliente) => {
     setEditingCliente(cliente);
-    setFormCliente({ nome: cliente.nome, contato: cliente.contato || "", email: cliente.email || "", telefone: cliente.telefone || "" });
+    setFormCliente({
+      nome: cliente.nome,
+      contato: cliente.contato || "",
+      email: cliente.email || "",
+      telefone: cliente.telefone || "",
+      abreviacao_2_letras: cliente.abreviacao_2_letras || "",
+      cnpj: cliente.cnpj || "",
+      endereco: cliente.endereco || "",
+    });
     setDialogClienteOpen(true);
   };
 
