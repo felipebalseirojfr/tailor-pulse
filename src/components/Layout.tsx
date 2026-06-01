@@ -176,6 +176,7 @@ export default function Layout({ children }: LayoutProps) {
     { name: "Clientes / Terceiros", href: "/clientes", icon: Users, roles: ["admin", "commercial"] },
     { name: "Fornecedores", href: "/catalogo/fornecedores", icon: Truck, roles: ["admin", "commercial", "viewer"] },
     { name: "Tecidos", href: "/catalogo/tecidos", icon: Shirt, roles: ["admin", "commercial", "viewer"] },
+    { name: "Aviamentos", href: "/catalogo/aviamentos", icon: Tag, roles: ["admin", "commercial", "viewer"] },
     { name: "Calendário", href: "/calendario", icon: CalendarIcon, roles: NON_CORTE },
     { name: "Usuários", href: "/usuarios", icon: UserCog, roles: ["admin"] },
   ];
