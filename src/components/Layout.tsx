@@ -170,6 +170,7 @@ export default function Layout({ children }: LayoutProps) {
     { name: "Fila das Etapas", href: "/fila-etapas", icon: ListOrdered, roles: ["admin", "commercial", "production"] },
     { name: "Corte", href: "/area-corte", icon: Scissors, roles: ["admin", "corte"] },
     { name: "Clientes / Terceiros", href: "/clientes", icon: Users, roles: ["admin", "commercial"] },
+    { name: "Fornecedores", href: "/catalogo/fornecedores", icon: Truck, roles: ["admin", "commercial", "viewer"] },
     { name: "Calendário", href: "/calendario", icon: CalendarIcon, roles: NON_CORTE },
     { name: "Usuários", href: "/usuarios", icon: UserCog, roles: ["admin"] },
   ];
