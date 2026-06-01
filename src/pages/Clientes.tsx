@@ -637,7 +637,7 @@ export default function Clientes() {
         <p className="text-muted-foreground">Gerencie clientes e fornecedores externos</p>
       </div>
 
-      <Tabs defaultValue="clientes">
+      <Tabs defaultValue={initialTab}>
         <TabsList className="mb-4">
           <TabsTrigger value="clientes" className="gap-2">
             <UsersIcon className="h-4 w-4" />
@@ -650,6 +650,10 @@ export default function Clientes() {
           <TabsTrigger value="tipos_peca" className="gap-2">
             <Shirt className="h-4 w-4" />
             Tipos de Peça ({tiposPecaAtivos.length})
+          </TabsTrigger>
+          <TabsTrigger value="referencias" className="gap-2">
+            <FileCode2 className="h-4 w-4" />
+            Referências ({referenciasAtivas.length})
           </TabsTrigger>
         </TabsList>
 
