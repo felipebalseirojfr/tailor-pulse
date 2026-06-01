@@ -192,6 +192,7 @@ export default function Clientes() {
     fetchClientes();
     fetchTerceiros();
     fetchTiposPeca();
+    fetchReferencias();
 
     const clientesChannel = supabase
       .channel('clientes-changes-page')
@@ -200,8 +201,93 @@ export default function Clientes() {
       })
       .subscribe();
 
-    return () => { supabase.removeChannel(clientesChannel); };
+    const refChannel = supabase
+      .channel('referencias-changes-page')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'referencias' }, () => {
+        fetchReferencias();
+      })
+      .subscribe();
+
+    return () => { supabase.removeChannel(clientesChannel); supabase.removeChannel(refChannel); };
   }, []);
+
+  const fetchReferencias = async () => {
+    try {
+      const { data, error } = await (supabase.from("referencias") as any).select("*").order("codigo");
+      if (error) throw error;
+      setReferencias((data || []) as Referencia[]);
+    } catch (error) {
+      console.error("Erro ao buscar referências:", error);
+    } finally {
+      setLoadingReferencias(false);
+    }
+  };
+
+  // Atualiza preview do próximo sequencial quando cliente+tipo selecionados
+  useEffect(() => {
+    const fetchSeq = async () => {
+      if (!novaRefCliente || !novaRefTipo) { setProximoSeq(null); return; }
+      const { data } = await (supabase.rpc as any)("proximo_sequencial_referencia", {
+        _cliente_id: novaRefCliente,
+        _tipo_peca_id: novaRefTipo,
+      });
+      setProximoSeq(typeof data === "number" ? data : 1);
+    };
+    fetchSeq();
+  }, [novaRefCliente, novaRefTipo]);
+
+  const clienteSelecionado = clientes.find((c) => c.id === novaRefCliente);
+  const tipoSelecionado = tiposPeca.find((t) => t.id === novaRefTipo);
+  const clienteSemAbrev = clienteSelecionado && !clienteSelecionado.abreviacao_2_letras;
+  const codigoPreview = clienteSelecionado?.abreviacao_2_letras && tipoSelecionado && proximoSeq
+    ? `${tipoSelecionado.abreviacao_2_letras}.${clienteSelecionado.abreviacao_2_letras}.${String(proximoSeq).padStart(4, "0")}`
+    : "—";
+
+  const resetNovaRef = () => {
+    setNovaRefCliente("");
+    setNovaRefTipo("");
+    setNovaRefDescricao("");
+    setNovaRefOrigem("__none__");
+    setProximoSeq(null);
+  };
+
+  const editarClienteSemAbrev = () => {
+    if (!clienteSelecionado) return;
+    setDialogRefOpen(false);
+    handleEditCliente(clienteSelecionado as any);
+  };
+
+  const salvarReferencia = async () => {
+    if (!novaRefCliente || !novaRefTipo) return;
+    if (clienteSemAbrev) {
+      toast({ title: "Cliente sem abreviação", description: "Cadastre a abreviação do cliente antes.", variant: "destructive" });
+      return;
+    }
+    setSalvandoRef(true);
+    const { data: userData } = await supabase.auth.getUser();
+    const payload = {
+      cliente_id: novaRefCliente,
+      tipo_peca_id: novaRefTipo,
+      descricao: novaRefDescricao.trim() || null,
+      modelagem_origem_id: novaRefOrigem === "__none__" ? null : novaRefOrigem,
+      criado_por: userData?.user?.id || null,
+      // codigo e sequencial são gerados pelo trigger; passamos placeholders aceitos pelo CHECK
+      codigo: "XX.XX.0000",
+      sequencial: 0,
+    };
+    const { data, error } = await (supabase.from("referencias") as any).insert([payload]).select().single();
+    setSalvandoRef(false);
+    if (error) {
+      toast({ title: "Erro ao criar referência", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Referência criada!", description: (data as any).codigo });
+    setDialogRefOpen(false);
+    resetNovaRef();
+    fetchReferencias();
+    navigate(`/cadastros/referencias/${(data as any).id}`);
+  };
+
 
   const fetchTiposPeca = async () => {
     try {
