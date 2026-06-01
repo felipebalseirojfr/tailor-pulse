@@ -27,6 +27,8 @@ import NotFound from "./pages/NotFound";
 import ScanResultado from "./pages/ScanResultado";
 import AreaCorte from "./pages/AreaCorte";
 import Fornecedores from "./pages/Fornecedores";
+import Tecidos from "./pages/Tecidos";
+import TecidoDetalhe from "./pages/TecidoDetalhe";
 
 
 const queryClient = new QueryClient();
