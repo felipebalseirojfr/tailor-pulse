@@ -23,7 +23,9 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, Users as UsersIcon, Mail, Phone, User, Pencil, Trash2, UsersRound } from "lucide-react";
+import { Plus, Users as UsersIcon, Mail, Phone, User, Pencil, Trash2, UsersRound, AlertTriangle } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import {
   AlertDialog,
   AlertDialogAction,
