@@ -416,11 +416,7 @@ function ExecucaoCorte({ pedidoId, onDone }: { pedidoId: string; onDone: () => v
       onDone();
       return;
     }
-    const { data: refs } = await supabase
-      .from("referencias")
-      .select("codigo_referencia")
-      .eq("pedido_id", pedidoId);
-    const referencias_codigos = buildReferenciaCodigos(data as any, refs || []);
+    const referencias_codigos = buildReferenciaCodigos(data as any, []);
     const p: PedidoCorte = { ...(data as any), etapa_corte_inicio: null, referencias_codigos };
     setPedido(p);
     const real = (p.grade_corte_real || {}) as Record<string, number>;
