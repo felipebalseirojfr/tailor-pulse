@@ -708,17 +708,7 @@ function HistoricoCorte() {
       .not("grade_corte_real", "is", null);
     if (pErr) { console.error(pErr); setLoading(false); return; }
 
-    // Buscar referências (códigos REF) por pedido
-    const { data: refs } = await supabase
-      .from("referencias")
-      .select("pedido_id, codigo_referencia")
-      .in("pedido_id", pedidoIds);
     const refsByPedido: Record<string, string[]> = {};
-    for (const r of refs || []) {
-      const pid = (r as any).pedido_id;
-      if (!refsByPedido[pid]) refsByPedido[pid] = [];
-      if ((r as any).codigo_referencia) refsByPedido[pid].push((r as any).codigo_referencia);
-    }
 
     const pedMap: Record<string, any> = {};
     for (const p of peds || []) pedMap[(p as any).id] = p;
