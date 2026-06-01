@@ -19,6 +19,9 @@ import {
   Scissors,
   Truck,
   Shirt,
+  Scissors as ScissorsIcon,
+  Tag,
+
 
 
 
