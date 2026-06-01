@@ -63,6 +63,7 @@ export default function NovoPedido() {
     composicao_tecido: "",
     observacoes_pedido: "",
     foto_modelo_url: "" as string | null | "",
+    etiqueta_composicao_responsavel: "" as "" | "cliente" | "fabrica",
   });
 
   const composicoesComuns = [
@@ -191,6 +192,9 @@ export default function NovoPedido() {
           composicao_tecido: formData.composicao_tecido || null,
           observacoes_pedido: formData.observacoes_pedido || null,
           foto_modelo_url: formData.foto_modelo_url || null,
+          etiqueta_composicao_responsavel: formData.aviamentos.includes("Etiq de composição")
+            ? (formData.etiqueta_composicao_responsavel || null)
+            : null,
         },
       ]).select();
 
@@ -673,8 +677,32 @@ export default function NovoPedido() {
                   <Label htmlFor="galao" className="font-normal cursor-pointer">
                     Galão
                   </Label>
-                </div>
               </div>
+
+              {formData.aviamentos.includes("Etiq de composição") && (
+                <div className="rounded-md border border-primary/30 bg-primary/5 p-3 space-y-2">
+                  <Label className="text-sm font-semibold">Etiqueta de composição — quem fornece?</Label>
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={formData.etiqueta_composicao_responsavel === "cliente" ? "default" : "outline"}
+                      onClick={() => setFormData((p) => ({ ...p, etiqueta_composicao_responsavel: "cliente" }))}
+                    >
+                      O cliente vai mandar
+                    </Button>
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={formData.etiqueta_composicao_responsavel === "fabrica" ? "default" : "outline"}
+                      onClick={() => setFormData((p) => ({ ...p, etiqueta_composicao_responsavel: "fabrica" }))}
+                    >
+                      Nós vamos fazer
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-2">

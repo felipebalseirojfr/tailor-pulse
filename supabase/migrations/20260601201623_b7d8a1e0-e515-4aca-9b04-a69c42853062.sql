@@ -1,0 +1,1 @@
+ALTER TABLE public.pedidos ADD COLUMN IF NOT EXISTS etiqueta_composicao_responsavel text CHECK (etiqueta_composicao_responsavel IN ('cliente','fabrica'));

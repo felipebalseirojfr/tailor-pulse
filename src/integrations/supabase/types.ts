@@ -893,6 +893,7 @@ export type Database = {
           corte_prioritario: boolean
           created_at: string | null
           data_inicio: string
+          etiqueta_composicao_responsavel: string | null
           foto_modelo_url: string | null
           grade_corte_real: Json | null
           grade_tamanhos: Json | null
@@ -930,6 +931,7 @@ export type Database = {
           corte_prioritario?: boolean
           created_at?: string | null
           data_inicio: string
+          etiqueta_composicao_responsavel?: string | null
           foto_modelo_url?: string | null
           grade_corte_real?: Json | null
           grade_tamanhos?: Json | null
@@ -967,6 +969,7 @@ export type Database = {
           corte_prioritario?: boolean
           created_at?: string | null
           data_inicio?: string
+          etiqueta_composicao_responsavel?: string | null
           foto_modelo_url?: string | null
           grade_corte_real?: Json | null
           grade_tamanhos?: Json | null
