@@ -61,7 +61,29 @@ interface Cliente {
   contato: string | null;
   email: string | null;
   telefone: string | null;
+  abreviacao_2_letras: string | null;
+  cnpj: string | null;
+  endereco: string | null;
 }
+
+const emptyFormCliente = {
+  nome: "",
+  contato: "",
+  email: "",
+  telefone: "",
+  abreviacao_2_letras: "",
+  cnpj: "",
+  endereco: "",
+};
+
+const formatCnpjMask = (v: string) => {
+  const d = v.replace(/\D/g, "").slice(0, 14);
+  return d
+    .replace(/^(\d{2})(\d)/, "$1.$2")
+    .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+    .replace(/\.(\d{3})(\d)/, ".$1/$2")
+    .replace(/(\d{4})(\d)/, "$1-$2");
+};
 
 interface Terceiro {
   id: string;
