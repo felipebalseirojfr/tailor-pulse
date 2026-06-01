@@ -286,7 +286,8 @@ export default function Tecidos() {
       if (vErr) {
         setSaving(false);
         toast.error("Tecido criado, mas falhou ao criar variação: " + vErr.message);
-        navigate(`/catalogo/tecidos/${newId}`);
+        setOpen(false);
+        load();
         return;
       }
       const variacaoId = (variacao as any)?.id;
@@ -301,7 +302,8 @@ export default function Tecidos() {
       if (pErr) {
         setSaving(false);
         toast.error("Variação criada, mas falhou ao salvar preço: " + pErr.message);
-        navigate(`/catalogo/tecidos/${newId}`);
+        setOpen(false);
+        load();
         return;
       }
     }
@@ -309,8 +311,7 @@ export default function Tecidos() {
     setSaving(false);
     toast.success("Tecido criado");
     setOpen(false);
-    if (newId) navigate(`/catalogo/tecidos/${newId}`);
-    else load();
+    load();
   };
 
   return (
