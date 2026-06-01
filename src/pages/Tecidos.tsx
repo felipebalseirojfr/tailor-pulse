@@ -432,6 +432,59 @@ export default function Tecidos() {
                 onChange={(e) => setForm({ ...form, observacoes: e.target.value })}
               />
             </div>
+
+            <div className="rounded-md border p-3 space-y-3">
+              <div>
+                <Label className="text-sm font-semibold">Fornecedor (opcional)</Label>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Já vincule um fornecedor criando uma variação inicial com preço. Você pode adicionar mais depois.
+                </p>
+              </div>
+              <div>
+                <Label>Fornecedor</Label>
+                <Select
+                  value={form.fornecedor_id || "none"}
+                  onValueChange={(v) =>
+                    setForm({ ...form, fornecedor_id: v === "none" ? "" : v })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um fornecedor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="none">Nenhum</SelectItem>
+                    {fornecedores.map((f) => (
+                      <SelectItem key={f.id} value={f.id}>
+                        {f.nome}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              {form.fornecedor_id && (
+                <div className="grid grid-cols-2 gap-3">
+                  <div>
+                    <Label>Cor inicial *</Label>
+                    <Input
+                      value={form.cor_inicial}
+                      onChange={(e) => setForm({ ...form, cor_inicial: e.target.value })}
+                      placeholder="Ex: Preto"
+                    />
+                  </div>
+                  <div>
+                    <Label>Preço por kg (R$) *</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={form.preco_por_kg}
+                      onChange={(e) => setForm({ ...form, preco_por_kg: e.target.value })}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
             <div className="flex items-center justify-between rounded-md border p-3">
               <Label className="m-0">Ativo</Label>
               <Switch
