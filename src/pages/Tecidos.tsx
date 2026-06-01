@@ -629,20 +629,32 @@ export default function Tecidos() {
           <DialogHeader>
             <DialogTitle>Novo Fornecedor</DialogTitle>
           </DialogHeader>
-          <div className="space-y-2 py-2">
-            <Label>Nome *</Label>
-            <Input
-              value={novoFornNome}
-              onChange={(e) => setNovoFornNome(e.target.value)}
-              placeholder="Nome do fornecedor"
-              autoFocus
-              onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault();
-                  handleCreateFornecedor();
-                }
-              }}
-            />
+          <div className="space-y-3 py-2">
+            <div className="space-y-1.5">
+              <Label>Nome *</Label>
+              <Input
+                value={novoFornNome}
+                onChange={(e) => setNovoFornNome(e.target.value)}
+                placeholder="Nome do fornecedor"
+                autoFocus
+                maxLength={120}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>CNPJ *</Label>
+              <Input
+                value={novoFornCnpj}
+                onChange={(e) => setNovoFornCnpj(formatCnpj(e.target.value))}
+                placeholder="00.000.000/0000-00"
+                inputMode="numeric"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleCreateFornecedor();
+                  }
+                }}
+              />
+            </div>
             <p className="text-xs text-muted-foreground">
               Você pode completar os outros dados depois em Catálogo &gt; Fornecedores.
             </p>
