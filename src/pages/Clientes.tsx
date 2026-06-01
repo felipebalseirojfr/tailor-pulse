@@ -376,12 +376,16 @@ export default function Clientes() {
         {/* ABA CLIENTES */}
         <TabsContent value="clientes">
           <div className="space-y-6">
-            <div className="flex justify-end">
-              <Dialog open={dialogClienteOpen} onOpenChange={(open) => { setDialogClienteOpen(open); if (!open) { setEditingCliente(null); setFormCliente({ nome: "", contato: "", email: "", telefone: "" }); } }}>
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <label className="flex items-center gap-2 text-sm">
+                <Switch checked={soSemAbreviacao} onCheckedChange={setSoSemAbreviacao} />
+                Mostrar só clientes sem abreviação
+              </label>
+              <Dialog open={dialogClienteOpen} onOpenChange={(open) => { setDialogClienteOpen(open); if (!open) { setEditingCliente(null); setFormCliente(emptyFormCliente); } }}>
                 <DialogTrigger asChild>
                   <Button><Plus className="mr-2 h-4 w-4" />Novo Cliente</Button>
                 </DialogTrigger>
-                <DialogContent>
+                <DialogContent className="max-h-[90vh] overflow-y-auto">
                   <form onSubmit={handleSubmitCliente}>
                     <DialogHeader>
                       <DialogTitle>{editingCliente ? "Editar Cliente" : "Cadastrar Cliente"}</DialogTitle>
@@ -391,6 +395,38 @@ export default function Clientes() {
                       <div className="space-y-2">
                         <Label htmlFor="nome">Nome da Marca *</Label>
                         <Input id="nome" value={formCliente.nome} onChange={(e) => setFormCliente({ ...formCliente, nome: e.target.value })} placeholder="Ex: Marca Premium" required />
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div className="space-y-2">
+                          <Label htmlFor="abreviacao">Abreviação (2 letras)</Label>
+                          <Input
+                            id="abreviacao"
+                            value={formCliente.abreviacao_2_letras}
+                            onChange={(e) =>
+                              setFormCliente({
+                                ...formCliente,
+                                abreviacao_2_letras: e.target.value.toUpperCase().replace(/[^A-Z]/g, "").slice(0, 2),
+                              })
+                            }
+                            placeholder="VT"
+                            maxLength={2}
+                            className="uppercase font-mono tracking-widest"
+                          />
+                          <p className="text-xs text-muted-foreground">
+                            2 letras maiúsculas. Usado para gerar códigos de referência (ex: CM.VT.0001). Deve ser única.
+                          </p>
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="cnpj">CNPJ</Label>
+                          <Input
+                            id="cnpj"
+                            value={formCliente.cnpj}
+                            onChange={(e) => setFormCliente({ ...formCliente, cnpj: formatCnpjMask(e.target.value) })}
+                            placeholder="00.000.000/0000-00"
+                            inputMode="numeric"
+                          />
+                          <p className="text-xs text-muted-foreground">Opcional. Mascarado automaticamente.</p>
+                        </div>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="contato">Pessoa de Contato</Label>
@@ -404,6 +440,16 @@ export default function Clientes() {
                         <Label htmlFor="telefone">Telefone</Label>
                         <Input id="telefone" value={formCliente.telefone} onChange={(e) => setFormCliente({ ...formCliente, telefone: e.target.value })} placeholder="(11) 99999-9999" />
                       </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="endereco">Endereço</Label>
+                        <Textarea
+                          id="endereco"
+                          value={formCliente.endereco}
+                          onChange={(e) => setFormCliente({ ...formCliente, endereco: e.target.value })}
+                          placeholder="Rua X, 123 — São Paulo/SP"
+                          rows={2}
+                        />
+                      </div>
                     </div>
                     <DialogFooter>
                       <Button type="button" variant="outline" onClick={() => setDialogClienteOpen(false)}>Cancelar</Button>
@@ -413,6 +459,7 @@ export default function Clientes() {
                 </DialogContent>
               </Dialog>
             </div>
+
 
             {loadingClientes ? (
               <div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>
