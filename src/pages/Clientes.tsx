@@ -157,6 +157,35 @@ export default function Clientes() {
   const [abrevManual, setAbrevManual] = useState(false);
   const [salvandoTipoPeca, setSalvandoTipoPeca] = useState(false);
 
+  // ── Referências ──
+  interface Referencia {
+    id: string;
+    codigo: string;
+    cliente_id: string;
+    tipo_peca_id: string;
+    sequencial: number;
+    descricao: string | null;
+    modelagem_origem_id: string | null;
+    status: string;
+    ativo: boolean;
+  }
+  const [referencias, setReferencias] = useState<Referencia[]>([]);
+  const [loadingReferencias, setLoadingReferencias] = useState(true);
+  const [buscaRef, setBuscaRef] = useState("");
+  const [filtroClienteRef, setFiltroClienteRef] = useState("todos");
+  const [filtroTipoRef, setFiltroTipoRef] = useState("todos");
+  const [mostrarInativosRef, setMostrarInativosRef] = useState(false);
+  const [dialogRefOpen, setDialogRefOpen] = useState(false);
+  const [novaRefCliente, setNovaRefCliente] = useState("");
+  const [novaRefTipo, setNovaRefTipo] = useState("");
+  const [novaRefDescricao, setNovaRefDescricao] = useState("");
+  const [novaRefOrigem, setNovaRefOrigem] = useState<string>("__none__");
+  const [proximoSeq, setProximoSeq] = useState<number | null>(null);
+  const [salvandoRef, setSalvandoRef] = useState(false);
+
+  const navigate = useNavigate();
+  const location = useLocation();
+  const initialTab = (location.state as any)?.tab || "clientes";
   const { toast } = useToast();
 
   useEffect(() => {
