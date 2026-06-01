@@ -700,7 +700,128 @@ export default function Clientes() {
             )}
           </div>
         </TabsContent>
+
+        {/* ABA TIPOS DE PEÇA */}
+        <TabsContent value="tipos_peca">
+          <div className="space-y-6">
+            <p className="text-sm text-muted-foreground">
+              Catálogo de tipos de peça para gerar códigos de referência (ex: CM.VT.0001)
+            </p>
+            <div className="flex items-center justify-between gap-4 flex-wrap">
+              <div className="flex items-center gap-4 flex-wrap">
+                <Input
+                  placeholder="Buscar por nome..."
+                  value={buscaTipoPeca}
+                  onChange={(e) => setBuscaTipoPeca(e.target.value)}
+                  className="w-64"
+                />
+                <label className="flex items-center gap-2 text-sm">
+                  <Switch checked={mostrarInativosTipo} onCheckedChange={setMostrarInativosTipo} />
+                  Mostrar inativos
+                </label>
+              </div>
+              <Button onClick={abrirNovoTipoPeca} className="gap-2">
+                <Plus className="h-4 w-4" /> Novo Tipo de Peça
+              </Button>
+            </div>
+
+            {loadingTiposPeca ? (
+              <div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>
+            ) : tiposPecaFiltrados.length === 0 ? (
+              <Card><CardContent className="flex flex-col items-center justify-center py-16 text-muted-foreground">
+                <Shirt className="h-12 w-12 mb-3 opacity-20" />
+                <p className="font-medium">
+                  {tiposPeca.length === 0 ? "Nenhum tipo de peça cadastrado ainda" : "Nenhum tipo encontrado com este filtro"}
+                </p>
+              </CardContent></Card>
+            ) : (
+              <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+                {tiposPecaFiltrados.map((tipo) => (
+                  <Card key={tipo.id} className={`transition-opacity ${!tipo.ativo ? "opacity-50" : ""}`}>
+                    <CardContent className="p-4">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
+                            <p className="font-semibold truncate">{tipo.nome}</p>
+                            <Badge variant="secondary" className="font-mono tracking-widest">{tipo.abreviacao_2_letras}</Badge>
+                            {!tipo.ativo && <Badge variant="outline" className="text-xs">Inativo</Badge>}
+                            {tipo.ativo && <Badge className="bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/30 text-xs" variant="outline">Ativo</Badge>}
+                          </div>
+                        </div>
+                        <div className="flex gap-1 shrink-0">
+                          <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => abrirEditarTipoPeca(tipo)}>
+                            <Pencil className="h-3.5 w-3.5" />
+                          </Button>
+                        </div>
+                      </div>
+                      <Button variant="ghost" size="sm" className="w-full mt-2 text-xs h-7" onClick={() => toggleAtivoTipoPeca(tipo)}>
+                        {tipo.ativo ? "Desativar" : "Ativar"}
+                      </Button>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            )}
+          </div>
+        </TabsContent>
       </Tabs>
+
+      {/* Modal Tipo de Peça */}
+      <Dialog open={dialogTipoPecaOpen} onOpenChange={setDialogTipoPecaOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingTipoPeca ? "Editar Tipo de Peça" : "Novo Tipo de Peça"}</DialogTitle>
+            <DialogDescription>
+              Cadastre um tipo de peça e a abreviação usada nos códigos de referência.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="space-y-2">
+              <Label htmlFor="tp-nome">Nome do tipo de peça *</Label>
+              <Input
+                id="tp-nome"
+                value={formTipoPeca.nome}
+                onChange={(e) => handleNomeTipoPecaChange(e.target.value)}
+                onBlur={() => {
+                  if (!abrevManual) {
+                    setFormTipoPeca((prev) => ({ ...prev, abreviacao_2_letras: sugerirAbreviacao(prev.nome) }));
+                  }
+                }}
+                placeholder="Ex: Camisa, Calça, Vestido"
+                maxLength={100}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="tp-abrev">Abreviação (2 letras) *</Label>
+              <Input
+                id="tp-abrev"
+                value={formTipoPeca.abreviacao_2_letras}
+                onChange={(e) => handleAbrevTipoPecaChange(e.target.value)}
+                placeholder="CM"
+                maxLength={2}
+                className="uppercase font-mono tracking-widest w-24"
+                required
+              />
+              <p className="text-xs text-muted-foreground">
+                2 letras maiúsculas. Será usada no código de referência. Deve ser única.
+              </p>
+            </div>
+            <div className="flex items-center justify-between">
+              <Label htmlFor="tp-ativo">Ativo</Label>
+              <Switch
+                id="tp-ativo"
+                checked={formTipoPeca.ativo}
+                onCheckedChange={(v) => setFormTipoPeca((prev) => ({ ...prev, ativo: v }))}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDialogTipoPecaOpen(false)}>Cancelar</Button>
+            <Button onClick={salvarTipoPeca} disabled={salvandoTipoPeca}>Salvar</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       {/* Modal terceiro */}
       <AlertDialog open={formTerceiroOpen} onOpenChange={setFormTerceiroOpen}>
