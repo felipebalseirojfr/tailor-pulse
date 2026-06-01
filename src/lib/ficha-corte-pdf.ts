@@ -295,15 +295,9 @@ async function montarFichaCortePDF(pedidoId: string) {
     .single();
   if (error || !p) throw error || new Error("Pedido não encontrado");
 
-  const { data: refs } = await supabase
-    .from("referencias")
-    .select("codigo_referencia")
-    .eq("pedido_id", pedidoId);
-  const codigos = (refs || []).map((r: any) => r.codigo_referencia).filter(isFilled);
-  if (codigos.length === 0) {
-    const fallback = isFilled((p as any).tipo_peca) ? (p as any).tipo_peca : (p as any).codigo_produto_cliente;
-    if (fallback) codigos.push(fallback);
-  }
+  const codigos: string[] = [];
+  const fallback = isFilled((p as any).tipo_peca) ? (p as any).tipo_peca : (p as any).codigo_produto_cliente;
+  if (fallback) codigos.push(fallback);
   const referencias = codigos.join(", ");
 
   const ETAPA_LABELS: Record<string, string> = {
