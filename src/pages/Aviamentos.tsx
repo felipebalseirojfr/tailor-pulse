@@ -354,7 +354,7 @@ export default function Aviamentos() {
                 <TableRow
                   key={a.id}
                   className="cursor-pointer"
-                  onClick={() => navigate(`/catalogo/aviamentos/${a.id}`)}
+                  onClick={() => openQuickView(a)}
                 >
                   <TableCell className="font-medium">{a.nome}</TableCell>
                   <TableCell><Badge variant="secondary">{a.categoria}</Badge></TableCell>
