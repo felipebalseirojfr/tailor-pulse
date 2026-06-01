@@ -490,24 +490,82 @@ export default function Tecidos() {
               </div>
               <div>
                 <Label>Fornecedor</Label>
-                <Select
-                  value={form.fornecedor_id || "none"}
-                  onValueChange={(v) =>
-                    setForm({ ...form, fornecedor_id: v === "none" ? "" : v })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um fornecedor" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="none">Nenhum</SelectItem>
-                    {fornecedores.map((f) => (
-                      <SelectItem key={f.id} value={f.id}>
-                        {f.nome}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <Popover open={fornPopoverOpen} onOpenChange={setFornPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      role="combobox"
+                      className="w-full justify-between font-normal"
+                    >
+                      {form.fornecedor_id
+                        ? fornecedores.find((f) => f.id === form.fornecedor_id)?.nome ?? "Selecione..."
+                        : "Selecione ou busque..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Buscar fornecedor..." />
+                      <CommandList>
+                        <CommandEmpty>
+                          <div className="py-3 text-center text-sm">
+                            Nenhum fornecedor encontrado.
+                          </div>
+                        </CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem
+                            value="__nenhum__"
+                            onSelect={() => {
+                              setForm({ ...form, fornecedor_id: "" });
+                              setFornPopoverOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                !form.fornecedor_id ? "opacity-100" : "opacity-0",
+                              )}
+                            />
+                            Nenhum
+                          </CommandItem>
+                          {fornecedores.map((f) => (
+                            <CommandItem
+                              key={f.id}
+                              value={f.nome}
+                              onSelect={() => {
+                                setForm({ ...form, fornecedor_id: f.id });
+                                setFornPopoverOpen(false);
+                              }}
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  form.fornecedor_id === f.id ? "opacity-100" : "opacity-0",
+                                )}
+                              />
+                              {f.nome}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                        <div className="border-t p-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="w-full justify-start"
+                            onClick={() => {
+                              setNovoFornOpen(true);
+                              setFornPopoverOpen(false);
+                            }}
+                          >
+                            <Plus className="mr-2 h-4 w-4" />
+                            Cadastrar novo fornecedor
+                          </Button>
+                        </div>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
               {form.fornecedor_id && (
                 <div className="grid grid-cols-2 gap-3">
