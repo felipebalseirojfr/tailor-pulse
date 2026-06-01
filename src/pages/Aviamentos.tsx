@@ -23,6 +23,9 @@ import {
 import {
   Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList,
 } from "@/components/ui/command";
+import {
+  Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { Plus, Search, Tag, Check, ChevronsUpDown } from "lucide-react";
 import { useUserRoles } from "@/hooks/useUserRoles";
@@ -59,6 +62,11 @@ interface AviamentoAgg extends Aviamento {
   preco_max: number | null;
 }
 
+interface FornecedorOpt {
+  id: string;
+  nome: string;
+}
+
 const emptyForm = {
   nome: "",
   categoria: "",
@@ -68,6 +76,8 @@ const emptyForm = {
   estoque: "0",
   observacoes: "",
   ativo: true,
+  fornecedor_id: "",
+  preco_por_unidade: "",
 };
 
 const fmtMoney = (n: number) =>
@@ -87,6 +97,48 @@ export default function Aviamentos() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [catPopoverOpen, setCatPopoverOpen] = useState(false);
+
+  const [fornecedores, setFornecedores] = useState<FornecedorOpt[]>([]);
+  const [fornPopoverOpen, setFornPopoverOpen] = useState(false);
+  const [novoFornOpen, setNovoFornOpen] = useState(false);
+  const [novoFornNome, setNovoFornNome] = useState("");
+  const [novoFornCnpj, setNovoFornCnpj] = useState("");
+  const [savingForn, setSavingForn] = useState(false);
+
+  const formatCnpj = (v: string) => {
+    const d = v.replace(/\D/g, "").slice(0, 14);
+    return d
+      .replace(/^(\d{2})(\d)/, "$1.$2")
+      .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+      .replace(/\.(\d{3})(\d)/, ".$1/$2")
+      .replace(/(\d{4})(\d)/, "$1-$2");
+  };
+
+  const handleCreateFornecedor = async () => {
+    const nome = novoFornNome.trim();
+    const cnpjDigits = novoFornCnpj.replace(/\D/g, "");
+    if (!nome) return toast.error("Informe o nome do fornecedor");
+    if (cnpjDigits.length !== 14) return toast.error("Informe um CNPJ válido (14 dígitos)");
+    setSavingForn(true);
+    const { data, error } = await supabase
+      .from("fornecedores" as any)
+      .insert({ nome, cnpj: formatCnpj(cnpjDigits), ativo: true })
+      .select("id, nome")
+      .single();
+    setSavingForn(false);
+    if (error) {
+      toast.error(error.message || "Erro ao criar fornecedor");
+      return;
+    }
+    const novo = data as unknown as FornecedorOpt;
+    setFornecedores((prev) => [...prev, novo].sort((a, b) => a.nome.localeCompare(b.nome)));
+    setForm((f) => ({ ...f, fornecedor_id: novo.id }));
+    setNovoFornNome("");
+    setNovoFornCnpj("");
+    setNovoFornOpen(false);
+    setFornPopoverOpen(false);
+    toast.success("Fornecedor cadastrado");
+  };
 
   const load = async () => {
     setLoading(true);
@@ -122,7 +174,17 @@ export default function Aviamentos() {
     setLoading(false);
   };
 
-  useEffect(() => { load(); }, []);
+  useEffect(() => {
+    load();
+    (async () => {
+      const { data } = await supabase
+        .from("fornecedores" as any)
+        .select("id, nome")
+        .eq("ativo", true)
+        .order("nome", { ascending: true });
+      setFornecedores(((data || []) as unknown as FornecedorOpt[]));
+    })();
+  }, []);
 
   const categorias = useMemo(() => {
     const s = new Set<string>();
@@ -155,6 +217,13 @@ export default function Aviamentos() {
     if (!form.unidade) return toast.error("Unidade é obrigatória");
     if (isNaN(estoque) || estoque < 0) return toast.error("Estoque inválido");
 
+    const fornecedorId = form.fornecedor_id;
+    const precoStr = form.preco_por_unidade.trim();
+    const precoNum = parseFloat(precoStr);
+    if (fornecedorId) {
+      if (!(precoNum > 0)) return toast.error("Informe um preço por unidade válido");
+    }
+
     setSaving(true);
     const { data, error } = await supabase
       .from("aviamentos" as any)
@@ -170,8 +239,32 @@ export default function Aviamentos() {
       })
       .select("id")
       .single();
+
+    if (error) {
+      setSaving(false);
+      return toast.error(error.message || "Erro ao salvar");
+    }
+    const newId = (data as any)?.id as string;
+
+    if (fornecedorId && newId) {
+      const { error: pErr } = await supabase
+        .from("aviamentos_fornecedores_precos" as any)
+        .insert({
+          aviamento_id: newId,
+          fornecedor_id: fornecedorId,
+          preco_por_unidade: precoNum,
+          ativo: true,
+        });
+      if (pErr) {
+        setSaving(false);
+        toast.error("Aviamento criado, mas falhou ao salvar preço: " + pErr.message);
+        setOpen(false);
+        load();
+        return;
+      }
+    }
+
     setSaving(false);
-    if (error) return toast.error(error.message || "Erro ao salvar");
     toast.success("Aviamento criado");
     setOpen(false);
     load();
@@ -372,6 +465,95 @@ export default function Aviamentos() {
               <Label>Observações</Label>
               <Textarea value={form.observacoes} onChange={(e) => setForm({ ...form, observacoes: e.target.value })} />
             </div>
+
+            <div className="rounded-md border p-3 space-y-3">
+              <div>
+                <Label className="text-sm font-semibold">Fornecedor e preço (opcional)</Label>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Já vincule um fornecedor com o preço por unidade. Você pode adicionar mais depois.
+                </p>
+              </div>
+              <div>
+                <Label>Fornecedor</Label>
+                <Popover open={fornPopoverOpen} onOpenChange={setFornPopoverOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      role="combobox"
+                      className="w-full justify-between font-normal"
+                    >
+                      {form.fornecedor_id
+                        ? fornecedores.find((f) => f.id === form.fornecedor_id)?.nome ?? "Selecione..."
+                        : "Selecione ou busque..."}
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[--radix-popover-trigger-width] p-0" align="start">
+                    <Command>
+                      <CommandInput placeholder="Buscar fornecedor..." />
+                      <CommandList>
+                        <CommandEmpty>
+                          <div className="py-3 text-center text-sm">Nenhum fornecedor encontrado.</div>
+                        </CommandEmpty>
+                        <CommandGroup>
+                          <CommandItem
+                            value="__nenhum__"
+                            onSelect={() => {
+                              setForm({ ...form, fornecedor_id: "" });
+                              setFornPopoverOpen(false);
+                            }}
+                          >
+                            <Check className={cn("mr-2 h-4 w-4", !form.fornecedor_id ? "opacity-100" : "opacity-0")} />
+                            Nenhum
+                          </CommandItem>
+                          {fornecedores.map((f) => (
+                            <CommandItem
+                              key={f.id}
+                              value={f.nome}
+                              onSelect={() => {
+                                setForm({ ...form, fornecedor_id: f.id });
+                                setFornPopoverOpen(false);
+                              }}
+                            >
+                              <Check className={cn("mr-2 h-4 w-4", form.fornecedor_id === f.id ? "opacity-100" : "opacity-0")} />
+                              {f.nome}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                        <div className="border-t p-1">
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            className="w-full justify-start"
+                            onClick={() => {
+                              setNovoFornOpen(true);
+                              setFornPopoverOpen(false);
+                            }}
+                          >
+                            <Plus className="mr-2 h-4 w-4" />
+                            Cadastrar novo fornecedor
+                          </Button>
+                        </div>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+              </div>
+              {form.fornecedor_id && (
+                <div>
+                  <Label>Preço por {unidadeLabel(form.unidade)} (R$) *</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={form.preco_por_unidade}
+                    onChange={(e) => setForm({ ...form, preco_por_unidade: e.target.value })}
+                  />
+                </div>
+              )}
+            </div>
+
             <div className="flex items-center gap-2">
               <Switch checked={form.ativo} onCheckedChange={(v) => setForm({ ...form, ativo: v })} />
               <Label>Ativo</Label>
@@ -383,6 +565,50 @@ export default function Aviamentos() {
           </SheetFooter>
         </SheetContent>
       </Sheet>
+
+      <Dialog open={novoFornOpen} onOpenChange={setNovoFornOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>Novo Fornecedor</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-3 py-2">
+            <div className="space-y-1.5">
+              <Label>Nome *</Label>
+              <Input
+                value={novoFornNome}
+                onChange={(e) => setNovoFornNome(e.target.value)}
+                placeholder="Nome do fornecedor"
+                autoFocus
+                maxLength={120}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label>CNPJ *</Label>
+              <Input
+                value={novoFornCnpj}
+                onChange={(e) => setNovoFornCnpj(formatCnpj(e.target.value))}
+                placeholder="00.000.000/0000-00"
+                inputMode="numeric"
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    handleCreateFornecedor();
+                  }
+                }}
+              />
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Você pode completar os outros dados depois em Catálogo &gt; Fornecedores.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setNovoFornOpen(false)}>Cancelar</Button>
+            <Button onClick={handleCreateFornecedor} disabled={savingForn}>
+              {savingForn ? "Salvando..." : "Cadastrar"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
