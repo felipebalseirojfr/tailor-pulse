@@ -184,6 +184,16 @@ export default function Tecidos() {
     if (!(l > 0)) return toast.error("Largura deve ser maior que 0");
     if (!(r > 0)) return toast.error("Rendimento deve ser maior que 0");
 
+    // Optional supplier block: if a supplier is selected, cor + preço are required
+    const fornecedorId = form.fornecedor_id;
+    const corInicial = form.cor_inicial.trim();
+    const precoStr = form.preco_por_kg.trim();
+    const precoNum = parseFloat(precoStr);
+    if (fornecedorId) {
+      if (!corInicial) return toast.error("Informe a cor da variação inicial");
+      if (!(precoNum > 0)) return toast.error("Informe um preço por kg válido");
+    }
+
     setSaving(true);
     const { data, error } = await supabase
       .from("tecidos" as any)
@@ -198,15 +208,46 @@ export default function Tecidos() {
       })
       .select("id")
       .single();
-    setSaving(false);
 
     if (error) {
+      setSaving(false);
       toast.error(error.message || "Erro ao salvar");
       return;
     }
+    const newId = (data as any)?.id as string;
+
+    if (fornecedorId && newId) {
+      const { data: variacao, error: vErr } = await supabase
+        .from("tecidos_variacoes" as any)
+        .insert({ tecido_id: newId, cor: corInicial, estoque_kg: 0, ativo: true })
+        .select("id")
+        .single();
+      if (vErr) {
+        setSaving(false);
+        toast.error("Tecido criado, mas falhou ao criar variação: " + vErr.message);
+        navigate(`/catalogo/tecidos/${newId}`);
+        return;
+      }
+      const variacaoId = (variacao as any)?.id;
+      const { error: pErr } = await supabase
+        .from("tecidos_fornecedores_precos" as any)
+        .insert({
+          tecido_variacao_id: variacaoId,
+          fornecedor_id: fornecedorId,
+          preco_por_kg: precoNum,
+          ativo: true,
+        });
+      if (pErr) {
+        setSaving(false);
+        toast.error("Variação criada, mas falhou ao salvar preço: " + pErr.message);
+        navigate(`/catalogo/tecidos/${newId}`);
+        return;
+      }
+    }
+
+    setSaving(false);
     toast.success("Tecido criado");
     setOpen(false);
-    const newId = (data as any)?.id;
     if (newId) navigate(`/catalogo/tecidos/${newId}`);
     else load();
   };
