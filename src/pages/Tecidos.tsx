@@ -111,15 +111,27 @@ export default function Tecidos() {
   const [fornPopoverOpen, setFornPopoverOpen] = useState(false);
   const [novoFornOpen, setNovoFornOpen] = useState(false);
   const [novoFornNome, setNovoFornNome] = useState("");
+  const [novoFornCnpj, setNovoFornCnpj] = useState("");
   const [savingForn, setSavingForn] = useState(false);
+
+  const formatCnpj = (v: string) => {
+    const d = v.replace(/\D/g, "").slice(0, 14);
+    return d
+      .replace(/^(\d{2})(\d)/, "$1.$2")
+      .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+      .replace(/\.(\d{3})(\d)/, ".$1/$2")
+      .replace(/(\d{4})(\d)/, "$1-$2");
+  };
 
   const handleCreateFornecedor = async () => {
     const nome = novoFornNome.trim();
+    const cnpjDigits = novoFornCnpj.replace(/\D/g, "");
     if (!nome) return toast.error("Informe o nome do fornecedor");
+    if (cnpjDigits.length !== 14) return toast.error("Informe um CNPJ válido (14 dígitos)");
     setSavingForn(true);
     const { data, error } = await supabase
       .from("fornecedores" as any)
-      .insert({ nome, ativo: true })
+      .insert({ nome, cnpj: formatCnpj(cnpjDigits), ativo: true })
       .select("id, nome")
       .single();
     setSavingForn(false);
@@ -131,6 +143,7 @@ export default function Tecidos() {
     setFornecedores((prev) => [...prev, novo].sort((a, b) => a.nome.localeCompare(b.nome)));
     setForm((f) => ({ ...f, fornecedor_id: novo.id }));
     setNovoFornNome("");
+    setNovoFornCnpj("");
     setNovoFornOpen(false);
     setFornPopoverOpen(false);
     toast.success("Fornecedor cadastrado");
