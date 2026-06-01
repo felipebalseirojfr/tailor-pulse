@@ -86,6 +86,7 @@ export default function Tecidos() {
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState(emptyForm);
   const [rendimentoTouched, setRendimentoTouched] = useState(false);
+  const [fornecedores, setFornecedores] = useState<FornecedorOpt[]>([]);
 
   const load = async () => {
     setLoading(true);
