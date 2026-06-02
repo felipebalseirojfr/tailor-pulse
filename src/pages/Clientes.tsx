@@ -156,6 +156,8 @@ export default function Clientes() {
   const [formTipoPeca, setFormTipoPeca] = useState({ nome: "", abreviacao_2_letras: "", ativo: true });
   const [abrevManual, setAbrevManual] = useState(false);
   const [salvandoTipoPeca, setSalvandoTipoPeca] = useState(false);
+  const [deletandoTipoPeca, setDeletandoTipoPeca] = useState<TipoPeca | null>(null);
+  const [confirmandoDeleteTipoPeca, setConfirmandoDeleteTipoPeca] = useState(false);
 
   // ── Referências ──
   interface Referencia {
