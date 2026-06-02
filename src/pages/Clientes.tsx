@@ -1189,6 +1189,22 @@ export default function Clientes() {
         </DialogContent>
       </Dialog>
 
+      {/* Confirmar exclusão tipo de peça */}
+      <AlertDialog open={confirmandoDeleteTipoPeca} onOpenChange={(v) => { setConfirmandoDeleteTipoPeca(v); if (!v) setDeletandoTipoPeca(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir tipo de peça?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir <strong>{deletandoTipoPeca?.nome}</strong> ({deletandoTipoPeca?.abreviacao_2_letras})? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmarDeleteTipoPeca} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
       {/* Modal terceiro */}
       <AlertDialog open={formTerceiroOpen} onOpenChange={setFormTerceiroOpen}>
         <AlertDialogContent>
