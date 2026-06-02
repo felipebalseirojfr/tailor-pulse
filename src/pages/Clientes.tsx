@@ -583,6 +583,34 @@ export default function Clientes() {
     if (!error) fetchTiposPeca();
   };
 
+  const confirmarDeleteTipoPeca = async () => {
+    if (!deletandoTipoPeca) return;
+    try {
+      const { count, error: errCount } = await (supabase.from("referencias") as any)
+        .select("id", { count: "exact", head: true })
+        .eq("tipo_peca_id", deletandoTipoPeca.id);
+      if (errCount) throw errCount;
+      if ((count ?? 0) > 0) {
+        toast({
+          title: "Não é possível excluir",
+          description: `Este tipo está vinculado a ${count} referência(s). Desative-o em vez de excluir.`,
+          variant: "destructive",
+        });
+        setConfirmandoDeleteTipoPeca(false);
+        setDeletandoTipoPeca(null);
+        return;
+      }
+      const { error } = await (supabase.from("tipos_peca") as any).delete().eq("id", deletandoTipoPeca.id);
+      if (error) throw error;
+      toast({ title: "Tipo de peça excluído" });
+      setConfirmandoDeleteTipoPeca(false);
+      setDeletandoTipoPeca(null);
+      fetchTiposPeca();
+    } catch (e: any) {
+      toast({ title: "Erro ao excluir", description: e.message, variant: "destructive" });
+    }
+  };
+
   const tiposPecaAtivos = tiposPeca.filter((t) => t.ativo);
   const tiposPecaFiltrados = tiposPeca
     .filter((t) => mostrarInativosTipo || t.ativo)
