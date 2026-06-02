@@ -916,6 +916,14 @@ export default function Clientes() {
                           <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => abrirEditarTipoPeca(tipo)}>
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                            onClick={() => { setDeletandoTipoPeca(tipo); setConfirmandoDeleteTipoPeca(true); }}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
                         </div>
                       </div>
                       <Button variant="ghost" size="sm" className="w-full mt-2 text-xs h-7" onClick={() => toggleAtivoTipoPeca(tipo)}>
