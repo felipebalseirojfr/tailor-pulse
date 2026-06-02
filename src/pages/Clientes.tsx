@@ -156,6 +156,8 @@ export default function Clientes() {
   const [formTipoPeca, setFormTipoPeca] = useState({ nome: "", abreviacao_2_letras: "", ativo: true });
   const [abrevManual, setAbrevManual] = useState(false);
   const [salvandoTipoPeca, setSalvandoTipoPeca] = useState(false);
+  const [deletandoTipoPeca, setDeletandoTipoPeca] = useState<TipoPeca | null>(null);
+  const [confirmandoDeleteTipoPeca, setConfirmandoDeleteTipoPeca] = useState(false);
 
   // ── Referências ──
   interface Referencia {
@@ -581,6 +583,34 @@ export default function Clientes() {
     if (!error) fetchTiposPeca();
   };
 
+  const confirmarDeleteTipoPeca = async () => {
+    if (!deletandoTipoPeca) return;
+    try {
+      const { count, error: errCount } = await (supabase.from("referencias") as any)
+        .select("id", { count: "exact", head: true })
+        .eq("tipo_peca_id", deletandoTipoPeca.id);
+      if (errCount) throw errCount;
+      if ((count ?? 0) > 0) {
+        toast({
+          title: "Não é possível excluir",
+          description: `Este tipo está vinculado a ${count} referência(s). Desative-o em vez de excluir.`,
+          variant: "destructive",
+        });
+        setConfirmandoDeleteTipoPeca(false);
+        setDeletandoTipoPeca(null);
+        return;
+      }
+      const { error } = await (supabase.from("tipos_peca") as any).delete().eq("id", deletandoTipoPeca.id);
+      if (error) throw error;
+      toast({ title: "Tipo de peça excluído" });
+      setConfirmandoDeleteTipoPeca(false);
+      setDeletandoTipoPeca(null);
+      fetchTiposPeca();
+    } catch (e: any) {
+      toast({ title: "Erro ao excluir", description: e.message, variant: "destructive" });
+    }
+  };
+
   const tiposPecaAtivos = tiposPeca.filter((t) => t.ativo);
   const tiposPecaFiltrados = tiposPeca
     .filter((t) => mostrarInativosTipo || t.ativo)
@@ -886,6 +916,14 @@ export default function Clientes() {
                           <Button variant="ghost" size="sm" className="h-8 w-8 p-0" onClick={() => abrirEditarTipoPeca(tipo)}>
                             <Pencil className="h-3.5 w-3.5" />
                           </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 text-destructive hover:text-destructive"
+                            onClick={() => { setDeletandoTipoPeca(tipo); setConfirmandoDeleteTipoPeca(true); }}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
                         </div>
                       </div>
                       <Button variant="ghost" size="sm" className="w-full mt-2 text-xs h-7" onClick={() => toggleAtivoTipoPeca(tipo)}>
@@ -1150,6 +1188,22 @@ export default function Clientes() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Confirmar exclusão tipo de peça */}
+      <AlertDialog open={confirmandoDeleteTipoPeca} onOpenChange={(v) => { setConfirmandoDeleteTipoPeca(v); if (!v) setDeletandoTipoPeca(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir tipo de peça?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir <strong>{deletandoTipoPeca?.nome}</strong> ({deletandoTipoPeca?.abreviacao_2_letras})? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={confirmarDeleteTipoPeca} className="bg-destructive text-destructive-foreground hover:bg-destructive/90">Excluir</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Modal terceiro */}
       <AlertDialog open={formTerceiroOpen} onOpenChange={setFormTerceiroOpen}>

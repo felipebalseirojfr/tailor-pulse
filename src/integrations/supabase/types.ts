@@ -1685,6 +1685,7 @@ export type Database = {
           created_at: string
           criado_por: string | null
           descricao: string | null
+          genero: string | null
           id: string
           modelagem_origem_id: string | null
           sequencial: number
@@ -1699,6 +1700,7 @@ export type Database = {
           created_at?: string
           criado_por?: string | null
           descricao?: string | null
+          genero?: string | null
           id?: string
           modelagem_origem_id?: string | null
           sequencial: number
@@ -1713,6 +1715,7 @@ export type Database = {
           created_at?: string
           criado_por?: string | null
           descricao?: string | null
+          genero?: string | null
           id?: string
           modelagem_origem_id?: string | null
           sequencial?: number
