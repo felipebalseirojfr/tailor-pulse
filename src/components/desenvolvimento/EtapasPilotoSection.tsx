@@ -45,7 +45,7 @@ export default function EtapasPilotoSection({
   const [fittingTexto, setFittingTexto] = useState("");
   const [fittingNovaPiloto, setFittingNovaPiloto] = useState<"sim" | "nao">("sim");
   const [decisionLoading, setDecisionLoading] = useState(false);
-  const [fichasMissing, setFichasMissing] = useState<{ tecnica: boolean; costura: boolean } | null>(null);
+  const [fichasMissing, setFichasMissing] = useState<{ tecnica: boolean; costura: boolean; fotoFrente: boolean; fotoCostas: boolean } | null>(null);
 
   const carregar = async () => {
     setLoading(true);
