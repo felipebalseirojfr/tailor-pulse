@@ -860,7 +860,8 @@ const CHECK_LABEL_POR_ETAPA: Record<string, string> = {
   bordado: "Bordado aplicado?",
   caseado: "Caseado / botão feito?",
   acabamento: "Acabamento concluído?",
-  lacre_piloto: "Piloto lacrada?",
+  piloto_enviada_cliente: "Piloto enviada ao cliente?",
+  aguardando_aprovacao_cliente: "Decidir resultado",
 };
 
 function prazoInfo(r: Referencia): { dias: number; label: string; cls: string } | null {
