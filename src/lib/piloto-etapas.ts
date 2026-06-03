@@ -11,9 +11,6 @@ import { supabase } from "@/integrations/supabase/client";
  * triggered from `aguardando_aprovacao_cliente` (see lacrarPiloto()).
  */
 export const PILOTO_ETAPAS_CONFIGURAVEIS = [
-  "plotagem_risco",
-  "corte",
-  "costura",
   "lavanderia",
   "estamparia",
   "estamparia_bordado",
@@ -22,7 +19,12 @@ export const PILOTO_ETAPAS_CONFIGURAVEIS = [
   "acabamento",
 ] as const;
 
-export const PILOTO_ETAPAS_FIXAS_INICIO = ["desenvolvimento_modelagem"] as const;
+export const PILOTO_ETAPAS_FIXAS_INICIO = [
+  "desenvolvimento_modelagem",
+  "plotagem_risco",
+  "corte",
+  "costura",
+] as const;
 export const PILOTO_ETAPAS_FIXAS_FIM = [
   "piloto_enviada_cliente",
   "aguardando_aprovacao_cliente",
