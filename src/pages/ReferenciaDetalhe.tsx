@@ -291,6 +291,19 @@ export default function ReferenciaDetalhe() {
             )}
           </div>
 
+          <div className="space-y-2">
+            <Label>Prazo de término do desenvolvimento</Label>
+            {editMode ? (
+              <Input type="date" value={prazoTermino} onChange={(e) => setPrazoTermino(e.target.value)} />
+            ) : (
+              <p className="text-sm">
+                {ref.prazo_termino
+                  ? new Date(ref.prazo_termino + "T00:00:00").toLocaleDateString("pt-BR")
+                  : <span className="text-muted-foreground">—</span>}
+              </p>
+            )}
+          </div>
+
           <div>
             <Label className="text-xs text-muted-foreground">Criado em</Label>
             <p className="text-sm">{new Date(ref.created_at).toLocaleString("pt-BR")}</p>
