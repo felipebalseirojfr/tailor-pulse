@@ -21,6 +21,7 @@ import ModelagemDxfSection from "@/components/referencias/ModelagemDxfSection";
 import DxfBanner from "@/components/desenvolvimento/DxfBanner";
 import EtapasPilotoSection from "@/components/desenvolvimento/EtapasPilotoSection";
 import FichaTecnicaSection from "@/components/desenvolvimento/FichaTecnicaSection";
+import FichaCosturaSection from "@/components/desenvolvimento/FichaCosturaSection";
 
 interface Referencia {
   id: string;
@@ -62,6 +63,7 @@ export default function ReferenciaDetalhe() {
   const [editMode, setEditMode] = useState(false);
   const [saving, setSaving] = useState(false);
   const [fichaSummary, setFichaSummary] = useState<{ tecidos: number; aviamentos: number; status: string } | null>(null);
+  const [costuraSummary, setCosturaSummary] = useState<{ tecidos: number; medidas: number; status: string } | null>(null);
 
   // Edit form
   const [descricao, setDescricao] = useState("");
@@ -205,15 +207,31 @@ export default function ReferenciaDetalhe() {
         <DxfBanner referenciaId={ref.id} onChange={fetchAll} />
       )}
 
-      {fichaSummary && (
-        <button
-          type="button"
-          onClick={() => document.getElementById("ficha-tecnica")?.scrollIntoView({ behavior: "smooth" })}
-          className="text-sm text-muted-foreground hover:text-foreground underline-offset-2 hover:underline self-start"
-        >
-          Ficha Técnica: {fichaSummary.tecidos} tecido(s) · {fichaSummary.aviamentos} aviamento(s)
-        </button>
-      )}
+      <div className="flex flex-wrap gap-x-4 gap-y-1">
+        {fichaSummary && (
+          <button
+            type="button"
+            onClick={() => document.getElementById("ficha-tecnica")?.scrollIntoView({ behavior: "smooth" })}
+            className="text-sm text-muted-foreground hover:text-foreground underline-offset-2 hover:underline self-start"
+          >
+            Ficha Técnica: {fichaSummary.tecidos} tecido(s) · {fichaSummary.aviamentos} aviamento(s)
+          </button>
+        )}
+        {costuraSummary && (
+          <button
+            type="button"
+            onClick={() => document.getElementById("ficha-costura")?.scrollIntoView({ behavior: "smooth" })}
+            className="text-sm text-muted-foreground hover:text-foreground underline-offset-2 hover:underline self-start inline-flex items-center gap-1"
+          >
+            Ficha de Costura: {costuraSummary.tecidos} tecido(s) · {costuraSummary.medidas} medidas ·
+            <Badge variant="outline" className={costuraSummary.status === "finalizada"
+              ? "bg-green-500/15 text-green-700 dark:text-green-400 border-green-500/30"
+              : "bg-muted"}>
+              {costuraSummary.status === "finalizada" ? "Finalizada" : "Rascunho"}
+            </Badge>
+          </button>
+        )}
+      </div>
 
       {/* Section F — Etapas da Piloto */}
       <EtapasPilotoSection referenciaId={ref.id} onChanged={fetchAll} />
@@ -335,15 +353,7 @@ export default function ReferenciaDetalhe() {
       />
 
       {/* Section C — Ficha de Costura */}
-      <Card id="ficha-costura" className="scroll-mt-24">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Scissors className="h-5 w-5" /> Ficha de Costura</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <p className="text-muted-foreground">Ficha de Costura ainda não cadastrada. Em breve.</p>
-          <Button disabled title="Em breve" variant="outline">Editar Ficha de Costura</Button>
-        </CardContent>
-      </Card>
+      <FichaCosturaSection referenciaId={ref.id} onSummaryChange={setCosturaSummary} />
 
       {/* Section D — PDFs */}
       <Card>
