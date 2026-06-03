@@ -81,7 +81,16 @@ Deno.serve(async (req) => {
       source = "entities";
     }
     if (!bbox) {
-      return json({ ok: false, error: "dxf_parse", message: "DXF sem coordenadas legíveis" });
+      const sample = text.slice(0, 800);
+      const hasExtmin = text.includes("$EXTMIN");
+      const hasEntities = text.includes("ENTITIES");
+      const has10 = /\n\s*10\s*\n/.test(text);
+      return json({
+        ok: false,
+        error: "dxf_parse",
+        message: "DXF sem coordenadas legíveis",
+        debug: { size: text.length, hasExtmin, hasEntities, has10, sample },
+      });
     }
 
     const widthMm = Math.abs(bbox.maxX - bbox.minX);
