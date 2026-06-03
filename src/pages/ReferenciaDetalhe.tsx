@@ -20,6 +20,7 @@ import { ArrowLeft, Pencil, FileText, Scissors, FileDown } from "lucide-react";
 import ModelagemDxfSection from "@/components/referencias/ModelagemDxfSection";
 import DxfBanner from "@/components/desenvolvimento/DxfBanner";
 import EtapasPilotoSection from "@/components/desenvolvimento/EtapasPilotoSection";
+import FichaTecnicaSection from "@/components/desenvolvimento/FichaTecnicaSection";
 
 interface Referencia {
   id: string;
@@ -60,6 +61,7 @@ export default function ReferenciaDetalhe() {
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [fichaSummary, setFichaSummary] = useState<{ tecidos: number; aviamentos: number; status: string } | null>(null);
 
   // Edit form
   const [descricao, setDescricao] = useState("");
@@ -203,6 +205,16 @@ export default function ReferenciaDetalhe() {
         <DxfBanner referenciaId={ref.id} onChange={fetchAll} />
       )}
 
+      {fichaSummary && (
+        <button
+          type="button"
+          onClick={() => document.getElementById("ficha-tecnica")?.scrollIntoView({ behavior: "smooth" })}
+          className="text-sm text-muted-foreground hover:text-foreground underline-offset-2 hover:underline self-start"
+        >
+          Ficha Técnica: {fichaSummary.tecidos} tecido(s) · {fichaSummary.aviamentos} aviamento(s)
+        </button>
+      )}
+
       {/* Section F — Etapas da Piloto */}
       <EtapasPilotoSection referenciaId={ref.id} onChanged={fetchAll} />
 
@@ -315,16 +327,12 @@ export default function ReferenciaDetalhe() {
         </CardContent>
       </Card>
 
-      {/* Section B — Ficha Técnica */}
-      <Card id="ficha-tecnica" className="scroll-mt-24">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5" /> Ficha Técnica</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <p className="text-muted-foreground">Ficha Técnica ainda não cadastrada. Esta funcionalidade será implementada em breve.</p>
-          <Button disabled title="Em breve" variant="outline">Editar Ficha Técnica</Button>
-        </CardContent>
-      </Card>
+      {/* Section B — Ficha Técnica JFR */}
+      <FichaTecnicaSection
+        referenciaId={ref.id}
+        refInfo={{ codigo: ref.codigo, cliente: clienteNome, tipoPeca: tipoPecaNome, descricao: ref.descricao }}
+        onSummaryChange={setFichaSummary}
+      />
 
       {/* Section C — Ficha de Costura */}
       <Card id="ficha-costura" className="scroll-mt-24">

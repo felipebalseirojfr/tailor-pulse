@@ -713,6 +713,278 @@ export type Database = {
           },
         ]
       }
+      fichas_tecnicas: {
+        Row: {
+          colecao: string | null
+          created_at: string
+          finalizada_em: string | null
+          id: string
+          observacoes_gerais: string | null
+          referencia_cliente: string | null
+          referencia_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          colecao?: string | null
+          created_at?: string
+          finalizada_em?: string | null
+          id?: string
+          observacoes_gerais?: string | null
+          referencia_cliente?: string | null
+          referencia_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          colecao?: string | null
+          created_at?: string
+          finalizada_em?: string | null
+          id?: string
+          observacoes_gerais?: string | null
+          referencia_cliente?: string | null
+          referencia_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fichas_tecnicas_referencia_id_fkey"
+            columns: ["referencia_id"]
+            isOneToOne: true
+            referencedRelation: "referencias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fichas_tecnicas_arquivos_cliente: {
+        Row: {
+          arquivo_url: string
+          created_at: string
+          ficha_tecnica_id: string
+          id: string
+          nome_arquivo: string
+          tamanho_bytes: number | null
+          updated_at: string
+        }
+        Insert: {
+          arquivo_url: string
+          created_at?: string
+          ficha_tecnica_id: string
+          id?: string
+          nome_arquivo: string
+          tamanho_bytes?: number | null
+          updated_at?: string
+        }
+        Update: {
+          arquivo_url?: string
+          created_at?: string
+          ficha_tecnica_id?: string
+          id?: string
+          nome_arquivo?: string
+          tamanho_bytes?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fichas_tecnicas_arquivos_cliente_ficha_tecnica_id_fkey"
+            columns: ["ficha_tecnica_id"]
+            isOneToOne: false
+            referencedRelation: "fichas_tecnicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fichas_tecnicas_aviamentos: {
+        Row: {
+          aviamento_id: string
+          created_at: string
+          ficha_tecnica_id: string
+          id: string
+          localizacao: string | null
+          observacoes: string | null
+          quantidade_por_peca: number
+          updated_at: string
+        }
+        Insert: {
+          aviamento_id: string
+          created_at?: string
+          ficha_tecnica_id: string
+          id?: string
+          localizacao?: string | null
+          observacoes?: string | null
+          quantidade_por_peca: number
+          updated_at?: string
+        }
+        Update: {
+          aviamento_id?: string
+          created_at?: string
+          ficha_tecnica_id?: string
+          id?: string
+          localizacao?: string | null
+          observacoes?: string | null
+          quantidade_por_peca?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fichas_tecnicas_aviamentos_aviamento_id_fkey"
+            columns: ["aviamento_id"]
+            isOneToOne: false
+            referencedRelation: "aviamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fichas_tecnicas_aviamentos_ficha_tecnica_id_fkey"
+            columns: ["ficha_tecnica_id"]
+            isOneToOne: false
+            referencedRelation: "fichas_tecnicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fichas_tecnicas_customizacoes: {
+        Row: {
+          arte_url: string | null
+          created_at: string
+          descricao: string
+          ficha_tecnica_id: string
+          id: string
+          localizacao: string | null
+          observacoes: string | null
+          ordem: number
+          tipo: string
+          updated_at: string
+        }
+        Insert: {
+          arte_url?: string | null
+          created_at?: string
+          descricao: string
+          ficha_tecnica_id: string
+          id?: string
+          localizacao?: string | null
+          observacoes?: string | null
+          ordem?: number
+          tipo: string
+          updated_at?: string
+        }
+        Update: {
+          arte_url?: string | null
+          created_at?: string
+          descricao?: string
+          ficha_tecnica_id?: string
+          id?: string
+          localizacao?: string | null
+          observacoes?: string | null
+          ordem?: number
+          tipo?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fichas_tecnicas_customizacoes_ficha_tecnica_id_fkey"
+            columns: ["ficha_tecnica_id"]
+            isOneToOne: false
+            referencedRelation: "fichas_tecnicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fichas_tecnicas_medidas: {
+        Row: {
+          created_at: string
+          ficha_tecnica_id: string
+          gradacao_obs: string | null
+          id: string
+          nome_medida: string
+          ordem: number
+          tamanho_base: string
+          updated_at: string
+          valor_cm: number
+        }
+        Insert: {
+          created_at?: string
+          ficha_tecnica_id: string
+          gradacao_obs?: string | null
+          id?: string
+          nome_medida: string
+          ordem?: number
+          tamanho_base: string
+          updated_at?: string
+          valor_cm: number
+        }
+        Update: {
+          created_at?: string
+          ficha_tecnica_id?: string
+          gradacao_obs?: string | null
+          id?: string
+          nome_medida?: string
+          ordem?: number
+          tamanho_base?: string
+          updated_at?: string
+          valor_cm?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fichas_tecnicas_medidas_ficha_tecnica_id_fkey"
+            columns: ["ficha_tecnica_id"]
+            isOneToOne: false
+            referencedRelation: "fichas_tecnicas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fichas_tecnicas_tecidos: {
+        Row: {
+          consumo_kg_por_peca: number | null
+          consumo_m_por_peca: number | null
+          created_at: string
+          ficha_tecnica_id: string
+          fornecido_pelo_cliente: boolean
+          id: string
+          observacoes: string | null
+          tecido_variacao_id: string
+          updated_at: string
+        }
+        Insert: {
+          consumo_kg_por_peca?: number | null
+          consumo_m_por_peca?: number | null
+          created_at?: string
+          ficha_tecnica_id: string
+          fornecido_pelo_cliente?: boolean
+          id?: string
+          observacoes?: string | null
+          tecido_variacao_id: string
+          updated_at?: string
+        }
+        Update: {
+          consumo_kg_por_peca?: number | null
+          consumo_m_por_peca?: number | null
+          created_at?: string
+          ficha_tecnica_id?: string
+          fornecido_pelo_cliente?: boolean
+          id?: string
+          observacoes?: string | null
+          tecido_variacao_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fichas_tecnicas_tecidos_ficha_tecnica_id_fkey"
+            columns: ["ficha_tecnica_id"]
+            isOneToOne: false
+            referencedRelation: "fichas_tecnicas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fichas_tecnicas_tecidos_tecido_variacao_id_fkey"
+            columns: ["tecido_variacao_id"]
+            isOneToOne: false
+            referencedRelation: "tecidos_variacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fornecedores: {
         Row: {
           ativo: boolean
