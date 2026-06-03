@@ -61,6 +61,7 @@ export default function ReferenciaDetalhe() {
   const [loading, setLoading] = useState(true);
   const [editMode, setEditMode] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [fichaSummary, setFichaSummary] = useState<{ tecidos: number; aviamentos: number; status: string } | null>(null);
 
   // Edit form
   const [descricao, setDescricao] = useState("");
