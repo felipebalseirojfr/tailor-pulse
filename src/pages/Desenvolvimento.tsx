@@ -664,6 +664,7 @@ function FilaSection({
                   <th className="p-2">Dias na etapa</th>
                   <th className="p-2">DXF</th>
                   {reordenavel && <th className="p-2 text-right">Reordenar</th>}
+                  {onExcluir && <th className="p-2 text-right">Ações</th>}
                 </tr>
               </thead>
               <tbody>
