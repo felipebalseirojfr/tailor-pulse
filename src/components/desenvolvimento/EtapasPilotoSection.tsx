@@ -105,10 +105,8 @@ export default function EtapasPilotoSection({
   ];
   const etapasComTerceiroSel = sequenciaFinal.filter((e) => ETAPAS_COM_TERCEIRO.has(e));
 
-  const irProximoStep = () => {
-    if (etapasComTerceiroSel.length === 0) return salvarConfig();
-    setStep("terceiros");
-  };
+  // Modelista não atribui terceiros — isso é definido pelo PCP.
+  const irProximoStep = () => salvarConfig();
 
   const salvarConfig = async () => {
     setSalvando(true);
