@@ -21,6 +21,7 @@ import ModelagemDxfSection from "@/components/referencias/ModelagemDxfSection";
 import DxfBanner from "@/components/desenvolvimento/DxfBanner";
 import EtapasPilotoSection from "@/components/desenvolvimento/EtapasPilotoSection";
 import FichaTecnicaSection from "@/components/desenvolvimento/FichaTecnicaSection";
+import FichaCosturaSection from "@/components/desenvolvimento/FichaCosturaSection";
 
 interface Referencia {
   id: string;
