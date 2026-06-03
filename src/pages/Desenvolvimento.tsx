@@ -50,7 +50,13 @@ export default function Desenvolvimento() {
   const [terceiros, setTerceiros] = useState<Terceiro[]>([]);
   const [dxfByRef, setDxfByRef] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
-  const [tab, setTab] = useState("acompanhamento");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tab = searchParams.get("tab") || "acompanhamento";
+  const setTab = (v: string) => {
+    const next = new URLSearchParams(searchParams);
+    next.set("tab", v);
+    setSearchParams(next, { replace: false });
+  };
   const [filtroEtapa, setFiltroEtapa] = useState<string | null>(null);
   const [clientesExpandidos, setClientesExpandidos] = useState<Set<string>>(new Set());
 
