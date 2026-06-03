@@ -36,12 +36,14 @@ interface Referencia {
 }
 
 const statusBadgeClass = (status: string) =>
-  status === "em_desenvolvimento"
+  status === "rascunho"
+    ? "bg-orange-500/15 text-orange-700 dark:text-orange-400 border-orange-500/30"
+    : status === "em_desenvolvimento"
     ? "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/30"
     : "bg-muted text-foreground";
 
 const statusLabel = (status: string) =>
-  status === "em_desenvolvimento" ? "Em desenvolvimento" : status;
+  status === "rascunho" ? "Rascunho" : status === "em_desenvolvimento" ? "Em desenvolvimento" : status;
 
 export default function ReferenciaDetalhe() {
   const { id } = useParams<{ id: string }>();
