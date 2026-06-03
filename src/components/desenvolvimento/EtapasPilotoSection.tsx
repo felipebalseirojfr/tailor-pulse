@@ -306,42 +306,13 @@ export default function EtapasPilotoSection({
                 </div>
               </div>
             </div>
-          ) : (
-            <div className="space-y-3 py-2">
-              {etapasComTerceiroSel.map((et) => {
-                const opcoes = terceiros.filter((t) => t.tipo_etapa === et);
-                return (
-                  <div key={et} className="space-y-1">
-                    <Label>{labelEtapa(et)}</Label>
-                    <Select
-                      value={terceirosMap[et] || "__none__"}
-                      onValueChange={(v) => setTerceirosMap((m) => ({ ...m, [et]: v === "__none__" ? "" : v }))}
-                    >
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none__">Sem terceiro</SelectItem>
-                        {opcoes.length === 0 && <SelectItem value="__empty__" disabled>Nenhum terceiro cadastrado para esta etapa</SelectItem>}
-                        {opcoes.map((t) => <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          ) : null}
 
           <DialogFooter>
-            {step === "terceiros" && (
-              <Button variant="outline" onClick={() => setStep("selecionar")}>Voltar</Button>
-            )}
             <Button variant="outline" onClick={() => setConfigOpen(false)}>Cancelar</Button>
-            {step === "selecionar" ? (
-              <Button onClick={irProximoStep}>
-                {etapasComTerceiroSel.length ? "Continuar" : "Salvar"}
-              </Button>
-            ) : (
-              <Button onClick={salvarConfig} disabled={salvando}>{salvando ? "Salvando..." : "Salvar Etapas"}</Button>
-            )}
+            <Button onClick={salvarConfig} disabled={salvando}>
+              {salvando ? "Salvando..." : "Salvar Etapas"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
