@@ -1,0 +1,1 @@
+ALTER TABLE public.referencias ADD COLUMN IF NOT EXISTS prioridade_desenvolvimento integer NOT NULL DEFAULT 0;
