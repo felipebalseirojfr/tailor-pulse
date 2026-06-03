@@ -867,6 +867,8 @@ function HistoricoCorte() {
                               <th className="text-left px-3 py-2 font-semibold border-b-2 border-blue-500/40 whitespace-nowrap">Conclusão</th>
                               
                               <th className="text-left px-3 py-2 font-semibold border-b-2 border-blue-500/40">Grade Esperada / Cortada</th>
+                              <th className="text-right px-3 py-2 font-semibold border-b-2 border-blue-500/40 whitespace-nowrap">Total Esp.</th>
+                              <th className="text-right px-3 py-2 font-semibold border-b-2 border-blue-500/40 whitespace-nowrap">Total Cort.</th>
                               <th className="text-left px-3 py-2 font-semibold border-b-2 border-blue-500/40">Diferença por Tamanho</th>
                               <th className="text-right px-3 py-2 font-semibold border-b-2 border-blue-500/40 whitespace-nowrap">Total Dif.</th>
                               <th className="text-center px-3 py-2 font-semibold border-b-2 border-blue-500/40">Coment.</th>
