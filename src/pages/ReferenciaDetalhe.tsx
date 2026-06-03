@@ -33,6 +33,7 @@ interface Referencia {
   ativo: boolean;
   criado_por: string | null;
   created_at: string;
+  prazo_termino: string | null;
 }
 
 const statusBadgeClass = (status: string) =>
