@@ -270,9 +270,9 @@ export default function EtapasPilotoSection({
               <div>
                 <p className="text-xs uppercase text-muted-foreground mb-2">Etapas fixas (sempre presentes)</p>
                 <div className="flex flex-wrap gap-2">
-                  {PILOTO_ETAPAS_FIXAS_INICIO.map((et) => (
+                  {PILOTO_ETAPAS_FIXAS_INICIO.map((et, i) => (
                     <Badge key={et} variant="outline" className="bg-primary/10 border-primary/30 text-primary">
-                      1. {labelEtapa(et)}
+                      {i + 1}. {labelEtapa(et)}
                     </Badge>
                   ))}
                   {PILOTO_ETAPAS_FIXAS_FIM.map((et, i) => (
