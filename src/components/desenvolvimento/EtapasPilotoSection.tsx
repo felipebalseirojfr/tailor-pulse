@@ -8,15 +8,16 @@ import {
 } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Label } from "@/components/ui/label";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { useToast } from "@/hooks/use-toast";
-import { Check, ListChecks, Pencil, ChevronRight, PlayCircle } from "lucide-react";
+import { Check, ListChecks, Pencil, ChevronRight, PlayCircle, AlertTriangle, CheckCircle2 } from "lucide-react";
 import {
-  PILOTO_ETAPAS_DISPONIVEIS, ETAPAS_COM_TERCEIRO, labelEtapa,
-  fetchPilotoEtapas, hasActiveDxf, avancarEtapa, PilotoEtapaRow,
+  PILOTO_ETAPAS_CONFIGURAVEIS, PILOTO_ETAPAS_FIXAS_INICIO, PILOTO_ETAPAS_FIXAS_FIM,
+  ETAPAS_COM_TERCEIRO, labelEtapa,
+  fetchPilotoEtapas, hasActiveDxf, avancarEtapa,
+  lacrarPiloto, solicitarFittingNovaPiloto, checkFichasFinalizadas,
+  PilotoEtapaRow,
 } from "@/lib/piloto-etapas";
 
 interface Terceiro { id: string; nome: string; tipo_etapa: string; ativo: boolean }
@@ -31,15 +32,20 @@ export default function EtapasPilotoSection({
   const [loading, setLoading] = useState(true);
   const [dxfOk, setDxfOk] = useState(false);
 
-  // Configurator state
+  // Configurator
   const [configOpen, setConfigOpen] = useState(false);
-  const [selecionadas, setSelecionadas] = useState<string[]>([]);
+  const [selecionadas, setSelecionadas] = useState<string[]>([]); // configurable only
   const [step, setStep] = useState<"selecionar" | "terceiros">("selecionar");
   const [terceirosMap, setTerceirosMap] = useState<Record<string, string>>({});
   const [salvando, setSalvando] = useState(false);
 
-  // Advance dialog
-  const [confirmLacre, setConfirmLacre] = useState(false);
+  // Decision modal (aguardando_aprovacao_cliente)
+  const [decisionOpen, setDecisionOpen] = useState(false);
+  const [decisionMode, setDecisionMode] = useState<"inicial" | "fitting">("inicial");
+  const [fittingTexto, setFittingTexto] = useState("");
+  const [fittingNovaPiloto, setFittingNovaPiloto] = useState<"sim" | "nao">("sim");
+  const [decisionLoading, setDecisionLoading] = useState(false);
+  const [fichasMissing, setFichasMissing] = useState<{ tecnica: boolean; costura: boolean } | null>(null);
 
   const carregar = async () => {
     setLoading(true);
@@ -71,12 +77,15 @@ export default function EtapasPilotoSection({
 
   const abrirConfig = () => {
     if (etapas.length) {
-      setSelecionadas(etapas.map((e) => e.tipo_etapa));
+      const configuradasAtuais = etapas
+        .map((e) => e.tipo_etapa)
+        .filter((t) => (PILOTO_ETAPAS_CONFIGURAVEIS as readonly string[]).includes(t));
+      setSelecionadas(configuradasAtuais);
       const map: Record<string, string> = {};
       etapas.forEach((e) => { if (e.terceiro_id) map[e.tipo_etapa] = e.terceiro_id; });
       setTerceirosMap(map);
     } else {
-      setSelecionadas(["desenvolvimento_modelagem", "lacre_piloto"]);
+      setSelecionadas([]);
       setTerceirosMap({});
     }
     setStep("selecionar");
@@ -84,14 +93,17 @@ export default function EtapasPilotoSection({
   };
 
   const toggleEtapa = (et: string) => {
-    if (et === "desenvolvimento_modelagem" || et === "lacre_piloto") return;
-    setSelecionadas((s) =>
-      s.includes(et) ? s.filter((x) => x !== et) : [...s.filter((x) => x !== "lacre_piloto"), et, "lacre_piloto"]
-    );
+    setSelecionadas((s) => (s.includes(et) ? s.filter((x) => x !== et) : [...s, et]));
   };
 
-  const ordemFinal = PILOTO_ETAPAS_DISPONIVEIS.filter((e) => selecionadas.includes(e));
-  const etapasComTerceiroSel = ordemFinal.filter((e) => ETAPAS_COM_TERCEIRO.has(e));
+  // Final sequence: fixed start + configurable (in their canonical order) + fixed end
+  const configuraveisOrdenadas = PILOTO_ETAPAS_CONFIGURAVEIS.filter((e) => selecionadas.includes(e));
+  const sequenciaFinal: string[] = [
+    ...PILOTO_ETAPAS_FIXAS_INICIO,
+    ...configuraveisOrdenadas,
+    ...PILOTO_ETAPAS_FIXAS_FIM,
+  ];
+  const etapasComTerceiroSel = sequenciaFinal.filter((e) => ETAPAS_COM_TERCEIRO.has(e));
 
   const irProximoStep = () => {
     if (etapasComTerceiroSel.length === 0) return salvarConfig();
@@ -100,10 +112,9 @@ export default function EtapasPilotoSection({
 
   const salvarConfig = async () => {
     setSalvando(true);
-    // delete existing then insert
     await (supabase.from("piloto_etapas") as any).delete().eq("referencia_id", referenciaId);
     const now = new Date().toISOString();
-    const payload = ordemFinal.map((tipo, idx) => ({
+    const payload = sequenciaFinal.map((tipo, idx) => ({
       referencia_id: referenciaId,
       tipo_etapa: tipo,
       ordem: idx + 1,
@@ -125,16 +136,56 @@ export default function EtapasPilotoSection({
 
   const fazerAvancar = async () => {
     const r = await avancarEtapa(referenciaId);
+    if (r.isAprovacaoCliente) { abrirDecisao(); return; }
     if (!r.ok) { toast({ title: "Não foi possível avançar", description: r.error, variant: "destructive" }); return; }
-    if (r.lacrou) toast({ title: "Piloto lacrada!", description: "Aprovada pelo cliente." });
-    else toast({ title: "Etapa avançada" });
+    toast({ title: "Etapa avançada" });
     carregar();
     onChanged?.();
   };
 
   const handleAvancar = () => {
-    if (atual?.tipo_etapa === "lacre_piloto") { setConfirmLacre(true); return; }
+    if (atual?.tipo_etapa === "aguardando_aprovacao_cliente") { abrirDecisao(); return; }
     fazerAvancar();
+  };
+
+  const abrirDecisao = () => {
+    setDecisionMode("inicial");
+    setFittingTexto("");
+    setFittingNovaPiloto("sim");
+    setFichasMissing(null);
+    setDecisionOpen(true);
+  };
+
+  const handleLacrar = async (aprovadaComAlteracoes = false, alteracoes: string | null = null) => {
+    setDecisionLoading(true);
+    const r = await lacrarPiloto(referenciaId, { aprovadaComAlteracoes, alteracoes });
+    setDecisionLoading(false);
+    if (!r.ok) {
+      if (r.fichas) setFichasMissing(r.fichas);
+      else toast({ title: "Erro ao lacrar", description: r.error, variant: "destructive" });
+      return;
+    }
+    toast({ title: aprovadaComAlteracoes ? "Piloto aprovada com alterações" : "Piloto lacrada!" });
+    setDecisionOpen(false);
+    carregar();
+    onChanged?.();
+  };
+
+  const handleFittingSubmit = async () => {
+    if (!fittingTexto.trim()) { toast({ title: "Descreva as correções", variant: "destructive" }); return; }
+    if (fittingNovaPiloto === "sim") {
+      setDecisionLoading(true);
+      const r = await solicitarFittingNovaPiloto(referenciaId, fittingTexto.trim());
+      setDecisionLoading(false);
+      if (!r.ok) { toast({ title: "Erro", description: r.error, variant: "destructive" }); return; }
+      toast({ title: "Fitting iniciado", description: "A referência voltou para Desenvolvimento de Modelagem." });
+      setDecisionOpen(false);
+      carregar();
+      onChanged?.();
+    } else {
+      // NO: validate fichas + lacrar
+      await handleLacrar(true, fittingTexto.trim());
+    }
   };
 
   const bloqueadoPorDxf = atual?.tipo_etapa === "desenvolvimento_modelagem" && !dxfOk;
@@ -185,7 +236,8 @@ export default function EtapasPilotoSection({
                   title={bloqueadoPorDxf ? "Envie o arquivo DXF antes de avançar para o corte." : undefined}
                   className="gap-2"
                 >
-                  <PlayCircle className="h-4 w-4" /> Avançar Etapa
+                  <PlayCircle className="h-4 w-4" />
+                  {atual.tipo_etapa === "aguardando_aprovacao_cliente" ? "Decidir Resultado" : "Avançar Etapa"}
                 </Button>
               )}
               {podeEditarEtapas && (
@@ -208,42 +260,55 @@ export default function EtapasPilotoSection({
             <DialogTitle>Configurar Etapas da Piloto</DialogTitle>
             <DialogDescription>
               {step === "selecionar"
-                ? "Clique nas etapas que esta piloto vai percorrer. A ordem segue a sequência padrão de produção."
+                ? "Selecione as etapas intermediárias. Desenvolvimento de Modelagem é sempre a primeira, e Piloto Enviada ao Cliente + Aguardando Aprovação são sempre as duas últimas."
                 : "Atribua um terceiro às etapas que envolvem operação externa (opcional)."}
             </DialogDescription>
           </DialogHeader>
 
           {step === "selecionar" ? (
-            <div className="space-y-3 py-2">
-              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                {PILOTO_ETAPAS_DISPONIVEIS.map((et) => {
-                  const sel = selecionadas.includes(et);
-                  const fixo = et === "desenvolvimento_modelagem" || et === "lacre_piloto";
-                  const ordem = sel ? ordemFinal.indexOf(et) + 1 : null;
-                  return (
-                    <button
-                      key={et}
-                      type="button"
-                      onClick={() => toggleEtapa(et)}
-                      disabled={fixo}
-                      className={`relative text-left p-3 rounded-md border text-sm transition-all ${
-                        sel ? "bg-primary/15 border-primary/50 text-primary" : "bg-background border-border hover:border-primary/30"
-                      } ${fixo ? "opacity-90 cursor-default" : "cursor-pointer"}`}
-                    >
-                      <div className="font-medium">{labelEtapa(et)}</div>
-                      {fixo && <div className="text-[10px] text-muted-foreground mt-0.5">Obrigatória</div>}
-                      {ordem && (
-                        <span className="absolute top-1.5 right-1.5 inline-flex items-center justify-center h-5 w-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
-                          {ordem}
-                        </span>
-                      )}
-                    </button>
-                  );
-                })}
+            <div className="space-y-4 py-2">
+              <div>
+                <p className="text-xs uppercase text-muted-foreground mb-2">Etapas fixas (sempre presentes)</p>
+                <div className="flex flex-wrap gap-2">
+                  {PILOTO_ETAPAS_FIXAS_INICIO.map((et) => (
+                    <Badge key={et} variant="outline" className="bg-primary/10 border-primary/30 text-primary">
+                      1. {labelEtapa(et)}
+                    </Badge>
+                  ))}
+                  {PILOTO_ETAPAS_FIXAS_FIM.map((et, i) => (
+                    <Badge key={et} variant="outline" className="bg-primary/10 border-primary/30 text-primary">
+                      {sequenciaFinal.length - PILOTO_ETAPAS_FIXAS_FIM.length + i + 1}. {labelEtapa(et)}
+                    </Badge>
+                  ))}
+                </div>
               </div>
-              <p className="text-xs text-muted-foreground">
-                A etapa <strong>Desenvolvimento de Modelagem</strong> é sempre a primeira e <strong>Lacre da Piloto</strong> sempre a última.
-              </p>
+
+              <div>
+                <p className="text-xs uppercase text-muted-foreground mb-2">Etapas configuráveis</p>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                  {PILOTO_ETAPAS_CONFIGURAVEIS.map((et) => {
+                    const sel = selecionadas.includes(et);
+                    const ordem = sel ? sequenciaFinal.indexOf(et) + 1 : null;
+                    return (
+                      <button
+                        key={et}
+                        type="button"
+                        onClick={() => toggleEtapa(et)}
+                        className={`relative text-left p-3 rounded-md border text-sm transition-all cursor-pointer ${
+                          sel ? "bg-primary/15 border-primary/50 text-primary" : "bg-background border-border hover:border-primary/30"
+                        }`}
+                      >
+                        <div className="font-medium">{labelEtapa(et)}</div>
+                        {ordem && (
+                          <span className="absolute top-1.5 right-1.5 inline-flex items-center justify-center h-5 w-5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold">
+                            {ordem}
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
             </div>
           ) : (
             <div className="space-y-3 py-2">
@@ -275,7 +340,7 @@ export default function EtapasPilotoSection({
             )}
             <Button variant="outline" onClick={() => setConfigOpen(false)}>Cancelar</Button>
             {step === "selecionar" ? (
-              <Button onClick={irProximoStep} disabled={selecionadas.length < 2}>
+              <Button onClick={irProximoStep}>
                 {etapasComTerceiroSel.length ? "Continuar" : "Salvar"}
               </Button>
             ) : (
@@ -285,20 +350,97 @@ export default function EtapasPilotoSection({
         </DialogContent>
       </Dialog>
 
-      <AlertDialog open={confirmLacre} onOpenChange={setConfirmLacre}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar lacre da piloto?</AlertDialogTitle>
-            <AlertDialogDescription>
-              Esta ação indica que a piloto foi aprovada pelo cliente e está pronta para precificação.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { setConfirmLacre(false); fazerAvancar(); }}>Confirmar</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+      {/* Decision Modal (aguardando_aprovacao_cliente) */}
+      <Dialog open={decisionOpen} onOpenChange={(o) => { if (!decisionLoading) setDecisionOpen(o); }}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle>Resultado da aprovação da piloto</DialogTitle>
+            <DialogDescription>
+              {decisionMode === "inicial"
+                ? "O que o cliente decidiu?"
+                : "Descreva as correções solicitadas pelo cliente."}
+            </DialogDescription>
+          </DialogHeader>
+
+          {fichasMissing && (!fichasMissing.tecnica || !fichasMissing.costura) && (
+            <div className="rounded-md border border-orange-500/40 bg-orange-500/10 p-3 text-sm space-y-2">
+              <div className="flex items-start gap-2 text-orange-700 dark:text-orange-400">
+                <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
+                <div>
+                  <strong>Para lacrar a piloto, finalize primeiro:</strong>
+                  <div className="flex gap-2 mt-1 flex-wrap">
+                    {!fichasMissing.tecnica && (
+                      <a href="#ficha-tecnica" onClick={() => setDecisionOpen(false)} className="underline hover:no-underline">Ficha Técnica</a>
+                    )}
+                    {!fichasMissing.costura && (
+                      <a href="#ficha-costura" onClick={() => setDecisionOpen(false)} className="underline hover:no-underline">Ficha de Costura</a>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {decisionMode === "inicial" ? (
+            <div className="space-y-3 py-2">
+              <Button
+                onClick={() => handleLacrar(false)}
+                disabled={decisionLoading}
+                className="w-full justify-start gap-2 h-auto py-3"
+              >
+                <CheckCircle2 className="h-5 w-5" />
+                <div className="text-left">
+                  <div className="font-medium">Piloto Aprovada — Lacrar</div>
+                  <div className="text-xs opacity-90">Cliente aprovou sem alterações</div>
+                </div>
+              </Button>
+              <Button
+                onClick={() => { setDecisionMode("fitting"); setFichasMissing(null); }}
+                disabled={decisionLoading}
+                variant="outline"
+                className="w-full justify-start gap-2 h-auto py-3"
+              >
+                <AlertTriangle className="h-5 w-5 text-orange-500" />
+                <div className="text-left">
+                  <div className="font-medium">Fitting — Solicitar Correções</div>
+                  <div className="text-xs text-muted-foreground">Cliente pediu ajustes</div>
+                </div>
+              </Button>
+            </div>
+          ) : (
+            <div className="space-y-4 py-2">
+              <div className="space-y-2">
+                <Label>Descreva as correções solicitadas pelo cliente *</Label>
+                <Textarea
+                  value={fittingTexto}
+                  onChange={(e) => setFittingTexto(e.target.value)}
+                  placeholder="Ex: encurtar 2cm na bainha, reforçar costura do ombro..."
+                  rows={4}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Será necessária uma nova piloto?</Label>
+                <RadioGroup value={fittingNovaPiloto} onValueChange={(v) => setFittingNovaPiloto(v as "sim" | "nao")}>
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="sim" id="fp-sim" />
+                    <Label htmlFor="fp-sim" className="cursor-pointer">Sim — refazer piloto com as correções</Label>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <RadioGroupItem value="nao" id="fp-nao" />
+                    <Label htmlFor="fp-nao" className="cursor-pointer">Não — aprovar e aplicar correções direto na produção</Label>
+                  </div>
+                </RadioGroup>
+              </div>
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" onClick={() => setDecisionMode("inicial")} disabled={decisionLoading}>Voltar</Button>
+                <Button onClick={handleFittingSubmit} disabled={decisionLoading || !fittingTexto.trim()}>
+                  {decisionLoading ? "Processando..." : fittingNovaPiloto === "sim" ? "Iniciar Fitting" : "Aprovar com alterações"}
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </Card>
   );
 }

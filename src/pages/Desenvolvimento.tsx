@@ -19,7 +19,7 @@ import {
   PlayCircle, ListChecks, Upload, Printer, Trash2,
 } from "lucide-react";
 import {
-  PILOTO_ETAPAS_DISPONIVEIS, labelEtapa, avancarEtapa, ETAPAS_COM_TERCEIRO,
+  PILOTO_ETAPAS_DISPONIVEIS, labelEtapa, avancarEtapa, ETAPAS_TERCEIROS,
 } from "@/lib/piloto-etapas";
 
 interface Referencia {
@@ -28,6 +28,7 @@ interface Referencia {
   created_at: string; updated_at: string;
   prioridade_desenvolvimento?: number | null;
   prazo_termino?: string | null;
+  numero_rodada_piloto?: number | null;
 }
 interface Cliente { id: string; nome: string; abreviacao_2_letras: string | null; }
 interface TipoPeca { id: string; nome: string; abreviacao_2_letras: string; ativo: boolean; }
@@ -160,8 +161,9 @@ export default function Desenvolvimento() {
   // Alerts
   const refsParadas = refsAtivasDev.filter((r) => daysSince(r.updated_at || r.created_at) > 5);
   const refsSemDxf = refsAtivasDev.filter((r) =>
-    (r.status === "em_desenvolvimento" || r.status === "piloto_em_producao") && !dxfByRef.has(r.id)
+    (r.status === "em_desenvolvimento" || r.status === "piloto_em_producao" || r.status === "em_correcao") && !dxfByRef.has(r.id)
   );
+  const refsEmCorrecao = refsAtivasDev.filter((r) => r.status === "em_correcao");
 
   // Acompanhamento filtered by current stage filter
   const refsAcomp = filtroEtapa
@@ -212,10 +214,17 @@ export default function Desenvolvimento() {
 
   const avancar = async (refId: string) => {
     const r = await avancarEtapa(refId);
+    if (r.isAprovacaoCliente) {
+      // Open detail page so user can use the decision modal in Section F
+      navigate(`/cadastros/referencias/${refId}`);
+      toast({ title: "Decisão necessária", description: "Use o botão 'Decidir Resultado' na página da referência." });
+      return;
+    }
     if (!r.ok) { toast({ title: "Não foi possível avançar", description: r.error, variant: "destructive" }); return; }
-    toast({ title: r.lacrou ? "Piloto lacrada!" : "Etapa avançada" });
+    toast({ title: "Etapa avançada" });
     fetchAll();
   };
+
 
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
@@ -342,6 +351,21 @@ export default function Desenvolvimento() {
                       </div>
                     )}
                   </div>
+                  <div>
+                    <h3 className="text-sm font-medium mb-2 text-purple-600 dark:text-purple-400">Em correção (fitting) ({refsEmCorrecao.length})</h3>
+                    {refsEmCorrecao.length === 0 ? <p className="text-xs text-muted-foreground">Nenhuma referência em fitting.</p> : (
+                      <div className="space-y-1">
+                        {refsEmCorrecao.map((r) => (
+                          <div key={r.id} className="flex items-center justify-between text-sm border border-purple-500/30 bg-purple-500/5 rounded p-2 cursor-pointer hover:bg-purple-500/10" onClick={() => navigate(`/cadastros/referencias/${r.id}`)}>
+                            <span><Badge variant="secondary" className="font-mono mr-2">{r.codigo}</Badge>{r.descricao || cliById.get(r.cliente_id)?.nome}</span>
+                            <Badge variant="outline" className="bg-purple-500/15 text-purple-700 dark:text-purple-400 border-purple-500/30 text-[10px]">
+                              Fitting Nº {r.numero_rodada_piloto || 2}ª
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             </>
@@ -459,30 +483,77 @@ export default function Desenvolvimento() {
         <TabsContent value="filas" className="space-y-6 mt-4">
           {loading ? <Spinner /> : (
             <div className="space-y-6">
-              {PILOTO_ETAPAS_DISPONIVEIS.map((etapa) => {
-                const items = refsEmEtapa(etapa);
-                const reordenavel = !ETAPAS_COM_TERCEIRO.has(etapa);
-                return (
-                  <FilaSection
-                    key={etapa}
-                    titulo={`Fila — ${labelEtapa(etapa)}`}
-                    etapa={etapa}
-                    items={items}
-                    onReorder={(id, dir) => reordenar(id, dir, etapa)}
-                    cliById={cliById}
-                    dxfByRef={dxfByRef}
-                    navigate={navigate}
-                    tercById={tercById}
-                    reordenavel={reordenavel}
-                    onExcluir={(id) => setConfirmDeleteId(id)}
-                  />
-                );
-              })}
+              {/* Fila de Modelagem */}
+              <FilaSection
+                titulo="Fila de Modelagem"
+                etapa="desenvolvimento_modelagem"
+                items={refsEmEtapa("desenvolvimento_modelagem")}
+                onReorder={(id, dir) => reordenar(id, dir, "desenvolvimento_modelagem")}
+                cliById={cliById}
+                dxfByRef={dxfByRef}
+                navigate={navigate}
+                reordenavel
+                onExcluir={(id) => setConfirmDeleteId(id)}
+              />
+
+              {/* Fila de Costura */}
+              <FilaSection
+                titulo="Fila de Costura da Piloto"
+                etapa="costura"
+                items={refsEmEtapa("costura")}
+                onReorder={(id, dir) => reordenar(id, dir, "costura")}
+                cliById={cliById}
+                dxfByRef={dxfByRef}
+                navigate={navigate}
+                reordenavel
+                onExcluir={(id) => setConfirmDeleteId(id)}
+              />
+
+              {/* Em Terceiros — read-only, agrupado por etapa */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="text-lg">Em Terceiros</CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {ETAPAS_TERCEIROS.every((et) => refsEmEtapa(et).length === 0) ? (
+                    <p className="text-sm text-muted-foreground">Nenhuma referência em terceiros no momento.</p>
+                  ) : (
+                    ETAPAS_TERCEIROS.map((etapa) => {
+                      const items = refsEmEtapa(etapa);
+                      if (items.length === 0) return null;
+                      return (
+                        <div key={etapa} className="space-y-2">
+                          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
+                            {labelEtapa(etapa)} ({items.length})
+                          </h3>
+                          <div className="rounded-md border divide-y">
+                            {items.map(({ r, a }) => {
+                              const terc = a?.terceiro_id ? tercById.get(a.terceiro_id) : null;
+                              const dias = a?.data_inicio ? daysSince(a.data_inicio) : 0;
+                              return (
+                                <div key={r.id} className="p-2 text-sm flex items-center justify-between gap-2 cursor-pointer hover:bg-muted/30" onClick={() => navigate(`/cadastros/referencias/${r.id}`)}>
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <Badge variant="secondary" className="font-mono text-xs">{r.codigo}</Badge>
+                                    <span className="truncate">{r.descricao || cliById.get(r.cliente_id)?.nome || "—"}</span>
+                                    {terc && <span className="text-xs text-muted-foreground">· {terc.nome}</span>}
+                                  </div>
+                                  <span className="text-xs text-muted-foreground shrink-0">{dias}d</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      );
+                    })
+                  )}
+                </CardContent>
+              </Card>
             </div>
           )}
         </TabsContent>
 
       </Tabs>
+
 
       {/* Modal Novo Desenvolvimento */}
       <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) resetNovo(); }}>
@@ -789,7 +860,8 @@ const CHECK_LABEL_POR_ETAPA: Record<string, string> = {
   bordado: "Bordado aplicado?",
   caseado: "Caseado / botão feito?",
   acabamento: "Acabamento concluído?",
-  lacre_piloto: "Piloto lacrada?",
+  piloto_enviada_cliente: "Piloto enviada ao cliente?",
+  aguardando_aprovacao_cliente: "Decidir resultado",
 };
 
 function prazoInfo(r: Referencia): { dias: number; label: string; cls: string } | null {
@@ -857,6 +929,11 @@ function RefRow({ r, etapas, dxfOk, tercById, clienteNome, onAvancar, onDetalhes
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-medium">{r.descricao || "—"}</span>
             {clienteNome && <span className="text-xs text-muted-foreground uppercase">· {clienteNome}</span>}
+            {(r.numero_rodada_piloto || 1) > 1 && (
+              <Badge variant="outline" className="bg-purple-500/15 text-purple-700 dark:text-purple-400 border-purple-500/30 text-[10px]">
+                Fitting — Nº {r.numero_rodada_piloto}ª piloto
+              </Badge>
+            )}
             {dxfOk
               ? <span className="text-green-600 flex items-center gap-1 text-xs"><CheckCircle2 className="h-3 w-3" /> DXF</span>
               : <span className="text-orange-600 flex items-center gap-1 text-xs"><AlertTriangle className="h-3 w-3" /> Sem DXF</span>}

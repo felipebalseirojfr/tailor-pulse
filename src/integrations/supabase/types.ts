@@ -1799,6 +1799,8 @@ export type Database = {
       }
       referencias: {
         Row: {
+          alteracoes_fitting: string | null
+          aprovada_com_alteracoes: boolean
           ativo: boolean
           cliente_id: string
           codigo: string
@@ -1808,6 +1810,7 @@ export type Database = {
           genero: string | null
           id: string
           modelagem_origem_id: string | null
+          numero_rodada_piloto: number
           prazo_termino: string | null
           prioridade_desenvolvimento: number
           sequencial: number
@@ -1816,6 +1819,8 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          alteracoes_fitting?: string | null
+          aprovada_com_alteracoes?: boolean
           ativo?: boolean
           cliente_id: string
           codigo: string
@@ -1825,6 +1830,7 @@ export type Database = {
           genero?: string | null
           id?: string
           modelagem_origem_id?: string | null
+          numero_rodada_piloto?: number
           prazo_termino?: string | null
           prioridade_desenvolvimento?: number
           sequencial: number
@@ -1833,6 +1839,8 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          alteracoes_fitting?: string | null
+          aprovada_com_alteracoes?: boolean
           ativo?: boolean
           cliente_id?: string
           codigo?: string
@@ -1842,6 +1850,7 @@ export type Database = {
           genero?: string | null
           id?: string
           modelagem_origem_id?: string | null
+          numero_rodada_piloto?: number
           prazo_termino?: string | null
           prioridade_desenvolvimento?: number
           sequencial?: number
@@ -2180,6 +2189,8 @@ export type Database = {
         | "desenvolvimento_modelagem"
         | "lacre_piloto"
         | "plotagem_risco"
+        | "piloto_enviada_cliente"
+        | "aguardando_aprovacao_cliente"
       unidade_medida_aviamento:
         | "peca"
         | "kg"
@@ -2386,6 +2397,8 @@ export const Constants = {
         "desenvolvimento_modelagem",
         "lacre_piloto",
         "plotagem_risco",
+        "piloto_enviada_cliente",
+        "aguardando_aprovacao_cliente",
       ],
       unidade_medida_aviamento: [
         "peca",
