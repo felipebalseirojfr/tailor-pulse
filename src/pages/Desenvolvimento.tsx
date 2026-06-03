@@ -212,10 +212,17 @@ export default function Desenvolvimento() {
 
   const avancar = async (refId: string) => {
     const r = await avancarEtapa(refId);
+    if (r.isAprovacaoCliente) {
+      // Open detail page so user can use the decision modal in Section F
+      navigate(`/cadastros/referencias/${refId}`);
+      toast({ title: "Decisão necessária", description: "Use o botão 'Decidir Resultado' na página da referência." });
+      return;
+    }
     if (!r.ok) { toast({ title: "Não foi possível avançar", description: r.error, variant: "destructive" }); return; }
-    toast({ title: r.lacrou ? "Piloto lacrada!" : "Etapa avançada" });
+    toast({ title: "Etapa avançada" });
     fetchAll();
   };
+
 
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
