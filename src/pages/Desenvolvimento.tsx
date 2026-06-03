@@ -16,7 +16,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import {
   Plus, ChevronDown, ChevronRight, AlertTriangle, CheckCircle2, ArrowUp, ArrowDown,
-  PlayCircle, ListChecks, Upload, Printer,
+  PlayCircle, ListChecks, Upload, Printer, Trash2,
 } from "lucide-react";
 import {
   PILOTO_ETAPAS_DISPONIVEIS, labelEtapa, avancarEtapa, ETAPAS_COM_TERCEIRO,
@@ -217,6 +217,22 @@ export default function Desenvolvimento() {
     fetchAll();
   };
 
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const excluirRef = async (refId: string) => {
+    setDeleting(true);
+    const { error } = await (supabase.from("referencias") as any).update({ ativo: false }).eq("id", refId);
+    setDeleting(false);
+    setConfirmDeleteId(null);
+    if (error) {
+      toast({ title: "Erro ao excluir referência", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Referência excluída" });
+    fetchAll();
+  };
+
   // Filas helpers
   const refsEmEtapa = (etapa: string | string[]) => {
     const set = new Set(Array.isArray(etapa) ? etapa : [etapa]);
@@ -401,6 +417,7 @@ export default function Desenvolvimento() {
                               tercById={tercById}
                               onAvancar={() => avancar(r.id)}
                               onDetalhes={() => navigate(`/cadastros/referencias/${r.id}`)}
+                              onExcluir={() => setConfirmDeleteId(r.id)}
                             />
                           ))}
                         </div>
@@ -429,6 +446,7 @@ export default function Desenvolvimento() {
                       clienteNome={cliById.get(r.cliente_id)?.nome}
                       onAvancar={() => avancar(r.id)}
                       onDetalhes={() => navigate(`/cadastros/referencias/${r.id}`)}
+                      onExcluir={() => setConfirmDeleteId(r.id)}
                     />
                   ))}
               </CardContent>
@@ -456,6 +474,7 @@ export default function Desenvolvimento() {
                     navigate={navigate}
                     tercById={tercById}
                     reordenavel={reordenavel}
+                    onExcluir={(id) => setConfirmDeleteId(id)}
                   />
                 );
               })}
@@ -540,6 +559,24 @@ export default function Desenvolvimento() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Confirmação de exclusão */}
+      <Dialog open={!!confirmDeleteId} onOpenChange={(o) => { if (!o) setConfirmDeleteId(null); }}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Excluir referência?</DialogTitle>
+            <DialogDescription>
+              A referência será removida do desenvolvimento. Essa ação não pode ser desfeita.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmDeleteId(null)} disabled={deleting}>Cancelar</Button>
+            <Button variant="destructive" onClick={() => confirmDeleteId && excluirRef(confirmDeleteId)} disabled={deleting}>
+              {deleting ? "Excluindo..." : "Excluir"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -560,7 +597,7 @@ function KpiCard({ label, value, alerta }: { label: string; value: number; alert
 }
 
 function FilaSection({
-  titulo, items, onReorder, cliById, dxfByRef, navigate, reordenavel, tercById,
+  titulo, items, onReorder, cliById, dxfByRef, navigate, reordenavel, tercById, onExcluir,
 }: {
   titulo: string; etapa: string;
   items: { r: Referencia; a: PilotoEtapa | null }[];
@@ -570,6 +607,7 @@ function FilaSection({
   navigate: (p: string) => void;
   reordenavel?: boolean;
   tercById?: Map<string, Terceiro | undefined>;
+  onExcluir?: (id: string) => void;
 }) {
   const handlePrint = () => {
     const win = window.open("", "_blank", "width=900,height=700");
@@ -644,6 +682,7 @@ function FilaSection({
                   <th className="p-2">Dias na etapa</th>
                   <th className="p-2">DXF</th>
                   {reordenavel && <th className="p-2 text-right">Reordenar</th>}
+                  {onExcluir && <th className="p-2 text-right">Ações</th>}
                 </tr>
               </thead>
               <tbody>
@@ -671,6 +710,15 @@ function FilaSection({
                             </Button>
                             <Button size="icon" variant="ghost" className="h-7 w-7" disabled={idx === items.length - 1} onClick={() => onReorder(r.id, 1)}>
                               <ArrowDown className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </td>
+                      )}
+                      {onExcluir && (
+                        <td className="p-2 text-right">
+                          <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+                            <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10" title="Excluir referência" onClick={() => onExcluir(r.id)}>
+                              <Trash2 className="h-3.5 w-3.5" />
                             </Button>
                           </div>
                         </td>
@@ -727,6 +775,7 @@ interface RefRowProps {
   clienteNome?: string;
   onAvancar: () => void;
   onDetalhes: () => void;
+  onExcluir?: () => void;
 }
 
 const CHECK_LABEL_POR_ETAPA: Record<string, string> = {
@@ -758,7 +807,7 @@ function prazoInfo(r: Referencia): { dias: number; label: string; cls: string } 
   return { dias, label: `${dias}d restantes`, cls: "bg-muted text-muted-foreground border-border" };
 }
 
-function RefRow({ r, etapas, dxfOk, tercById, clienteNome, onAvancar, onDetalhes }: RefRowProps) {
+function RefRow({ r, etapas, dxfOk, tercById, clienteNome, onAvancar, onDetalhes, onExcluir }: RefRowProps) {
   const { toast } = useToast();
   const atual = etapas.find((e) => e.status === "em_andamento");
   const concluidas = etapas.filter((e) => e.status === "concluido").length;
@@ -860,6 +909,11 @@ function RefRow({ r, etapas, dxfOk, tercById, clienteNome, onAvancar, onDetalhes
             <span className="text-xs text-muted-foreground italic">—</span>
           )}
           <Button size="sm" variant="outline" onClick={onDetalhes}>Detalhes ›</Button>
+          {onExcluir && (
+            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" title="Excluir referência" onClick={(e) => { e.stopPropagation(); onExcluir(); }}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
       <EtapasStepper etapas={etapas} />
