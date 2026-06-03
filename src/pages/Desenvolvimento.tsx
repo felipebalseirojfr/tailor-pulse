@@ -744,6 +744,7 @@ interface RefRowProps {
   clienteNome?: string;
   onAvancar: () => void;
   onDetalhes: () => void;
+  onExcluir?: () => void;
 }
 
 const CHECK_LABEL_POR_ETAPA: Record<string, string> = {
