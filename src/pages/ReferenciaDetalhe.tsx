@@ -207,15 +207,31 @@ export default function ReferenciaDetalhe() {
         <DxfBanner referenciaId={ref.id} onChange={fetchAll} />
       )}
 
-      {fichaSummary && (
-        <button
-          type="button"
-          onClick={() => document.getElementById("ficha-tecnica")?.scrollIntoView({ behavior: "smooth" })}
-          className="text-sm text-muted-foreground hover:text-foreground underline-offset-2 hover:underline self-start"
-        >
-          Ficha Técnica: {fichaSummary.tecidos} tecido(s) · {fichaSummary.aviamentos} aviamento(s)
-        </button>
-      )}
+      <div className="flex flex-wrap gap-x-4 gap-y-1">
+        {fichaSummary && (
+          <button
+            type="button"
+            onClick={() => document.getElementById("ficha-tecnica")?.scrollIntoView({ behavior: "smooth" })}
+            className="text-sm text-muted-foreground hover:text-foreground underline-offset-2 hover:underline self-start"
+          >
+            Ficha Técnica: {fichaSummary.tecidos} tecido(s) · {fichaSummary.aviamentos} aviamento(s)
+          </button>
+        )}
+        {costuraSummary && (
+          <button
+            type="button"
+            onClick={() => document.getElementById("ficha-costura")?.scrollIntoView({ behavior: "smooth" })}
+            className="text-sm text-muted-foreground hover:text-foreground underline-offset-2 hover:underline self-start inline-flex items-center gap-1"
+          >
+            Ficha de Costura: {costuraSummary.tecidos} tecido(s) · {costuraSummary.medidas} medidas ·
+            <Badge variant="outline" className={costuraSummary.status === "finalizada"
+              ? "bg-green-500/15 text-green-700 dark:text-green-400 border-green-500/30"
+              : "bg-muted"}>
+              {costuraSummary.status === "finalizada" ? "Finalizada" : "Rascunho"}
+            </Badge>
+          </button>
+        )}
+      </div>
 
       {/* Section F — Etapas da Piloto */}
       <EtapasPilotoSection referenciaId={ref.id} onChanged={fetchAll} />
