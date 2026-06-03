@@ -941,7 +941,8 @@ export default function Clientes() {
         <TabsContent value="referencias">
           <div className="space-y-6">
             <p className="text-sm text-muted-foreground">
-              Catálogo de referências (peças desenvolvidas) com código no formato XX.YY.ZZZZ
+              Catálogo de referências (peças desenvolvidas) com código no formato XX.YY.ZZZZ.
+              <span className="ml-2 italic">Referências são criadas na aba Desenvolvimento.</span>
             </p>
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <div className="flex items-center gap-3 flex-wrap">
@@ -974,9 +975,6 @@ export default function Clientes() {
                   Mostrar inativos
                 </label>
               </div>
-              <Button onClick={() => { resetNovaRef(); setDialogRefOpen(true); }} className="gap-2">
-                <Plus className="h-4 w-4" /> Nova Referência
-              </Button>
             </div>
 
             {loadingReferencias ? (
@@ -988,8 +986,8 @@ export default function Clientes() {
                   {referencias.length === 0 ? "Nenhuma referência cadastrada ainda" : "Nenhuma referência encontrada com este filtro"}
                 </p>
                 {referencias.length === 0 && (
-                  <Button onClick={() => { resetNovaRef(); setDialogRefOpen(true); }} className="mt-4 gap-2">
-                    <Plus className="h-4 w-4" /> Nova Referência
+                  <Button onClick={() => navigate("/desenvolvimento")} className="mt-4 gap-2">
+                    Ir para Desenvolvimento
                   </Button>
                 )}
               </CardContent></Card>
