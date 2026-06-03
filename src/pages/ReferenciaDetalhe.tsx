@@ -18,6 +18,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Pencil, FileText, Scissors, FileDown } from "lucide-react";
 import ModelagemDxfSection from "@/components/referencias/ModelagemDxfSection";
+import DxfBanner from "@/components/desenvolvimento/DxfBanner";
+import EtapasPilotoSection from "@/components/desenvolvimento/EtapasPilotoSection";
 
 interface Referencia {
   id: string;
