@@ -776,7 +776,7 @@ function prazoInfo(r: Referencia): { dias: number; label: string; cls: string } 
   return { dias, label: `${dias}d restantes`, cls: "bg-muted text-muted-foreground border-border" };
 }
 
-function RefRow({ r, etapas, dxfOk, tercById, clienteNome, onAvancar, onDetalhes }: RefRowProps) {
+function RefRow({ r, etapas, dxfOk, tercById, clienteNome, onAvancar, onDetalhes, onExcluir }: RefRowProps) {
   const { toast } = useToast();
   const atual = etapas.find((e) => e.status === "em_andamento");
   const concluidas = etapas.filter((e) => e.status === "concluido").length;
