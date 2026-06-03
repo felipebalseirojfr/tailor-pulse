@@ -1,0 +1,1 @@
+ALTER TYPE public.tipo_etapa ADD VALUE IF NOT EXISTS 'plotagem_risco';

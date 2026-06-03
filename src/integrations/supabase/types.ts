@@ -2176,6 +2176,7 @@ export type Database = {
         | "aplicacao_travete"
         | "desenvolvimento_modelagem"
         | "lacre_piloto"
+        | "plotagem_risco"
       unidade_medida_aviamento:
         | "peca"
         | "kg"
@@ -2381,6 +2382,7 @@ export const Constants = {
         "aplicacao_travete",
         "desenvolvimento_modelagem",
         "lacre_piloto",
+        "plotagem_risco",
       ],
       unidade_medida_aviamento: [
         "peca",
