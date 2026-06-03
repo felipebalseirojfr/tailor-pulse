@@ -170,6 +170,7 @@ export default function Layout({ children }: LayoutProps) {
     { name: "Início", href: "/", icon: HomeIcon, roles: NON_CORTE },
     { name: "Dashboard", href: "/ppcp", icon: LayoutDashboard, roles: NON_CORTE },
     { name: "Pedidos", href: "/pedidos", icon: Package, roles: NON_CORTE },
+    { name: "Desenvolvimento", href: "/desenvolvimento", icon: ScissorsIcon, roles: ["admin", "commercial", "viewer"] },
     { name: "Fechamento", href: "/pcp/fechamentos", icon: PackageCheck, roles: ["admin", "commercial", "production", "pcp_closer", "backoffice_fiscal"] },
     { name: "Fila das Etapas", href: "/fila-etapas", icon: ListOrdered, roles: ["admin", "commercial", "production"] },
     { name: "Corte", href: "/area-corte", icon: Scissors, roles: ["admin", "corte"] },
