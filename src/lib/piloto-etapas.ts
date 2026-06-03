@@ -13,7 +13,6 @@ import { supabase } from "@/integrations/supabase/client";
 export const PILOTO_ETAPAS_CONFIGURAVEIS = [
   "lavanderia",
   "estamparia",
-  "estamparia_bordado",
   "bordado",
   "caseado",
   "acabamento",
@@ -45,7 +44,7 @@ export const ETAPA_LABELS: Record<string, string> = {
   costura: "Costura",
   lavanderia: "Lavanderia",
   estamparia: "Estamparia",
-  estamparia_bordado: "Estamparia + Bordado",
+  
   bordado: "Bordado",
   caseado: "Caseado",
   acabamento: "Acabamento",
@@ -57,7 +56,6 @@ export const ETAPA_LABELS: Record<string, string> = {
 export const ETAPAS_COM_TERCEIRO = new Set([
   "lavanderia",
   "estamparia",
-  "estamparia_bordado",
   "bordado",
   "caseado",
 ]);
@@ -66,7 +64,6 @@ export const ETAPAS_COM_TERCEIRO = new Set([
 export const ETAPAS_TERCEIROS = [
   "lavanderia",
   "estamparia",
-  "estamparia_bordado",
   "bordado",
 ] as const;
 
