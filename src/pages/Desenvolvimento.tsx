@@ -161,8 +161,9 @@ export default function Desenvolvimento() {
   // Alerts
   const refsParadas = refsAtivasDev.filter((r) => daysSince(r.updated_at || r.created_at) > 5);
   const refsSemDxf = refsAtivasDev.filter((r) =>
-    (r.status === "em_desenvolvimento" || r.status === "piloto_em_producao") && !dxfByRef.has(r.id)
+    (r.status === "em_desenvolvimento" || r.status === "piloto_em_producao" || r.status === "em_correcao") && !dxfByRef.has(r.id)
   );
+  const refsEmCorrecao = refsAtivasDev.filter((r) => r.status === "em_correcao");
 
   // Acompanhamento filtered by current stage filter
   const refsAcomp = filtroEtapa
