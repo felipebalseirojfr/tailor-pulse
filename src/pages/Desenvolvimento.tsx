@@ -16,11 +16,12 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import {
   Plus, ChevronDown, ChevronRight, AlertTriangle, CheckCircle2, ArrowUp, ArrowDown,
-  PlayCircle, ListChecks, Upload, Printer, Trash2,
+  PlayCircle, ListChecks, Upload, Printer, Trash2, Calculator,
 } from "lucide-react";
 import {
   PILOTO_ETAPAS_DISPONIVEIS, labelEtapa, avancarEtapa,
 } from "@/lib/piloto-etapas";
+import ConsumoRapidoDialog from "@/components/desenvolvimento/ConsumoRapidoDialog";
 
 interface Referencia {
   id: string; codigo: string; cliente_id: string; tipo_peca_id: string;
@@ -64,6 +65,7 @@ export default function Desenvolvimento() {
 
   // modal nova
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [consumoOpen, setConsumoOpen] = useState(false);
   const [novoCli, setNovoCli] = useState("");
   const [novoTipo, setNovoTipo] = useState("");
   const [modoAcomp, setModoAcomp] = useState<"marca" | "ref">("marca");
@@ -281,10 +283,17 @@ export default function Desenvolvimento() {
           <h1 className="text-3xl font-bold">Desenvolvimento</h1>
           <p className="text-muted-foreground">Acompanhe o desenvolvimento de novas referências e pilotos</p>
         </div>
-        <Button onClick={() => { resetNovo(); setDialogOpen(true); }} className="gap-2">
-          <Plus className="h-4 w-4" /> Novo Desenvolvimento
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => setConsumoOpen(true)} className="gap-2">
+            <Calculator className="h-4 w-4" /> Consumo rápido
+          </Button>
+          <Button onClick={() => { resetNovo(); setDialogOpen(true); }} className="gap-2">
+            <Plus className="h-4 w-4" /> Novo Desenvolvimento
+          </Button>
+        </div>
       </div>
+
+      <ConsumoRapidoDialog open={consumoOpen} onOpenChange={setConsumoOpen} />
 
       <Tabs value={tab} onValueChange={(v) => { setTab(v); if (v !== "acompanhamento") setFiltroEtapa(null); }}>
         <TabsList>
