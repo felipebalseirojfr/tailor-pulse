@@ -65,6 +65,7 @@ export default function Desenvolvimento() {
 
   // modal nova
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [consumoOpen, setConsumoOpen] = useState(false);
   const [novoCli, setNovoCli] = useState("");
   const [novoTipo, setNovoTipo] = useState("");
   const [modoAcomp, setModoAcomp] = useState<"marca" | "ref">("marca");
