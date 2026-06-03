@@ -199,7 +199,7 @@ export default function ReferenciaDetalhe() {
       )}
 
       {/* DXF banner — visible only in development statuses */}
-      {(ref.status === "em_desenvolvimento" || ref.status === "piloto_em_producao") && (
+      {(ref.status === "em_desenvolvimento" || ref.status === "piloto_em_producao" || ref.status === "em_correcao") && (
         <DxfBanner referenciaId={ref.id} onChange={fetchAll} />
       )}
 
