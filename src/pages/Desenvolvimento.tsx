@@ -19,7 +19,7 @@ import {
   PlayCircle, ListChecks,
 } from "lucide-react";
 import {
-  PILOTO_ETAPAS_DISPONIVEIS, labelEtapa, avancarEtapa,
+  PILOTO_ETAPAS_DISPONIVEIS, labelEtapa, avancarEtapa, ETAPAS_COM_TERCEIRO,
 } from "@/lib/piloto-etapas";
 
 interface Referencia {
@@ -27,6 +27,7 @@ interface Referencia {
   descricao: string | null; status: string; ativo: boolean;
   created_at: string; updated_at: string;
   prioridade_desenvolvimento?: number | null;
+  prazo_termino?: string | null;
 }
 interface Cliente { id: string; nome: string; abreviacao_2_letras: string | null; }
 interface TipoPeca { id: string; nome: string; abreviacao_2_letras: string; ativo: boolean; }
@@ -439,31 +440,29 @@ export default function Desenvolvimento() {
         {/* FILAS */}
         <TabsContent value="filas" className="space-y-6 mt-4">
           {loading ? <Spinner /> : (
-            <>
-              <FilaSection
-                titulo="Fila de Modelagem"
-                etapa="desenvolvimento_modelagem"
-                items={refsEmEtapa("desenvolvimento_modelagem")}
-                onReorder={(id, dir) => reordenar(id, dir, "desenvolvimento_modelagem")}
-                cliById={cliById} dxfByRef={dxfByRef} navigate={navigate} reordenavel
-              />
-              <FilaSection
-                titulo="Fila de Costura da Piloto"
-                etapa="costura"
-                items={refsEmEtapa("costura")}
-                onReorder={(id, dir) => reordenar(id, dir, "costura")}
-                cliById={cliById} dxfByRef={dxfByRef} navigate={navigate} reordenavel
-              />
-              <FilaSection
-                titulo="Em Terceiros"
-                etapa="terceiros"
-                items={refsEmEtapa(["lavanderia","estamparia","estamparia_bordado","bordado"])}
-                onReorder={() => {}}
-                cliById={cliById} dxfByRef={dxfByRef} navigate={navigate} tercById={tercById}
-              />
-            </>
+            <div className="space-y-6">
+              {PILOTO_ETAPAS_DISPONIVEIS.map((etapa) => {
+                const items = refsEmEtapa(etapa);
+                const reordenavel = !ETAPAS_COM_TERCEIRO.has(etapa);
+                return (
+                  <FilaSection
+                    key={etapa}
+                    titulo={`Fila — ${labelEtapa(etapa)}`}
+                    etapa={etapa}
+                    items={items}
+                    onReorder={(id, dir) => reordenar(id, dir, etapa)}
+                    cliById={cliById}
+                    dxfByRef={dxfByRef}
+                    navigate={navigate}
+                    tercById={tercById}
+                    reordenavel={reordenavel}
+                  />
+                );
+              })}
+            </div>
           )}
         </TabsContent>
+
       </Tabs>
 
       {/* Modal Novo Desenvolvimento */}
@@ -676,6 +675,35 @@ interface RefRowProps {
   onDetalhes: () => void;
 }
 
+const CHECK_LABEL_POR_ETAPA: Record<string, string> = {
+  desenvolvimento_modelagem: "DXF enviado?",
+  plotagem_risco: "Risco plotado?",
+  corte: "Peças cortadas?",
+  costura: "Piloto costurada?",
+  lavanderia: "Lavanderia concluída?",
+  estamparia: "Estampa aplicada?",
+  estamparia_bordado: "Estampa + bordado concluídos?",
+  bordado: "Bordado aplicado?",
+  caseado: "Caseado / botão feito?",
+  acabamento: "Acabamento concluído?",
+  lacre_piloto: "Piloto lacrada?",
+};
+
+function prazoInfo(r: Referencia): { dias: number; label: string; cls: string } | null {
+  const base = r.prazo_termino || null;
+  if (!base) return null;
+  const hoje = new Date(); hoje.setHours(0, 0, 0, 0);
+  const fim = new Date(base + "T00:00:00");
+  const dias = Math.round((fim.getTime() - hoje.getTime()) / 86400000);
+  if (dias < 0) {
+    return { dias, label: `${Math.abs(dias)}d em atraso`, cls: "bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30" };
+  }
+  if (dias <= 5) {
+    return { dias, label: `${dias}d restantes`, cls: "bg-orange-500/15 text-orange-700 dark:text-orange-400 border-orange-500/30" };
+  }
+  return { dias, label: `${dias}d restantes`, cls: "bg-muted text-muted-foreground border-border" };
+}
+
 function RefRow({ r, etapas, dxfOk, tercById, clienteNome, onAvancar, onDetalhes }: RefRowProps) {
   const atual = etapas.find((e) => e.status === "em_andamento");
   const concluidas = etapas.filter((e) => e.status === "concluido").length;
@@ -683,6 +711,8 @@ function RefRow({ r, etapas, dxfOk, tercById, clienteNome, onAvancar, onDetalhes
   const progresso = total ? Math.round((concluidas / total) * 100) : 0;
   const bloqueado = atual?.tipo_etapa === "desenvolvimento_modelagem" && !dxfOk;
   const terc = atual?.terceiro_id ? tercById.get(atual.terceiro_id) : null;
+  const checkLabel = atual ? (CHECK_LABEL_POR_ETAPA[atual.tipo_etapa] || `${labelEtapa(atual.tipo_etapa)} concluído?`) : null;
+  const prazo = prazoInfo(r);
   return (
     <div className="p-3 space-y-2">
       <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-3 items-start">
@@ -694,6 +724,11 @@ function RefRow({ r, etapas, dxfOk, tercById, clienteNome, onAvancar, onDetalhes
             {dxfOk
               ? <span className="text-green-600 flex items-center gap-1 text-xs"><CheckCircle2 className="h-3 w-3" /> DXF</span>
               : <span className="text-orange-600 flex items-center gap-1 text-xs"><AlertTriangle className="h-3 w-3" /> Sem DXF</span>}
+            {prazo && (
+              <span className={`px-2 py-0.5 rounded-md border text-[10px] font-medium ${prazo.cls}`}>
+                {prazo.label}
+              </span>
+            )}
           </div>
           <div className="text-xs text-muted-foreground">
             {atual ? `Etapa atual: ${labelEtapa(atual.tipo_etapa)}${terc ? ` · ${terc.nome}` : ""}` : "Etapas não configuradas"}
@@ -702,14 +737,23 @@ function RefRow({ r, etapas, dxfOk, tercById, clienteNome, onAvancar, onDetalhes
           <Progress value={progresso} className="h-1.5" />
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            size="sm" onClick={onAvancar}
-            disabled={!atual || bloqueado}
-            title={bloqueado ? "Envie o arquivo DXF antes de avançar para o corte." : undefined}
-            className="gap-1"
-          >
-            <PlayCircle className="h-3 w-3" /> Avançar
-          </Button>
+          {atual && checkLabel ? (
+            <label
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md border text-xs cursor-pointer transition-colors ${bloqueado ? "opacity-50 cursor-not-allowed" : "hover:bg-muted/50"}`}
+              title={bloqueado ? "Envie o arquivo DXF antes de marcar como concluído." : "Marcar como concluído avança para a próxima etapa"}
+            >
+              <input
+                type="checkbox"
+                checked={false}
+                disabled={bloqueado}
+                onChange={() => { if (!bloqueado) onAvancar(); }}
+                className="h-4 w-4 rounded border-border cursor-pointer accent-primary"
+              />
+              <span>{checkLabel}</span>
+            </label>
+          ) : (
+            <span className="text-xs text-muted-foreground italic">—</span>
+          )}
           <Button size="sm" variant="outline" onClick={onDetalhes}>Detalhes ›</Button>
         </div>
       </div>
@@ -717,3 +761,4 @@ function RefRow({ r, etapas, dxfOk, tercById, clienteNome, onAvancar, onDetalhes
     </div>
   );
 }
+

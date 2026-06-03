@@ -33,6 +33,7 @@ interface Referencia {
   ativo: boolean;
   criado_por: string | null;
   created_at: string;
+  prazo_termino: string | null;
 }
 
 const statusBadgeClass = (status: string) =>
@@ -65,6 +66,7 @@ export default function ReferenciaDetalhe() {
   const [modelagemOrigemId, setModelagemOrigemId] = useState<string>("__none__");
   const [status, setStatus] = useState("em_desenvolvimento");
   const [ativo, setAtivo] = useState(true);
+  const [prazoTermino, setPrazoTermino] = useState<string>("");
 
   useEffect(() => {
     if (!id) return;
@@ -88,6 +90,7 @@ export default function ReferenciaDetalhe() {
     setModelagemOrigemId(r.modelagem_origem_id || "__none__");
     setStatus(r.status);
     setAtivo(r.ativo);
+    setPrazoTermino(r.prazo_termino || "");
 
     const [cli, tipo, prof, todasOrigens] = await Promise.all([
       supabase.from("clientes").select("nome").eq("id", r.cliente_id).maybeSingle(),
@@ -126,6 +129,7 @@ export default function ReferenciaDetalhe() {
       modelagem_origem_id: modelagemOrigemId === "__none__" ? null : modelagemOrigemId,
       status: status.trim() || "em_desenvolvimento",
       ativo,
+      prazo_termino: prazoTermino || null,
     };
     const { error } = await (supabase.from("referencias") as any)
       .update(payload)
@@ -284,6 +288,19 @@ export default function ReferenciaDetalhe() {
               <Badge variant="outline" className={ativo ? "bg-green-500/15 text-green-600 dark:text-green-400 border-green-500/30" : "bg-muted"}>
                 {ativo ? "Ativo" : "Inativo"}
               </Badge>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <Label>Prazo de término do desenvolvimento</Label>
+            {editMode ? (
+              <Input type="date" value={prazoTermino} onChange={(e) => setPrazoTermino(e.target.value)} />
+            ) : (
+              <p className="text-sm">
+                {ref.prazo_termino
+                  ? new Date(ref.prazo_termino + "T00:00:00").toLocaleDateString("pt-BR")
+                  : <span className="text-muted-foreground">—</span>}
+              </p>
             )}
           </div>
 
