@@ -64,6 +64,7 @@ export default function Desenvolvimento() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [novoCli, setNovoCli] = useState("");
   const [novoTipo, setNovoTipo] = useState("");
+  const [modoAcomp, setModoAcomp] = useState<"marca" | "ref">("marca");
   const [novoDesc, setNovoDesc] = useState("");
   const [novoOrigem, setNovoOrigem] = useState("__none__");
   const [opcoesAvancadas, setOpcoesAvancadas] = useState(false);
@@ -333,26 +334,44 @@ export default function Desenvolvimento() {
         {/* ACOMPANHAMENTO */}
         <TabsContent value="acompanhamento" className="space-y-4 mt-4">
           <div className="flex items-center justify-between gap-3 flex-wrap">
-            <h2 className="text-xl font-semibold">Referências em Desenvolvimento ({refsAcomp.length})</h2>
-            {filtroEtapa && (
-              <Badge variant="outline" className="gap-2">
-                Filtro: {labelEtapa(filtroEtapa)}
-                <button onClick={() => setFiltroEtapa(null)} className="ml-1 hover:text-foreground">×</button>
-              </Badge>
-            )}
+            <div className="flex items-center gap-3 flex-wrap">
+              <h2 className="text-xl font-semibold">
+                Acompanhando {refsAcomp.length} {refsAcomp.length === 1 ? "referência" : "referências"}
+              </h2>
+              {filtroEtapa && (
+                <Badge variant="outline" className="gap-2">
+                  Filtro: {labelEtapa(filtroEtapa)}
+                  <button onClick={() => setFiltroEtapa(null)} className="ml-1 hover:text-foreground">×</button>
+                </Badge>
+              )}
+            </div>
+            <div className="inline-flex rounded-md border bg-muted/30 p-0.5">
+              <button
+                onClick={() => setModoAcomp("marca")}
+                className={`px-3 py-1 text-xs rounded-sm transition-colors ${modoAcomp === "marca" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                Por marca
+              </button>
+              <button
+                onClick={() => setModoAcomp("ref")}
+                className={`px-3 py-1 text-xs rounded-sm transition-colors ${modoAcomp === "ref" ? "bg-background shadow-sm font-medium" : "text-muted-foreground hover:text-foreground"}`}
+              >
+                Por referência
+              </button>
+            </div>
           </div>
 
-          {loading ? <Spinner /> : clientesComRefs.length === 0 ? (
+          {loading ? <Spinner /> : refsAcomp.length === 0 ? (
             <p className="text-muted-foreground text-sm">Nenhuma referência em desenvolvimento.</p>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+          ) : modoAcomp === "marca" ? (
+            <div className="grid grid-cols-1 gap-3">
               {clientesComRefs.map(({ cliente, refs: clientRefs }) => {
                 const expanded = clientesExpandidos.has(cliente!.id);
                 const algumSemDxf = clientRefs.some((r) => !dxfByRef.has(r.id));
                 const algumParado = clientRefs.some((r) => daysSince(r.updated_at) > 5);
                 const alerta = algumSemDxf || algumParado;
                 return (
-                  <Card key={cliente!.id} className="md:col-span-2 lg:col-span-3">
+                  <Card key={cliente!.id}>
                     <CardContent className="p-0">
                       <button onClick={() => toggleCliente(cliente!.id)} className="w-full p-4 flex items-center justify-between hover:bg-muted/30 transition-colors">
                         <div className="flex items-center gap-3">
@@ -373,43 +392,16 @@ export default function Desenvolvimento() {
                       </button>
                       {expanded && (
                         <div className="border-t divide-y">
-                          {clientRefs.map((r) => {
-                            const todas = etapasPorRef.get(r.id) || [];
-                            const atual = todas.find((e) => e.status === "em_andamento");
-                            const concluidas = todas.filter((e) => e.status === "concluido").length;
-                            const total = todas.length;
-                            const progresso = total ? Math.round((concluidas / total) * 100) : 0;
-                            const dxfOk = dxfByRef.has(r.id);
-                            const bloqueado = atual?.tipo_etapa === "desenvolvimento_modelagem" && !dxfOk;
-                            const terc = atual?.terceiro_id ? tercById.get(atual.terceiro_id) : null;
-                            return (
-                              <div key={r.id} className="p-3 grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-3 items-center">
-                                <Badge variant="secondary" className="font-mono text-xs tracking-widest">{r.codigo}</Badge>
-                                <div className="space-y-1 min-w-0">
-                                  <div className="flex items-center gap-2 flex-wrap">
-                                    <span className="text-sm font-medium">{r.descricao || "—"}</span>
-                                    {dxfOk ? <span className="text-green-600 flex items-center gap-1 text-xs"><CheckCircle2 className="h-3 w-3" /> DXF</span>
-                                           : <span className="text-orange-600 flex items-center gap-1 text-xs"><AlertTriangle className="h-3 w-3" /> Sem DXF</span>}
-                                  </div>
-                                  <div className="text-xs text-muted-foreground">
-                                    {atual ? `Etapa: ${labelEtapa(atual.tipo_etapa)}${terc ? ` · ${terc.nome}` : ""}` : "Etapas não configuradas"}
-                                  </div>
-                                  <Progress value={progresso} className="h-1.5" />
-                                </div>
-                                <div className="flex items-center gap-2">
-                                  <Button
-                                    size="sm" onClick={() => avancar(r.id)}
-                                    disabled={!atual || bloqueado}
-                                    title={bloqueado ? "Envie o arquivo DXF antes de avançar para o corte." : undefined}
-                                    className="gap-1"
-                                  >
-                                    <PlayCircle className="h-3 w-3" /> Avançar
-                                  </Button>
-                                  <Button size="sm" variant="outline" onClick={() => navigate(`/cadastros/referencias/${r.id}`)}>Detalhes ›</Button>
-                                </div>
-                              </div>
-                            );
-                          })}
+                          {clientRefs.map((r) => (
+                            <RefRow
+                              key={r.id} r={r}
+                              etapas={etapasPorRef.get(r.id) || []}
+                              dxfOk={dxfByRef.has(r.id)}
+                              tercById={tercById}
+                              onAvancar={() => avancar(r.id)}
+                              onDetalhes={() => navigate(`/cadastros/referencias/${r.id}`)}
+                            />
+                          ))}
                         </div>
                       )}
                     </CardContent>
@@ -417,8 +409,32 @@ export default function Desenvolvimento() {
                 );
               })}
             </div>
+          ) : (
+            <Card>
+              <CardContent className="p-0 divide-y">
+                {refsAcomp
+                  .slice()
+                  .sort((a, b) => {
+                    const ca = cliById.get(a.cliente_id)?.nome || "";
+                    const cb = cliById.get(b.cliente_id)?.nome || "";
+                    return ca.localeCompare(cb) || a.codigo.localeCompare(b.codigo);
+                  })
+                  .map((r) => (
+                    <RefRow
+                      key={r.id} r={r}
+                      etapas={etapasPorRef.get(r.id) || []}
+                      dxfOk={dxfByRef.has(r.id)}
+                      tercById={tercById}
+                      clienteNome={cliById.get(r.cliente_id)?.nome}
+                      onAvancar={() => avancar(r.id)}
+                      onDetalhes={() => navigate(`/cadastros/referencias/${r.id}`)}
+                    />
+                  ))}
+              </CardContent>
+            </Card>
           )}
         </TabsContent>
+
 
         {/* FILAS */}
         <TabsContent value="filas" className="space-y-6 mt-4">
@@ -615,5 +631,89 @@ function FilaSection({
         )}
       </CardContent>
     </Card>
+  );
+}
+
+function EtapasStepper({ etapas }: { etapas: PilotoEtapa[] }) {
+  if (!etapas.length) {
+    return <div className="text-xs text-muted-foreground italic">Etapas não configuradas</div>;
+  }
+  const ordenadas = etapas.slice().sort((a, b) => a.ordem - b.ordem);
+  return (
+    <div className="flex items-center gap-1 flex-wrap">
+      {ordenadas.map((e, idx) => {
+        const isLast = idx === ordenadas.length - 1;
+        const cls =
+          e.status === "concluido"
+            ? "bg-green-500/15 text-green-700 dark:text-green-400 border-green-500/30"
+            : e.status === "em_andamento"
+            ? "bg-primary/15 text-primary border-primary/40 ring-1 ring-primary/30"
+            : "bg-muted text-muted-foreground border-border";
+        return (
+          <div key={e.id} className="flex items-center gap-1">
+            <span
+              title={`${labelEtapa(e.tipo_etapa)} · ${e.status}`}
+              className={`px-2 py-0.5 rounded-md border text-[10px] font-medium whitespace-nowrap ${cls}`}
+            >
+              {e.status === "concluido" && <CheckCircle2 className="inline h-2.5 w-2.5 mr-1" />}
+              {labelEtapa(e.tipo_etapa)}
+            </span>
+            {!isLast && <span className="text-muted-foreground/50 text-[10px]">›</span>}
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+interface RefRowProps {
+  r: Referencia;
+  etapas: PilotoEtapa[];
+  dxfOk: boolean;
+  tercById: Map<string, Terceiro>;
+  clienteNome?: string;
+  onAvancar: () => void;
+  onDetalhes: () => void;
+}
+
+function RefRow({ r, etapas, dxfOk, tercById, clienteNome, onAvancar, onDetalhes }: RefRowProps) {
+  const atual = etapas.find((e) => e.status === "em_andamento");
+  const concluidas = etapas.filter((e) => e.status === "concluido").length;
+  const total = etapas.length;
+  const progresso = total ? Math.round((concluidas / total) * 100) : 0;
+  const bloqueado = atual?.tipo_etapa === "desenvolvimento_modelagem" && !dxfOk;
+  const terc = atual?.terceiro_id ? tercById.get(atual.terceiro_id) : null;
+  return (
+    <div className="p-3 space-y-2">
+      <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-3 items-start">
+        <Badge variant="secondary" className="font-mono text-xs tracking-widest h-fit">{r.codigo}</Badge>
+        <div className="space-y-1 min-w-0">
+          <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-sm font-medium">{r.descricao || "—"}</span>
+            {clienteNome && <span className="text-xs text-muted-foreground uppercase">· {clienteNome}</span>}
+            {dxfOk
+              ? <span className="text-green-600 flex items-center gap-1 text-xs"><CheckCircle2 className="h-3 w-3" /> DXF</span>
+              : <span className="text-orange-600 flex items-center gap-1 text-xs"><AlertTriangle className="h-3 w-3" /> Sem DXF</span>}
+          </div>
+          <div className="text-xs text-muted-foreground">
+            {atual ? `Etapa atual: ${labelEtapa(atual.tipo_etapa)}${terc ? ` · ${terc.nome}` : ""}` : "Etapas não configuradas"}
+            <span className="ml-2">· {concluidas}/{total} ({progresso}%)</span>
+          </div>
+          <Progress value={progresso} className="h-1.5" />
+        </div>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm" onClick={onAvancar}
+            disabled={!atual || bloqueado}
+            title={bloqueado ? "Envie o arquivo DXF antes de avançar para o corte." : undefined}
+            className="gap-1"
+          >
+            <PlayCircle className="h-3 w-3" /> Avançar
+          </Button>
+          <Button size="sm" variant="outline" onClick={onDetalhes}>Detalhes ›</Button>
+        </div>
+      </div>
+      <EtapasStepper etapas={etapas} />
+    </div>
   );
 }
