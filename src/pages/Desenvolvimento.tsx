@@ -856,7 +856,7 @@ const CHECK_LABEL_POR_ETAPA: Record<string, string> = {
   costura: "Piloto costurada?",
   lavanderia: "Lavanderia concluída?",
   estamparia: "Estampa aplicada?",
-  estamparia_bordado: "Estampa + bordado concluídos?",
+  
   bordado: "Bordado aplicado?",
   caseado: "Caseado / botão feito?",
   acabamento: "Acabamento concluído?",
