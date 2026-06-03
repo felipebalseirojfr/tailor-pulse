@@ -114,7 +114,7 @@ export async function checkFichasFinalizadas(referenciaId: string): Promise<{
   const result = { tecnica: false, costura: false };
 
   try {
-    const { data, error } = await (supabase.from("fichas_tecnicas") as any)
+    const { data, error } = await ((supabase as any).from("fichas_tecnicas"))
       .select("id, status")
       .eq("referencia_id", referenciaId)
       .eq("status", "finalizada")
@@ -123,7 +123,7 @@ export async function checkFichasFinalizadas(referenciaId: string): Promise<{
   } catch { /* table not yet created */ }
 
   try {
-    const { data, error } = await (supabase.from("fichas_costura") as any)
+    const { data, error } = await ((supabase as any).from("fichas_costura"))
       .select("id, status")
       .eq("referencia_id", referenciaId)
       .eq("status", "finalizada")
