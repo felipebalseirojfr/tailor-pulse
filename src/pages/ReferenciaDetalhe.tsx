@@ -163,11 +163,10 @@ export default function ReferenciaDetalhe() {
     <div className="space-y-6">
       <div>
         <Link
-          to="/clientes"
-          state={{ tab: "referencias" }}
+          to="/desenvolvimento"
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className="h-4 w-4" /> Voltar para Cadastros
+          <ArrowLeft className="h-4 w-4" /> Voltar para Desenvolvimento
         </Link>
       </div>
 
