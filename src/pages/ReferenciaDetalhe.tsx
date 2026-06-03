@@ -205,6 +205,16 @@ export default function ReferenciaDetalhe() {
         <DxfBanner referenciaId={ref.id} onChange={fetchAll} />
       )}
 
+      {fichaSummary && (
+        <button
+          type="button"
+          onClick={() => document.getElementById("ficha-tecnica")?.scrollIntoView({ behavior: "smooth" })}
+          className="text-sm text-muted-foreground hover:text-foreground underline-offset-2 hover:underline self-start"
+        >
+          Ficha Técnica: {fichaSummary.tecidos} tecido(s) · {fichaSummary.aviamentos} aviamento(s)
+        </button>
+      )}
+
       {/* Section F — Etapas da Piloto */}
       <EtapasPilotoSection referenciaId={ref.id} onChanged={fetchAll} />
 
