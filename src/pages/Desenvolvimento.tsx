@@ -16,10 +16,10 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import {
   Plus, ChevronDown, ChevronRight, AlertTriangle, CheckCircle2, ArrowUp, ArrowDown,
-  PlayCircle, Users, ListChecks,
+  PlayCircle, ListChecks,
 } from "lucide-react";
 import {
-  PILOTO_ETAPAS_DISPONIVEIS, ETAPAS_COM_TERCEIRO, labelEtapa, avancarEtapa,
+  PILOTO_ETAPAS_DISPONIVEIS, labelEtapa, avancarEtapa,
 } from "@/lib/piloto-etapas";
 
 interface Referencia {
