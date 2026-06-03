@@ -2161,6 +2161,54 @@ export type Database = {
           },
         ]
       }
+      referencias_fotos_piloto: {
+        Row: {
+          created_at: string
+          foto_url: string
+          id: string
+          lado: string
+          referencia_id: string
+          tamanho_bytes: number | null
+          updated_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          foto_url: string
+          id?: string
+          lado: string
+          referencia_id: string
+          tamanho_bytes?: number | null
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          foto_url?: string
+          id?: string
+          lado?: string
+          referencia_id?: string
+          tamanho_bytes?: number | null
+          updated_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "referencias_fotos_piloto_referencia_id_fkey"
+            columns: ["referencia_id"]
+            isOneToOne: false
+            referencedRelation: "referencias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "referencias_fotos_piloto_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tecidos: {
         Row: {
           ativo: boolean

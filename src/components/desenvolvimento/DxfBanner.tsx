@@ -33,17 +33,26 @@ export default function DxfBanner({
   const [obs, setObs] = useState("");
   const [uploading, setUploading] = useState(false);
 
+  const [fotos, setFotos] = useState<{ frente: boolean; costas: boolean }>({ frente: false, costas: false });
+
   const fetchDxf = async () => {
     setLoading(true);
-    const { data } = await (supabase.from("modelagens_dxf") as any)
-      .select("id, nome_arquivo, versao, created_at")
-      .eq("referencia_id", referenciaId)
-      .eq("ativo", true)
-      .order("created_at", { ascending: false })
-      .limit(1);
+    const [{ data }, { data: ftsData }] = await Promise.all([
+      (supabase.from("modelagens_dxf") as any)
+        .select("id, nome_arquivo, versao, created_at")
+        .eq("referencia_id", referenciaId)
+        .eq("ativo", true)
+        .order("created_at", { ascending: false })
+        .limit(1),
+      (supabase.from("referencias_fotos_piloto" as any) as any)
+        .select("lado").eq("referencia_id", referenciaId),
+    ]);
     setDxf(((data as any[]) || [])[0] || null);
+    const lados = new Set(((ftsData as any[]) || []).map((r) => r.lado));
+    setFotos({ frente: lados.has("frente"), costas: lados.has("costas") });
     setLoading(false);
   };
+
 
   useEffect(() => { fetchDxf(); }, [referenciaId]);
 
@@ -79,8 +88,18 @@ export default function DxfBanner({
 
   if (loading) return null;
 
+  const fotosOk = fotos.frente && fotos.costas;
+  const fotosLabel = fotosOk
+    ? "✓ Fotos da piloto: Frente e Costas"
+    : !fotos.frente && !fotos.costas
+    ? "⚠ Fotos da piloto não enviadas"
+    : !fotos.frente
+    ? "⚠ Foto frente da piloto não enviada"
+    : "⚠ Foto costas da piloto não enviada";
+
   return (
     <>
+      <div className="space-y-2">
       {dxf ? (
         <div className="rounded-md border border-green-500/30 bg-green-500/10 p-4 flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-3 text-green-700 dark:text-green-400">
@@ -108,6 +127,22 @@ export default function DxfBanner({
           </Button>
         </div>
       )}
+
+      <button
+        type="button"
+        onClick={() => document.getElementById("ficha-tecnica")?.scrollIntoView({ behavior: "smooth" })}
+        className={
+          "w-full text-left rounded-md border p-3 text-sm flex items-center gap-2 hover:opacity-80 transition " +
+          (fotosOk
+            ? "border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400"
+            : "border-orange-500/30 bg-orange-500/10 text-orange-700 dark:text-orange-400")
+        }
+      >
+        {fotosOk ? <CheckCircle2 className="h-4 w-4 shrink-0" /> : <AlertTriangle className="h-4 w-4 shrink-0" />}
+        <span>{fotosLabel}</span>
+      </button>
+      </div>
+
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>

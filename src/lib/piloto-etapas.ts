@@ -101,22 +101,23 @@ export async function hasActiveDxf(referenciaId: string): Promise<boolean> {
 }
 
 /**
- * Checks if Ficha Técnica AND Ficha de Costura exist and are finalized.
- * Tables fichas_tecnicas / fichas_costura come in Dev-3 and Dev-4.
- * If a table doesn't exist yet (PostgREST 42P01), we treat it as "missing".
- * Returns { tecnica, costura } — both true means lacre is allowed.
+ * Verifica os requisitos para lacrar a piloto:
+ *  - tecnica: existe um registro em fichas_tecnicas (Dev-3 simplificado)
+ *  - costura: Ficha de Costura finalizada (Dev-4) — até existir, retorna false
+ *  - fotoFrente / fotoCostas: fotos da piloto enviadas (Dev-3)
  */
 export async function checkFichasFinalizadas(referenciaId: string): Promise<{
   tecnica: boolean;
   costura: boolean;
+  fotoFrente: boolean;
+  fotoCostas: boolean;
 }> {
-  const result = { tecnica: false, costura: false };
+  const result = { tecnica: false, costura: false, fotoFrente: false, fotoCostas: false };
 
   try {
     const { data, error } = await ((supabase as any).from("fichas_tecnicas"))
-      .select("id, status")
+      .select("id")
       .eq("referencia_id", referenciaId)
-      .eq("status", "finalizada")
       .limit(1);
     if (!error && data && data.length) result.tecnica = true;
   } catch { /* table not yet created */ }
@@ -130,8 +131,20 @@ export async function checkFichasFinalizadas(referenciaId: string): Promise<{
     if (!error && data && data.length) result.costura = true;
   } catch { /* table not yet created */ }
 
+  try {
+    const { data, error } = await ((supabase as any).from("referencias_fotos_piloto"))
+      .select("lado")
+      .eq("referencia_id", referenciaId);
+    if (!error && data) {
+      const lados = new Set((data as any[]).map((r) => r.lado));
+      result.fotoFrente = lados.has("frente");
+      result.fotoCostas = lados.has("costas");
+    }
+  } catch { /* table not yet created */ }
+
   return result;
 }
+
 
 /**
  * Status sync rules when advancing:
@@ -202,11 +215,12 @@ export async function avancarEtapa(referenciaId: string): Promise<{ ok: boolean;
 export async function lacrarPiloto(
   referenciaId: string,
   opts: { aprovadaComAlteracoes?: boolean; alteracoes?: string | null } = {}
-): Promise<{ ok: boolean; error?: string; fichas?: { tecnica: boolean; costura: boolean } }> {
+): Promise<{ ok: boolean; error?: string; fichas?: { tecnica: boolean; costura: boolean; fotoFrente: boolean; fotoCostas: boolean } }> {
   const fichas = await checkFichasFinalizadas(referenciaId);
-  if (!fichas.tecnica || !fichas.costura) {
-    return { ok: false, error: "Fichas obrigatórias não finalizadas", fichas };
+  if (!fichas.tecnica || !fichas.costura || !fichas.fotoFrente || !fichas.fotoCostas) {
+    return { ok: false, error: "Requisitos para lacre não atendidos", fichas };
   }
+
 
   const etapas = await fetchPilotoEtapas(referenciaId);
   const atual = etapas.find((e) => e.status === "em_andamento");
