@@ -923,6 +923,8 @@ function HistoricoCorte() {
                                       </div>
                                     )}
                                   </td>
+                                  <td className="px-3 py-3 text-right font-semibold text-muted-foreground whitespace-nowrap border-b-2 border-blue-500/20">{esp}</td>
+                                  <td className="px-3 py-3 text-right font-bold whitespace-nowrap border-b-2 border-blue-500/20">{real}</td>
                                   <td className="px-3 py-3 border-b-2 border-blue-500/20">
                                     {tamanhos.length === 0 ? (
                                       <span className="text-muted-foreground">—</span>
