@@ -27,6 +27,7 @@ interface Referencia {
   descricao: string | null; status: string; ativo: boolean;
   created_at: string; updated_at: string;
   prioridade_desenvolvimento?: number | null;
+  prazo_termino?: string | null;
 }
 interface Cliente { id: string; nome: string; abreviacao_2_letras: string | null; }
 interface TipoPeca { id: string; nome: string; abreviacao_2_letras: string; ativo: boolean; }
