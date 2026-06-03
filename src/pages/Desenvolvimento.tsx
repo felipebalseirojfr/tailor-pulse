@@ -928,6 +928,11 @@ function RefRow({ r, etapas, dxfOk, tercById, clienteNome, onAvancar, onDetalhes
           <div className="flex items-center gap-2 flex-wrap">
             <span className="text-sm font-medium">{r.descricao || "—"}</span>
             {clienteNome && <span className="text-xs text-muted-foreground uppercase">· {clienteNome}</span>}
+            {(r.numero_rodada_piloto || 1) > 1 && (
+              <Badge variant="outline" className="bg-purple-500/15 text-purple-700 dark:text-purple-400 border-purple-500/30 text-[10px]">
+                Fitting — Nº {r.numero_rodada_piloto}ª piloto
+              </Badge>
+            )}
             {dxfOk
               ? <span className="text-green-600 flex items-center gap-1 text-xs"><CheckCircle2 className="h-3 w-3" /> DXF</span>
               : <span className="text-orange-600 flex items-center gap-1 text-xs"><AlertTriangle className="h-3 w-3" /> Sem DXF</span>}
