@@ -867,6 +867,8 @@ function HistoricoCorte() {
                               <th className="text-left px-3 py-2 font-semibold border-b-2 border-blue-500/40 whitespace-nowrap">Conclusão</th>
                               
                               <th className="text-left px-3 py-2 font-semibold border-b-2 border-blue-500/40">Grade Esperada / Cortada</th>
+                              <th className="text-right px-3 py-2 font-semibold border-b-2 border-blue-500/40 whitespace-nowrap">Total Esp.</th>
+                              <th className="text-right px-3 py-2 font-semibold border-b-2 border-blue-500/40 whitespace-nowrap">Total Cort.</th>
                               <th className="text-left px-3 py-2 font-semibold border-b-2 border-blue-500/40">Diferença por Tamanho</th>
                               <th className="text-right px-3 py-2 font-semibold border-b-2 border-blue-500/40 whitespace-nowrap">Total Dif.</th>
                               <th className="text-center px-3 py-2 font-semibold border-b-2 border-blue-500/40">Coment.</th>
@@ -921,6 +923,8 @@ function HistoricoCorte() {
                                       </div>
                                     )}
                                   </td>
+                                  <td className="px-3 py-3 text-right font-semibold text-muted-foreground whitespace-nowrap border-b-2 border-blue-500/20">{esp}</td>
+                                  <td className="px-3 py-3 text-right font-bold whitespace-nowrap border-b-2 border-blue-500/20">{real}</td>
                                   <td className="px-3 py-3 border-b-2 border-blue-500/20">
                                     {tamanhos.length === 0 ? (
                                       <span className="text-muted-foreground">—</span>
@@ -984,12 +988,11 @@ function HistoricoCorte() {
                           </tbody>
                           <tfoot className="bg-blue-500/10 font-semibold">
                             <tr>
-                              <td className="px-3 py-2 border-t-2 border-blue-500/40" colSpan={6}>
+                              <td className="px-3 py-2 border-t-2 border-blue-500/40" colSpan={7}>
                                 Totais do mês — {grupoItems.length} OPs
                               </td>
-                              <td className="px-3 py-2 border-t-2 border-blue-500/40 text-muted-foreground">
-                                Esperado: <span className="text-foreground">{totalEsperado}</span> · Cortado: <span className="text-foreground">{totalReal}</span>
-                              </td>
+                              <td className="px-3 py-2 text-right border-t-2 border-blue-500/40 text-muted-foreground whitespace-nowrap">{totalEsperado}</td>
+                              <td className="px-3 py-2 text-right border-t-2 border-blue-500/40 whitespace-nowrap">{totalReal}</td>
                               <td className="px-3 py-2 border-t-2 border-blue-500/40"></td>
                               <td className={cn(
                                 "px-3 py-2 text-right border-t-2 border-blue-500/40",
