@@ -19,7 +19,7 @@ import {
   PlayCircle, ListChecks,
 } from "lucide-react";
 import {
-  PILOTO_ETAPAS_DISPONIVEIS, labelEtapa, avancarEtapa,
+  PILOTO_ETAPAS_DISPONIVEIS, labelEtapa, avancarEtapa, ETAPAS_COM_TERCEIRO,
 } from "@/lib/piloto-etapas";
 
 interface Referencia {
