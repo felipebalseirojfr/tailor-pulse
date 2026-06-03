@@ -181,6 +181,14 @@ export default function ReferenciaDetalhe() {
         </Badge>
       </div>
 
+      {/* DXF banner — visible only in development statuses */}
+      {(ref.status === "em_desenvolvimento" || ref.status === "piloto_em_producao") && (
+        <DxfBanner referenciaId={ref.id} onChange={fetchAll} />
+      )}
+
+      {/* Section F — Etapas da Piloto */}
+      <EtapasPilotoSection referenciaId={ref.id} onChanged={fetchAll} />
+
       {/* Section A — Dados */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
