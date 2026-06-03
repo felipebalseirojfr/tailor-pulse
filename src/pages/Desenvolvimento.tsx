@@ -696,6 +696,15 @@ function FilaSection({
                           </div>
                         </td>
                       )}
+                      {onExcluir && (
+                        <td className="p-2 text-right">
+                          <div className="flex justify-end" onClick={(e) => e.stopPropagation()}>
+                            <Button size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10" title="Excluir referência" onClick={() => onExcluir(r.id)}>
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   );
                 })}
