@@ -129,6 +129,7 @@ export default function ReferenciaDetalhe() {
       modelagem_origem_id: modelagemOrigemId === "__none__" ? null : modelagemOrigemId,
       status: status.trim() || "em_desenvolvimento",
       ativo,
+      prazo_termino: prazoTermino || null,
     };
     const { error } = await (supabase.from("referencias") as any)
       .update(payload)
