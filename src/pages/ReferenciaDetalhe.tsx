@@ -327,16 +327,12 @@ export default function ReferenciaDetalhe() {
         </CardContent>
       </Card>
 
-      {/* Section B — Ficha Técnica */}
-      <Card id="ficha-tecnica" className="scroll-mt-24">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5" /> Ficha Técnica</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <p className="text-muted-foreground">Ficha Técnica ainda não cadastrada. Esta funcionalidade será implementada em breve.</p>
-          <Button disabled title="Em breve" variant="outline">Editar Ficha Técnica</Button>
-        </CardContent>
-      </Card>
+      {/* Section B — Ficha Técnica JFR */}
+      <FichaTecnicaSection
+        referenciaId={ref.id}
+        refInfo={{ codigo: ref.codigo, cliente: clienteNome, tipoPeca: tipoPecaNome, descricao: ref.descricao }}
+        onSummaryChange={setFichaSummary}
+      />
 
       {/* Section C — Ficha de Costura */}
       <Card id="ficha-costura" className="scroll-mt-24">
