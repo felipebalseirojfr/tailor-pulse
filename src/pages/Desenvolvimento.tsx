@@ -16,7 +16,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import {
   Plus, ChevronDown, ChevronRight, AlertTriangle, CheckCircle2, ArrowUp, ArrowDown,
-  PlayCircle, ListChecks,
+  PlayCircle, ListChecks, Upload,
 } from "lucide-react";
 import {
   PILOTO_ETAPAS_DISPONIVEIS, labelEtapa, avancarEtapa, ETAPAS_COM_TERCEIRO,
