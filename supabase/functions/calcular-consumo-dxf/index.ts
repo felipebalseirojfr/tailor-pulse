@@ -176,24 +176,15 @@ function readExtFromHeader(text: string): { minX: number; minY: number; maxX: nu
 }
 
 function scanEntitiesBBox(text: string): { minX: number; minY: number; maxX: number; maxY: number } | null {
-  let inEntities = false;
+  // Scan all (10, 20) coordinate pairs across the whole file.
+  // Group code 10 = X, 20 = Y. Tracking sections is fragile because
+  // code 2 also appears inside entities (e.g. layer/linetype names),
+  // and the bounding box of all coords matches the marker extent.
   let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
   let pendingX: number | null = null;
   let found = false;
 
   for (const [code, value] of iterPairs(text)) {
-    if (code === 0) {
-      pendingX = null;
-      const v = value.trim();
-      if (v === "SECTION") continue;
-    }
-    if (code === 2) {
-      const v = value.trim();
-      inEntities = v === "ENTITIES" || v === "BLOCKS";
-      continue;
-    }
-    if (!inEntities) continue;
-
     if (code === 10) {
       pendingX = parseFloat(value);
     } else if (code === 20 && pendingX !== null) {
@@ -207,6 +198,9 @@ function scanEntitiesBBox(text: string): { minX: number; minY: number; maxX: num
         found = true;
       }
       pendingX = null;
+    } else if (code !== 20) {
+      // Any non-20 code after a 10 breaks the pair (besides 20 which we consumed)
+      // Keep pendingX so a subsequent 20 still works — but reset if we hit another 10.
     }
   }
 
