@@ -183,6 +183,13 @@ export default function ReferenciaDetalhe() {
         </Badge>
       </div>
 
+      {ref.status === "rascunho" && (
+        <div className="rounded-md border border-orange-500/40 bg-orange-500/10 p-4 text-sm">
+          <strong className="text-orange-700 dark:text-orange-400">Rascunho não publicado.</strong>{" "}
+          Configure as etapas da piloto abaixo e clique em <strong>Salvar</strong> para publicar esta referência no painel de Desenvolvimento.
+        </div>
+      )}
+
       {/* DXF banner — visible only in development statuses */}
       {(ref.status === "em_desenvolvimento" || ref.status === "piloto_em_producao") && (
         <DxfBanner referenciaId={ref.id} onChange={fetchAll} />
