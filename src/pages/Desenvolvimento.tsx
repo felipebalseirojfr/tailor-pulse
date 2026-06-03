@@ -479,75 +479,24 @@ export default function Desenvolvimento() {
         </TabsContent>
 
 
-        {/* FILAS */}
+        {/* FILAS — uma fila por etapa */}
         <TabsContent value="filas" className="space-y-6 mt-4">
           {loading ? <Spinner /> : (
             <div className="space-y-6">
-              {/* Fila de Modelagem */}
-              <FilaSection
-                titulo="Fila de Modelagem"
-                etapa="desenvolvimento_modelagem"
-                items={refsEmEtapa("desenvolvimento_modelagem")}
-                onReorder={(id, dir) => reordenar(id, dir, "desenvolvimento_modelagem")}
-                cliById={cliById}
-                dxfByRef={dxfByRef}
-                navigate={navigate}
-                reordenavel
-                onExcluir={(id) => setConfirmDeleteId(id)}
-              />
-
-              {/* Fila de Costura */}
-              <FilaSection
-                titulo="Fila de Costura da Piloto"
-                etapa="costura"
-                items={refsEmEtapa("costura")}
-                onReorder={(id, dir) => reordenar(id, dir, "costura")}
-                cliById={cliById}
-                dxfByRef={dxfByRef}
-                navigate={navigate}
-                reordenavel
-                onExcluir={(id) => setConfirmDeleteId(id)}
-              />
-
-              {/* Em Terceiros — read-only, agrupado por etapa */}
-              <Card>
-                <CardHeader>
-                  <CardTitle className="text-lg">Em Terceiros</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {ETAPAS_TERCEIROS.every((et) => refsEmEtapa(et).length === 0) ? (
-                    <p className="text-sm text-muted-foreground">Nenhuma referência em terceiros no momento.</p>
-                  ) : (
-                    ETAPAS_TERCEIROS.map((etapa) => {
-                      const items = refsEmEtapa(etapa);
-                      if (items.length === 0) return null;
-                      return (
-                        <div key={etapa} className="space-y-2">
-                          <h3 className="text-sm font-semibold text-muted-foreground uppercase tracking-wide">
-                            {labelEtapa(etapa)} ({items.length})
-                          </h3>
-                          <div className="rounded-md border divide-y">
-                            {items.map(({ r, a }) => {
-                              const terc = a?.terceiro_id ? tercById.get(a.terceiro_id) : null;
-                              const dias = a?.data_inicio ? daysSince(a.data_inicio) : 0;
-                              return (
-                                <div key={r.id} className="p-2 text-sm flex items-center justify-between gap-2 cursor-pointer hover:bg-muted/30" onClick={() => navigate(`/cadastros/referencias/${r.id}`)}>
-                                  <div className="flex items-center gap-2 min-w-0">
-                                    <Badge variant="secondary" className="font-mono text-xs">{r.codigo}</Badge>
-                                    <span className="truncate">{r.descricao || cliById.get(r.cliente_id)?.nome || "—"}</span>
-                                    {terc && <span className="text-xs text-muted-foreground">· {terc.nome}</span>}
-                                  </div>
-                                  <span className="text-xs text-muted-foreground shrink-0">{dias}d</span>
-                                </div>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      );
-                    })
-                  )}
-                </CardContent>
-              </Card>
+              {PILOTO_ETAPAS_DISPONIVEIS.map((etapa) => (
+                <FilaSection
+                  key={etapa}
+                  titulo={`Fila — ${labelEtapa(etapa)}`}
+                  etapa={etapa}
+                  items={refsEmEtapa(etapa)}
+                  onReorder={(id, dir) => reordenar(id, dir, etapa)}
+                  cliById={cliById}
+                  dxfByRef={dxfByRef}
+                  navigate={navigate}
+                  reordenavel
+                  onExcluir={(id) => setConfirmDeleteId(id)}
+                />
+              ))}
             </div>
           )}
         </TabsContent>
