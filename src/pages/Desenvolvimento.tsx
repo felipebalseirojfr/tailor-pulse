@@ -474,6 +474,7 @@ export default function Desenvolvimento() {
                     navigate={navigate}
                     tercById={tercById}
                     reordenavel={reordenavel}
+                    onExcluir={(id) => setConfirmDeleteId(id)}
                   />
                 );
               })}
