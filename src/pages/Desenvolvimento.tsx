@@ -446,6 +446,7 @@ export default function Desenvolvimento() {
                       clienteNome={cliById.get(r.cliente_id)?.nome}
                       onAvancar={() => avancar(r.id)}
                       onDetalhes={() => navigate(`/cadastros/referencias/${r.id}`)}
+                      onExcluir={() => setConfirmDeleteId(r.id)}
                     />
                   ))}
               </CardContent>
