@@ -571,9 +571,63 @@ function FilaSection({
   reordenavel?: boolean;
   tercById?: Map<string, Terceiro | undefined>;
 }) {
+  const handlePrint = () => {
+    const win = window.open("", "_blank", "width=900,height=700");
+    if (!win) return;
+    const rows = items.map(({ r, a }, idx) => {
+      const dias = a?.data_inicio ? daysSince(a.data_inicio) : 0;
+      const terc = tercById && a?.terceiro_id ? tercById.get(a.terceiro_id) : null;
+      const cli = cliById.get(r.cliente_id)?.nome || "—";
+      const dxf = dxfByRef.has(r.id) ? "OK" : "Sem DXF";
+      const esc = (s: string) => s.replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]!));
+      return `<tr>
+        <td>${idx + 1}</td>
+        <td style="font-family:monospace">${esc(r.codigo)}</td>
+        <td>${esc(cli)}</td>
+        <td>${esc(r.descricao || "—")}</td>
+        ${tercById ? `<td>${esc(terc?.nome || "—")}</td>` : ""}
+        <td>${dias}d</td>
+        <td>${dxf}</td>
+        <td style="width:120px;border-bottom:1px solid #999">&nbsp;</td>
+      </tr>`;
+    }).join("");
+    const data = new Date().toLocaleString("pt-BR");
+    win.document.write(`<!doctype html><html><head><meta charset="utf-8"><title>${titulo}</title>
+      <style>
+        @page { size: A4; margin: 14mm; }
+        body { font-family: -apple-system, Segoe UI, Roboto, Arial, sans-serif; color: #111; font-size: 12px; }
+        h1 { font-size: 16px; margin: 0 0 4px; }
+        .meta { color: #666; font-size: 11px; margin-bottom: 12px; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 6px 8px; border-bottom: 1px solid #ddd; text-align: left; vertical-align: top; }
+        th { background: #f3f4f6; font-size: 11px; text-transform: uppercase; letter-spacing: .04em; }
+        tr { page-break-inside: avoid; }
+        .empty { padding: 24px; text-align: center; color: #666; }
+      </style></head><body>
+      <h1>${titulo}</h1>
+      <div class="meta">${items.length} ${items.length === 1 ? "referência" : "referências"} · Gerado em ${data}</div>
+      ${items.length === 0 ? `<div class="empty">Nenhuma referência nesta fila.</div>` : `
+      <table>
+        <thead><tr>
+          <th>#</th><th>Código</th><th>Cliente</th><th>Descrição</th>
+          ${tercById ? "<th>Terceiro</th>" : ""}
+          <th>Dias</th><th>DXF</th><th>Observação</th>
+        </tr></thead>
+        <tbody>${rows}</tbody>
+      </table>`}
+      <script>window.onload=()=>{setTimeout(()=>window.print(),200)};</script>
+      </body></html>`);
+    win.document.close();
+  };
+
   return (
     <Card>
-      <CardHeader><CardTitle className="text-lg">{titulo} ({items.length})</CardTitle></CardHeader>
+      <CardHeader className="flex flex-row items-center justify-between gap-2 space-y-0">
+        <CardTitle className="text-lg">{titulo} ({items.length})</CardTitle>
+        <Button size="sm" variant="outline" onClick={handlePrint} className="gap-2">
+          <Printer className="h-4 w-4" /> Imprimir / PDF
+        </Button>
+      </CardHeader>
       <CardContent>
         {items.length === 0 ? (
           <p className="text-sm text-muted-foreground">Nenhuma referência nesta fila.</p>
