@@ -90,6 +90,7 @@ export default function ReferenciaDetalhe() {
     setModelagemOrigemId(r.modelagem_origem_id || "__none__");
     setStatus(r.status);
     setAtivo(r.ativo);
+    setPrazoTermino(r.prazo_termino || "");
 
     const [cli, tipo, prof, todasOrigens] = await Promise.all([
       supabase.from("clientes").select("nome").eq("id", r.cliente_id).maybeSingle(),
