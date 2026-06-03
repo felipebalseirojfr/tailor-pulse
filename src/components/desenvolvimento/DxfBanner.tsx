@@ -88,8 +88,18 @@ export default function DxfBanner({
 
   if (loading) return null;
 
+  const fotosOk = fotos.frente && fotos.costas;
+  const fotosLabel = fotosOk
+    ? "✓ Fotos da piloto: Frente e Costas"
+    : !fotos.frente && !fotos.costas
+    ? "⚠ Fotos da piloto não enviadas"
+    : !fotos.frente
+    ? "⚠ Foto frente da piloto não enviada"
+    : "⚠ Foto costas da piloto não enviada";
+
   return (
     <>
+      <div className="space-y-2">
       {dxf ? (
         <div className="rounded-md border border-green-500/30 bg-green-500/10 p-4 flex items-center justify-between gap-3 flex-wrap">
           <div className="flex items-center gap-3 text-green-700 dark:text-green-400">
@@ -117,6 +127,22 @@ export default function DxfBanner({
           </Button>
         </div>
       )}
+
+      <button
+        type="button"
+        onClick={() => document.getElementById("ficha-tecnica")?.scrollIntoView({ behavior: "smooth" })}
+        className={
+          "w-full text-left rounded-md border p-3 text-sm flex items-center gap-2 hover:opacity-80 transition " +
+          (fotosOk
+            ? "border-green-500/30 bg-green-500/10 text-green-700 dark:text-green-400"
+            : "border-orange-500/30 bg-orange-500/10 text-orange-700 dark:text-orange-400")
+        }
+      >
+        {fotosOk ? <CheckCircle2 className="h-4 w-4 shrink-0" /> : <AlertTriangle className="h-4 w-4 shrink-0" />}
+        <span>{fotosLabel}</span>
+      </button>
+      </div>
+
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
