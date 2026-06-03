@@ -18,6 +18,8 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Pencil, FileText, Scissors, FileDown } from "lucide-react";
 import ModelagemDxfSection from "@/components/referencias/ModelagemDxfSection";
+import DxfBanner from "@/components/desenvolvimento/DxfBanner";
+import EtapasPilotoSection from "@/components/desenvolvimento/EtapasPilotoSection";
 
 interface Referencia {
   id: string;
@@ -178,6 +180,14 @@ export default function ReferenciaDetalhe() {
           {statusLabel(ref.status)}
         </Badge>
       </div>
+
+      {/* DXF banner — visible only in development statuses */}
+      {(ref.status === "em_desenvolvimento" || ref.status === "piloto_em_producao") && (
+        <DxfBanner referenciaId={ref.id} onChange={fetchAll} />
+      )}
+
+      {/* Section F — Etapas da Piloto */}
+      <EtapasPilotoSection referenciaId={ref.id} onChanged={fetchAll} />
 
       {/* Section A — Dados */}
       <Card>

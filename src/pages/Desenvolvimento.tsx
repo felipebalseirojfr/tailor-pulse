@@ -5,51 +5,40 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Progress } from "@/components/ui/progress";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
-import {
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
-  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, MoreVertical, FileCode2, Ruler } from "lucide-react";
+import {
+  Plus, ChevronDown, ChevronRight, AlertTriangle, CheckCircle2, ArrowUp, ArrowDown,
+  PlayCircle, ListChecks,
+} from "lucide-react";
+import {
+  PILOTO_ETAPAS_DISPONIVEIS, labelEtapa, avancarEtapa,
+} from "@/lib/piloto-etapas";
 
 interface Referencia {
-  id: string;
-  codigo: string;
-  cliente_id: string;
-  tipo_peca_id: string;
-  descricao: string | null;
-  status: string;
-  ativo: boolean;
-  created_at: string;
-  updated_at: string;
+  id: string; codigo: string; cliente_id: string; tipo_peca_id: string;
+  descricao: string | null; status: string; ativo: boolean;
+  created_at: string; updated_at: string;
+  prioridade_desenvolvimento?: number | null;
 }
 interface Cliente { id: string; nome: string; abreviacao_2_letras: string | null; }
 interface TipoPeca { id: string; nome: string; abreviacao_2_letras: string; ativo: boolean; }
+interface PilotoEtapa {
+  id: string; referencia_id: string; tipo_etapa: string; ordem: number;
+  status: string; terceiro_id: string | null; data_inicio: string | null;
+}
+interface Terceiro { id: string; nome: string; }
 
-const STATUSES: { value: string; label: string; color: string }[] = [
-  { value: "aguardando", label: "Aguardando", color: "bg-muted text-foreground border-border" },
-  { value: "em_desenvolvimento", label: "Em Desenvolvimento", color: "bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-500/30" },
-  { value: "piloto_em_producao", label: "Piloto em Produção", color: "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/30" },
-  { value: "piloto_pronta", label: "Piloto Pronta", color: "bg-purple-500/15 text-purple-700 dark:text-purple-400 border-purple-500/30" },
-  { value: "em_correcao", label: "Em Correção", color: "bg-orange-500/15 text-orange-700 dark:text-orange-400 border-orange-500/30" },
-  { value: "piloto_lacrada", label: "Piloto Lacrada", color: "bg-green-500/15 text-green-700 dark:text-green-400 border-green-500/30" },
-  { value: "cancelada", label: "Cancelada", color: "bg-red-500/15 text-red-700 dark:text-red-400 border-red-500/30" },
-];
+const STATUSES_ATIVOS = ["aguardando","em_desenvolvimento","piloto_em_producao","piloto_pronta","em_correcao"];
 
-const daysSince = (iso: string) => {
-  const d = Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
-  if (d <= 0) return "hoje";
-  if (d === 1) return "há 1 dia";
-  return `há ${d} dias`;
-};
+const daysSince = (iso: string) => Math.floor((Date.now() - new Date(iso).getTime()) / 86400000);
 
 export default function Desenvolvimento() {
   const navigate = useNavigate();
@@ -57,11 +46,13 @@ export default function Desenvolvimento() {
   const [refs, setRefs] = useState<Referencia[]>([]);
   const [clientes, setClientes] = useState<Cliente[]>([]);
   const [tipos, setTipos] = useState<TipoPeca[]>([]);
-  const [hasDxf, setHasDxf] = useState<Set<string>>(new Set());
+  const [pilotoEtapas, setPilotoEtapas] = useState<PilotoEtapa[]>([]);
+  const [terceiros, setTerceiros] = useState<Terceiro[]>([]);
+  const [dxfByRef, setDxfByRef] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
-  const [busca, setBusca] = useState("");
-  const [filtroCli, setFiltroCli] = useState("todos");
-  const [filtroTipo, setFiltroTipo] = useState("todos");
+  const [tab, setTab] = useState("acompanhamento");
+  const [filtroEtapa, setFiltroEtapa] = useState<string | null>(null);
+  const [clientesExpandidos, setClientesExpandidos] = useState<Set<string>>(new Set());
 
   // modal nova
   const [dialogOpen, setDialogOpen] = useState(false);
@@ -69,31 +60,35 @@ export default function Desenvolvimento() {
   const [novoTipo, setNovoTipo] = useState("");
   const [novoDesc, setNovoDesc] = useState("");
   const [novoOrigem, setNovoOrigem] = useState("__none__");
+  const [opcoesAvancadas, setOpcoesAvancadas] = useState(false);
   const [proximoSeq, setProximoSeq] = useState<number | null>(null);
   const [salvando, setSalvando] = useState(false);
 
-  // confirm lacre
-  const [confirmLacre, setConfirmLacre] = useState<Referencia | null>(null);
-
   const fetchAll = async () => {
-    const [refRes, cliRes, tipoRes, dxfRes] = await Promise.all([
-      (supabase.from("referencias") as any).select("*").order("created_at", { ascending: true }),
+    const [refRes, cliRes, tipoRes, dxfRes, etRes, tRes] = await Promise.all([
+      (supabase.from("referencias") as any).select("*").order("prioridade_desenvolvimento", { ascending: true }).order("created_at", { ascending: true }),
       supabase.from("clientes").select("id, nome, abreviacao_2_letras").order("nome"),
       (supabase.from("tipos_peca") as any).select("*").eq("ativo", true).order("nome"),
       (supabase.from("modelagens_dxf") as any).select("referencia_id").eq("ativo", true),
+      (supabase.from("piloto_etapas") as any).select("*").order("ordem", { ascending: true }),
+      supabase.from("terceiros").select("id, nome"),
     ]);
     setRefs((refRes.data || []) as Referencia[]);
     setClientes((cliRes.data || []) as any);
     setTipos((tipoRes.data || []) as any);
-    setHasDxf(new Set(((dxfRes.data as any[]) || []).map((d) => d.referencia_id)));
+    setDxfByRef(new Set(((dxfRes.data as any[]) || []).map((d) => d.referencia_id)));
+    setPilotoEtapas((etRes.data || []) as PilotoEtapa[]);
+    setTerceiros((tRes.data || []) as any);
     setLoading(false);
   };
 
   useEffect(() => {
     fetchAll();
     const ch = supabase
-      .channel("desenvolvimento-refs")
+      .channel("desenvolvimento-all")
       .on("postgres_changes", { event: "*", schema: "public", table: "referencias" }, () => fetchAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "piloto_etapas" }, () => fetchAll())
+      .on("postgres_changes", { event: "*", schema: "public", table: "modelagens_dxf" }, () => fetchAll())
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
@@ -109,6 +104,10 @@ export default function Desenvolvimento() {
     f();
   }, [novoCli, novoTipo]);
 
+  const cliById = useMemo(() => new Map(clientes.map((c) => [c.id, c])), [clientes]);
+  const tipoById = useMemo(() => new Map(tipos.map((t) => [t.id, t])), [tipos]);
+  const tercById = useMemo(() => new Map(terceiros.map((t) => [t.id, t])), [terceiros]);
+
   const cliSel = clientes.find((c) => c.id === novoCli);
   const tipoSel = tipos.find((t) => t.id === novoTipo);
   const cliSemAbrev = cliSel && !cliSel.abreviacao_2_letras;
@@ -117,70 +116,129 @@ export default function Desenvolvimento() {
     : "—";
 
   const resetNovo = () => {
-    setNovoCli(""); setNovoTipo(""); setNovoDesc(""); setNovoOrigem("__none__"); setProximoSeq(null);
+    setNovoCli(""); setNovoTipo(""); setNovoDesc(""); setNovoOrigem("__none__"); setOpcoesAvancadas(false); setProximoSeq(null);
   };
 
-  const cliById = useMemo(() => new Map(clientes.map((c) => [c.id, c])), [clientes]);
-  const tipoById = useMemo(() => new Map(tipos.map((t) => [t.id, t])), [tipos]);
+  const refsAtivasDev = refs.filter((r) => r.ativo && STATUSES_ATIVOS.includes(r.status));
+  const etapasPorRef = useMemo(() => {
+    const m = new Map<string, PilotoEtapa[]>();
+    pilotoEtapas.forEach((e) => {
+      const arr = m.get(e.referencia_id) || [];
+      arr.push(e);
+      m.set(e.referencia_id, arr);
+    });
+    return m;
+  }, [pilotoEtapas]);
 
-  const filtered = refs.filter((r) => {
-    if (!r.ativo) return false;
-    if (filtroCli !== "todos" && r.cliente_id !== filtroCli) return false;
-    if (filtroTipo !== "todos" && r.tipo_peca_id !== filtroTipo) return false;
-    if (busca) {
-      const q = busca.toLowerCase();
-      if (!r.codigo.toLowerCase().includes(q) && !(r.descricao || "").toLowerCase().includes(q)) return false;
-    }
-    return true;
-  });
+  const etapaAtualDe = (refId: string) =>
+    (etapasPorRef.get(refId) || []).find((e) => e.status === "em_andamento") || null;
 
-  const byStatus = (status: string) => filtered.filter((r) => (r.status || "aguardando") === status);
+  // KPIs
+  const kpiDev = refs.filter((r) => r.ativo && r.status === "em_desenvolvimento").length;
+  const kpiPilProd = refs.filter((r) => r.ativo && r.status === "piloto_em_producao").length;
+  const kpiPilPronta = refs.filter((r) => r.ativo && r.status === "piloto_pronta").length;
+  const kpiSemDxf = refsAtivasDev.filter((r) => !dxfByRef.has(r.id)).length;
 
-  const changeStatus = async (r: Referencia, newStatus: string) => {
-    // optimistic
-    setRefs((prev) => prev.map((x) => x.id === r.id ? { ...x, status: newStatus, updated_at: new Date().toISOString() } : x));
-    const { error } = await (supabase.from("referencias") as any).update({ status: newStatus }).eq("id", r.id);
-    if (error) {
-      toast({ title: "Erro ao atualizar status", description: error.message, variant: "destructive" });
-      fetchAll();
-    } else {
-      toast({ title: "Status atualizado" });
-    }
-  };
+  // Pilotos por etapa: count refs whose current em_andamento stage = X
+  const pilotosPorEtapa = useMemo(() => {
+    const m: Record<string, number> = {};
+    refsAtivasDev.forEach((r) => {
+      const a = etapaAtualDe(r.id);
+      if (a) m[a.tipo_etapa] = (m[a.tipo_etapa] || 0) + 1;
+    });
+    return m;
+  }, [refsAtivasDev, etapasPorRef]);
 
-  const handleStatusClick = (r: Referencia, newStatus: string) => {
-    if (newStatus === "piloto_lacrada") { setConfirmLacre(r); return; }
-    changeStatus(r, newStatus);
+  // Alerts
+  const refsParadas = refsAtivasDev.filter((r) => daysSince(r.updated_at || r.created_at) > 5);
+  const refsSemDxf = refsAtivasDev.filter((r) =>
+    (r.status === "em_desenvolvimento" || r.status === "piloto_em_producao") && !dxfByRef.has(r.id)
+  );
+
+  // Acompanhamento filtered by current stage filter
+  const refsAcomp = filtroEtapa
+    ? refsAtivasDev.filter((r) => etapaAtualDe(r.id)?.tipo_etapa === filtroEtapa)
+    : refsAtivasDev;
+
+  const clientesComRefs = useMemo(() => {
+    const map = new Map<string, Referencia[]>();
+    refsAcomp.forEach((r) => {
+      const arr = map.get(r.cliente_id) || [];
+      arr.push(r);
+      map.set(r.cliente_id, arr);
+    });
+    return Array.from(map.entries())
+      .map(([cliId, rs]) => ({ cliente: cliById.get(cliId), refs: rs }))
+      .filter((x) => x.cliente)
+      .sort((a, b) => (a.cliente!.nome || "").localeCompare(b.cliente!.nome || ""));
+  }, [refsAcomp, cliById]);
+
+  const toggleCliente = (id: string) => {
+    setClientesExpandidos((s) => {
+      const n = new Set(s);
+      n.has(id) ? n.delete(id) : n.add(id);
+      return n;
+    });
   };
 
   const salvar = async () => {
     if (!novoCli || !novoTipo) return;
-    if (cliSemAbrev) {
-      toast({ title: "Cliente sem abreviação", variant: "destructive" });
-      return;
-    }
+    if (cliSemAbrev) { toast({ title: "Cliente sem abreviação", variant: "destructive" }); return; }
     setSalvando(true);
     const { data: userData } = await supabase.auth.getUser();
     const payload = {
-      cliente_id: novoCli,
-      tipo_peca_id: novoTipo,
+      cliente_id: novoCli, tipo_peca_id: novoTipo,
       descricao: novoDesc.trim() || null,
       modelagem_origem_id: novoOrigem === "__none__" ? null : novoOrigem,
       criado_por: userData?.user?.id || null,
-      status: "aguardando",
-      codigo: "XX.XX.0000",
-      sequencial: 0,
+      status: "aguardando", codigo: "XX.XX.0000", sequencial: 0,
     };
     const { data, error } = await (supabase.from("referencias") as any).insert([payload]).select().single();
     setSalvando(false);
-    if (error) {
-      toast({ title: "Erro ao criar", description: error.message, variant: "destructive" });
-      return;
-    }
+    if (error) { toast({ title: "Erro ao criar", description: error.message, variant: "destructive" }); return; }
     toast({ title: "Desenvolvimento criado!", description: (data as any).codigo });
     setDialogOpen(false);
     resetNovo();
     navigate(`/cadastros/referencias/${(data as any).id}`);
+  };
+
+  const avancar = async (refId: string) => {
+    const r = await avancarEtapa(refId);
+    if (!r.ok) { toast({ title: "Não foi possível avançar", description: r.error, variant: "destructive" }); return; }
+    toast({ title: r.lacrou ? "Piloto lacrada!" : "Etapa avançada" });
+    fetchAll();
+  };
+
+  // Filas helpers
+  const refsEmEtapa = (etapa: string | string[]) => {
+    const set = new Set(Array.isArray(etapa) ? etapa : [etapa]);
+    return refsAtivasDev
+      .map((r) => ({ r, a: etapaAtualDe(r.id) }))
+      .filter((x) => x.a && set.has(x.a.tipo_etapa))
+      .sort((a, b) => {
+        const pa = a.r.prioridade_desenvolvimento ?? 0;
+        const pb = b.r.prioridade_desenvolvimento ?? 0;
+        if (pa !== pb) return pa - pb;
+        return new Date(a.r.created_at).getTime() - new Date(b.r.created_at).getTime();
+      });
+  };
+
+  const reordenar = async (refId: string, direcao: -1 | 1, filaEtapa: string) => {
+    const fila = refsEmEtapa(filaEtapa);
+    const idx = fila.findIndex((x) => x.r.id === refId);
+    const novoIdx = idx + direcao;
+    if (idx < 0 || novoIdx < 0 || novoIdx >= fila.length) return;
+    const novaOrdem = [...fila];
+    const [moved] = novaOrdem.splice(idx, 1);
+    novaOrdem.splice(novoIdx, 0, moved);
+    // optimistic
+    setRefs((prev) => prev.map((r) => {
+      const pos = novaOrdem.findIndex((x) => x.r.id === r.id);
+      return pos >= 0 ? { ...r, prioridade_desenvolvimento: pos } : r;
+    }));
+    await Promise.all(novaOrdem.map((x, i) =>
+      (supabase.from("referencias") as any).update({ prioridade_desenvolvimento: i }).eq("id", x.r.id)
+    ));
   };
 
   return (
@@ -195,83 +253,196 @@ export default function Desenvolvimento() {
         </Button>
       </div>
 
-      <div className="flex items-center gap-3 flex-wrap">
-        <Input placeholder="Buscar por código ou descrição..." value={busca} onChange={(e) => setBusca(e.target.value)} className="w-64" />
-        <Select value={filtroCli} onValueChange={setFiltroCli}>
-          <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Todos os clientes</SelectItem>
-            {clientes.map((c) => <SelectItem key={c.id} value={c.id}>{c.nome}</SelectItem>)}
-          </SelectContent>
-        </Select>
-        <Select value={filtroTipo} onValueChange={setFiltroTipo}>
-          <SelectTrigger className="w-48"><SelectValue /></SelectTrigger>
-          <SelectContent>
-            <SelectItem value="todos">Todos os tipos</SelectItem>
-            {tipos.map((t) => <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>)}
-          </SelectContent>
-        </Select>
-      </div>
+      <Tabs value={tab} onValueChange={(v) => { setTab(v); if (v !== "acompanhamento") setFiltroEtapa(null); }}>
+        <TabsList>
+          <TabsTrigger value="painel">Painel</TabsTrigger>
+          <TabsTrigger value="acompanhamento">Acompanhamento</TabsTrigger>
+          <TabsTrigger value="filas">Filas</TabsTrigger>
+        </TabsList>
 
-      {loading ? (
-        <div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-7 gap-4">
-          {STATUSES.map((col) => {
-            const items = byStatus(col.value);
-            return (
-              <div key={col.value} className="flex flex-col gap-2 min-w-0">
-                <div className={`px-3 py-2 rounded-md border text-sm font-medium ${col.color}`}>
-                  {col.label} ({items.length})
-                </div>
-                <div className="flex flex-col gap-2 min-h-[100px]">
-                  {items.length === 0 ? (
-                    <p className="text-xs text-muted-foreground text-center py-6">Nenhuma referência nesta etapa.</p>
-                  ) : items.map((r) => {
-                    const cli = cliById.get(r.cliente_id);
-                    const tp = tipoById.get(r.tipo_peca_id);
-                    return (
-                      <Card
-                        key={r.id}
-                        className="cursor-pointer transition-all hover:shadow-md hover:scale-[1.02]"
-                        onClick={() => navigate(`/cadastros/referencias/${r.id}`)}
-                      >
-                        <CardContent className="p-3 space-y-2">
-                          <div className="flex items-start justify-between gap-2">
-                            <Badge variant="secondary" className="font-mono text-xs tracking-widest">{r.codigo}</Badge>
-                            <DropdownMenu>
-                              <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                                <Button variant="ghost" size="icon" className="h-6 w-6"><MoreVertical className="h-4 w-4" /></Button>
-                              </DropdownMenuTrigger>
-                              <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                                <DropdownMenuLabel>Mover para</DropdownMenuLabel>
-                                <DropdownMenuSeparator />
-                                {STATUSES.filter((s) => s.value !== r.status).map((s) => (
-                                  <DropdownMenuItem key={s.value} onClick={() => handleStatusClick(r, s.value)}>
-                                    {s.label}
-                                  </DropdownMenuItem>
-                                ))}
-                              </DropdownMenuContent>
-                            </DropdownMenu>
-                          </div>
-                          <p className="text-sm font-medium line-clamp-2">{r.descricao || tp?.nome || "—"}</p>
-                          <div className="flex items-center justify-between gap-2 flex-wrap">
-                            <Badge variant="outline" className="text-xs">{cli?.nome || "—"}</Badge>
-                            <span className="text-xs text-muted-foreground">{daysSince(r.updated_at || r.created_at)}</span>
-                          </div>
-                          <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                            {hasDxf.has(r.id) && <span className="flex items-center gap-1"><Ruler className="h-3 w-3" /> DXF</span>}
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
-                </div>
+        {/* PAINEL */}
+        <TabsContent value="painel" className="space-y-6 mt-4">
+          {loading ? <Spinner /> : (
+            <>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <KpiCard label="Em Desenvolvimento" value={kpiDev} />
+                <KpiCard label="Piloto em Produção" value={kpiPilProd} />
+                <KpiCard label="Piloto Pronta" value={kpiPilPronta} />
+                <KpiCard label="Sem DXF" value={kpiSemDxf} alerta={kpiSemDxf > 0} />
               </div>
-            );
-          })}
-        </div>
-      )}
+
+              <Card>
+                <CardHeader><CardTitle className="text-lg flex items-center gap-2"><ListChecks className="h-5 w-5" /> Pilotos por Etapa</CardTitle></CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-2">
+                    {PILOTO_ETAPAS_DISPONIVEIS.map((et) => (
+                      <button
+                        key={et}
+                        onClick={() => { setFiltroEtapa(et); setTab("acompanhamento"); }}
+                        className="text-left p-3 rounded-md border bg-card hover:border-primary/40 transition-all"
+                      >
+                        <div className="text-xs text-muted-foreground">{labelEtapa(et)}</div>
+                        <div className="text-2xl font-bold">{pilotosPorEtapa[et] || 0}</div>
+                      </button>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardHeader><CardTitle className="text-lg flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-orange-500" /> Alertas</CardTitle></CardHeader>
+                <CardContent className="space-y-4">
+                  <div>
+                    <h3 className="text-sm font-medium mb-2">Sem alteração há mais de 5 dias ({refsParadas.length})</h3>
+                    {refsParadas.length === 0 ? <p className="text-xs text-muted-foreground">Nenhuma referência parada.</p> : (
+                      <div className="space-y-1">
+                        {refsParadas.map((r) => (
+                          <div key={r.id} className="flex items-center justify-between text-sm border rounded p-2 cursor-pointer hover:bg-muted/40" onClick={() => navigate(`/cadastros/referencias/${r.id}`)}>
+                            <span><Badge variant="secondary" className="font-mono mr-2">{r.codigo}</Badge>{r.descricao || cliById.get(r.cliente_id)?.nome}</span>
+                            <span className="text-xs text-muted-foreground">{daysSince(r.updated_at || r.created_at)} dias</span>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-medium mb-2">Sem DXF ativo em desenvolvimento ({refsSemDxf.length})</h3>
+                    {refsSemDxf.length === 0 ? <p className="text-xs text-muted-foreground">Todas com DXF.</p> : (
+                      <div className="space-y-1">
+                        {refsSemDxf.map((r) => (
+                          <div key={r.id} className="flex items-center justify-between text-sm border border-orange-500/30 bg-orange-500/5 rounded p-2 cursor-pointer hover:bg-orange-500/10" onClick={() => navigate(`/cadastros/referencias/${r.id}`)}>
+                            <span><Badge variant="secondary" className="font-mono mr-2">{r.codigo}</Badge>{r.descricao || cliById.get(r.cliente_id)?.nome}</span>
+                            <AlertTriangle className="h-4 w-4 text-orange-500" />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            </>
+          )}
+        </TabsContent>
+
+        {/* ACOMPANHAMENTO */}
+        <TabsContent value="acompanhamento" className="space-y-4 mt-4">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <h2 className="text-xl font-semibold">Referências em Desenvolvimento ({refsAcomp.length})</h2>
+            {filtroEtapa && (
+              <Badge variant="outline" className="gap-2">
+                Filtro: {labelEtapa(filtroEtapa)}
+                <button onClick={() => setFiltroEtapa(null)} className="ml-1 hover:text-foreground">×</button>
+              </Badge>
+            )}
+          </div>
+
+          {loading ? <Spinner /> : clientesComRefs.length === 0 ? (
+            <p className="text-muted-foreground text-sm">Nenhuma referência em desenvolvimento.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+              {clientesComRefs.map(({ cliente, refs: clientRefs }) => {
+                const expanded = clientesExpandidos.has(cliente!.id);
+                const algumSemDxf = clientRefs.some((r) => !dxfByRef.has(r.id));
+                const algumParado = clientRefs.some((r) => daysSince(r.updated_at) > 5);
+                const alerta = algumSemDxf || algumParado;
+                return (
+                  <Card key={cliente!.id} className="md:col-span-2 lg:col-span-3">
+                    <CardContent className="p-0">
+                      <button onClick={() => toggleCliente(cliente!.id)} className="w-full p-4 flex items-center justify-between hover:bg-muted/30 transition-colors">
+                        <div className="flex items-center gap-3">
+                          {expanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
+                          <div className="text-left">
+                            <div className="font-bold uppercase">{cliente!.nome}</div>
+                            <div className="text-xs text-muted-foreground">{clientRefs.length} refs em andamento</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          {alerta && (
+                            <Badge variant="outline" className="bg-orange-500/15 text-orange-700 dark:text-orange-400 border-orange-500/30 gap-1">
+                              <AlertTriangle className="h-3 w-3" /> Atenção
+                            </Badge>
+                          )}
+                          <span className="text-xs text-primary">Ver referências ›</span>
+                        </div>
+                      </button>
+                      {expanded && (
+                        <div className="border-t divide-y">
+                          {clientRefs.map((r) => {
+                            const todas = etapasPorRef.get(r.id) || [];
+                            const atual = todas.find((e) => e.status === "em_andamento");
+                            const concluidas = todas.filter((e) => e.status === "concluido").length;
+                            const total = todas.length;
+                            const progresso = total ? Math.round((concluidas / total) * 100) : 0;
+                            const dxfOk = dxfByRef.has(r.id);
+                            const bloqueado = atual?.tipo_etapa === "desenvolvimento_modelagem" && !dxfOk;
+                            const terc = atual?.terceiro_id ? tercById.get(atual.terceiro_id) : null;
+                            return (
+                              <div key={r.id} className="p-3 grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-3 items-center">
+                                <Badge variant="secondary" className="font-mono text-xs tracking-widest">{r.codigo}</Badge>
+                                <div className="space-y-1 min-w-0">
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="text-sm font-medium">{r.descricao || "—"}</span>
+                                    {dxfOk ? <span className="text-green-600 flex items-center gap-1 text-xs"><CheckCircle2 className="h-3 w-3" /> DXF</span>
+                                           : <span className="text-orange-600 flex items-center gap-1 text-xs"><AlertTriangle className="h-3 w-3" /> Sem DXF</span>}
+                                  </div>
+                                  <div className="text-xs text-muted-foreground">
+                                    {atual ? `Etapa: ${labelEtapa(atual.tipo_etapa)}${terc ? ` · ${terc.nome}` : ""}` : "Etapas não configuradas"}
+                                  </div>
+                                  <Progress value={progresso} className="h-1.5" />
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <Button
+                                    size="sm" onClick={() => avancar(r.id)}
+                                    disabled={!atual || bloqueado}
+                                    title={bloqueado ? "Envie o arquivo DXF antes de avançar para o corte." : undefined}
+                                    className="gap-1"
+                                  >
+                                    <PlayCircle className="h-3 w-3" /> Avançar
+                                  </Button>
+                                  <Button size="sm" variant="outline" onClick={() => navigate(`/cadastros/referencias/${r.id}`)}>Detalhes ›</Button>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* FILAS */}
+        <TabsContent value="filas" className="space-y-6 mt-4">
+          {loading ? <Spinner /> : (
+            <>
+              <FilaSection
+                titulo="Fila de Modelagem"
+                etapa="desenvolvimento_modelagem"
+                items={refsEmEtapa("desenvolvimento_modelagem")}
+                onReorder={(id, dir) => reordenar(id, dir, "desenvolvimento_modelagem")}
+                cliById={cliById} dxfByRef={dxfByRef} navigate={navigate} reordenavel
+              />
+              <FilaSection
+                titulo="Fila de Costura da Piloto"
+                etapa="costura"
+                items={refsEmEtapa("costura")}
+                onReorder={(id, dir) => reordenar(id, dir, "costura")}
+                cliById={cliById} dxfByRef={dxfByRef} navigate={navigate} reordenavel
+              />
+              <FilaSection
+                titulo="Em Terceiros"
+                etapa="terceiros"
+                items={refsEmEtapa(["lavanderia","estamparia","estamparia_bordado","bordado"])}
+                onReorder={() => {}}
+                cliById={cliById} dxfByRef={dxfByRef} navigate={navigate} tercById={tercById}
+              />
+            </>
+          )}
+        </TabsContent>
+      </Tabs>
 
       {/* Modal Novo Desenvolvimento */}
       <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) resetNovo(); }}>
@@ -313,18 +484,28 @@ export default function Desenvolvimento() {
               <Label>Descrição</Label>
               <Input value={novoDesc} onChange={(e) => setNovoDesc(e.target.value)} placeholder="Ex: Camisa Slim Manga Longa" />
             </div>
-            <div className="space-y-2">
-              <Label>Modelagem Origem</Label>
-              <Select value={novoOrigem} onValueChange={setNovoOrigem}>
-                <SelectTrigger><SelectValue placeholder="Nenhuma" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">Nenhuma</SelectItem>
-                  {refs.filter((r) => r.ativo).map((r) => (
-                    <SelectItem key={r.id} value={r.id}>{r.codigo} — {r.descricao || tipoById.get(r.tipo_peca_id)?.nome || "—"}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+
+            <Collapsible open={opcoesAvancadas} onOpenChange={setOpcoesAvancadas}>
+              <CollapsibleTrigger asChild>
+                <button type="button" className="text-sm text-muted-foreground flex items-center gap-1 hover:text-foreground">
+                  {opcoesAvancadas ? <ChevronDown className="h-3 w-3" /> : <ChevronRight className="h-3 w-3" />}
+                  Opções avançadas
+                </button>
+              </CollapsibleTrigger>
+              <CollapsibleContent className="pt-3 space-y-2">
+                <Label>Modelagem Origem</Label>
+                <Select value={novoOrigem} onValueChange={setNovoOrigem}>
+                  <SelectTrigger><SelectValue placeholder="Nenhuma" /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="__none__">Nenhuma</SelectItem>
+                    {refs.filter((r) => r.ativo).map((r) => (
+                      <SelectItem key={r.id} value={r.id}>{r.codigo} — {r.descricao || tipoById.get(r.tipo_peca_id)?.nome || "—"}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </CollapsibleContent>
+            </Collapsible>
+
             <div className="rounded-md border p-3 bg-muted/30">
               <p className="text-xs text-muted-foreground mb-1">Código gerado:</p>
               <p className="text-2xl font-mono font-bold tracking-widest">{codigoPreview}</p>
@@ -338,21 +519,95 @@ export default function Desenvolvimento() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      <AlertDialog open={!!confirmLacre} onOpenChange={(o) => { if (!o) setConfirmLacre(null); }}>
-        <AlertDialogContent>
-          <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar lacre da piloto?</AlertDialogTitle>
-            <AlertDialogDescription>Esta ação indica que a piloto foi aprovada pelo cliente.</AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={() => { if (confirmLacre) changeStatus(confirmLacre, "piloto_lacrada"); setConfirmLacre(null); }}>
-              Confirmar
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
+  );
+}
+
+function Spinner() {
+  return <div className="flex justify-center py-12"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" /></div>;
+}
+
+function KpiCard({ label, value, alerta }: { label: string; value: number; alerta?: boolean }) {
+  return (
+    <Card className={alerta ? "border-orange-500/40 bg-orange-500/5" : ""}>
+      <CardContent className="p-4">
+        <div className={`text-xs ${alerta ? "text-orange-700 dark:text-orange-400" : "text-muted-foreground"}`}>{label}</div>
+        <div className={`text-3xl font-bold mt-1 ${alerta ? "text-orange-700 dark:text-orange-400" : ""}`}>{value}</div>
+      </CardContent>
+    </Card>
+  );
+}
+
+function FilaSection({
+  titulo, items, onReorder, cliById, dxfByRef, navigate, reordenavel, tercById,
+}: {
+  titulo: string; etapa: string;
+  items: { r: Referencia; a: PilotoEtapa | null }[];
+  onReorder: (id: string, dir: -1 | 1) => void;
+  cliById: Map<string, Cliente | undefined>;
+  dxfByRef: Set<string>;
+  navigate: (p: string) => void;
+  reordenavel?: boolean;
+  tercById?: Map<string, Terceiro | undefined>;
+}) {
+  return (
+    <Card>
+      <CardHeader><CardTitle className="text-lg">{titulo} ({items.length})</CardTitle></CardHeader>
+      <CardContent>
+        {items.length === 0 ? (
+          <p className="text-sm text-muted-foreground">Nenhuma referência nesta fila.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead className="border-b bg-muted/30">
+                <tr className="text-left">
+                  <th className="p-2 w-10">#</th>
+                  <th className="p-2">Código</th>
+                  <th className="p-2">Cliente</th>
+                  <th className="p-2">Descrição</th>
+                  {tercById && <th className="p-2">Terceiro</th>}
+                  <th className="p-2">Dias na etapa</th>
+                  <th className="p-2">DXF</th>
+                  {reordenavel && <th className="p-2 text-right">Reordenar</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {items.map(({ r, a }, idx) => {
+                  const dias = a?.data_inicio ? daysSince(a.data_inicio) : 0;
+                  const terc = tercById && a?.terceiro_id ? tercById.get(a.terceiro_id) : null;
+                  return (
+                    <tr key={r.id} className="border-b hover:bg-muted/20 cursor-pointer" onClick={() => navigate(`/cadastros/referencias/${r.id}`)}>
+                      <td className="p-2 text-muted-foreground">{idx + 1}</td>
+                      <td className="p-2 font-mono text-xs">{r.codigo}</td>
+                      <td className="p-2">{cliById.get(r.cliente_id)?.nome || "—"}</td>
+                      <td className="p-2">{r.descricao || "—"}</td>
+                      {tercById && <td className="p-2">{terc?.nome || <span className="text-muted-foreground">—</span>}</td>}
+                      <td className="p-2 text-xs">{dias} {dias === 1 ? "dia" : "dias"}</td>
+                      <td className="p-2">
+                        {dxfByRef.has(r.id)
+                          ? <CheckCircle2 className="h-4 w-4 text-green-600" />
+                          : <AlertTriangle className="h-4 w-4 text-orange-500" />}
+                      </td>
+                      {reordenavel && (
+                        <td className="p-2 text-right">
+                          <div className="flex justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                            <Button size="icon" variant="ghost" className="h-7 w-7" disabled={idx === 0} onClick={() => onReorder(r.id, -1)}>
+                              <ArrowUp className="h-3 w-3" />
+                            </Button>
+                            <Button size="icon" variant="ghost" className="h-7 w-7" disabled={idx === items.length - 1} onClick={() => onReorder(r.id, 1)}>
+                              <ArrowDown className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   );
 }
