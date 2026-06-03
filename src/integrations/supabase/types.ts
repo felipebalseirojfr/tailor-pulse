@@ -1808,6 +1808,7 @@ export type Database = {
           genero: string | null
           id: string
           modelagem_origem_id: string | null
+          prazo_termino: string | null
           prioridade_desenvolvimento: number
           sequencial: number
           status: string
@@ -1824,6 +1825,7 @@ export type Database = {
           genero?: string | null
           id?: string
           modelagem_origem_id?: string | null
+          prazo_termino?: string | null
           prioridade_desenvolvimento?: number
           sequencial: number
           status?: string
@@ -1840,6 +1842,7 @@ export type Database = {
           genero?: string | null
           id?: string
           modelagem_origem_id?: string | null
+          prazo_termino?: string | null
           prioridade_desenvolvimento?: number
           sequencial?: number
           status?: string
