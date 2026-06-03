@@ -351,6 +351,21 @@ export default function Desenvolvimento() {
                       </div>
                     )}
                   </div>
+                  <div>
+                    <h3 className="text-sm font-medium mb-2 text-purple-600 dark:text-purple-400">Em correção (fitting) ({refsEmCorrecao.length})</h3>
+                    {refsEmCorrecao.length === 0 ? <p className="text-xs text-muted-foreground">Nenhuma referência em fitting.</p> : (
+                      <div className="space-y-1">
+                        {refsEmCorrecao.map((r) => (
+                          <div key={r.id} className="flex items-center justify-between text-sm border border-purple-500/30 bg-purple-500/5 rounded p-2 cursor-pointer hover:bg-purple-500/10" onClick={() => navigate(`/cadastros/referencias/${r.id}`)}>
+                            <span><Badge variant="secondary" className="font-mono mr-2">{r.codigo}</Badge>{r.descricao || cliById.get(r.cliente_id)?.nome}</span>
+                            <Badge variant="outline" className="bg-purple-500/15 text-purple-700 dark:text-purple-400 border-purple-500/30 text-[10px]">
+                              Fitting Nº {r.numero_rodada_piloto || 2}ª
+                            </Badge>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             </>
