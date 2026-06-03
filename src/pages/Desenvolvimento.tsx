@@ -439,31 +439,29 @@ export default function Desenvolvimento() {
         {/* FILAS */}
         <TabsContent value="filas" className="space-y-6 mt-4">
           {loading ? <Spinner /> : (
-            <>
-              <FilaSection
-                titulo="Fila de Modelagem"
-                etapa="desenvolvimento_modelagem"
-                items={refsEmEtapa("desenvolvimento_modelagem")}
-                onReorder={(id, dir) => reordenar(id, dir, "desenvolvimento_modelagem")}
-                cliById={cliById} dxfByRef={dxfByRef} navigate={navigate} reordenavel
-              />
-              <FilaSection
-                titulo="Fila de Costura da Piloto"
-                etapa="costura"
-                items={refsEmEtapa("costura")}
-                onReorder={(id, dir) => reordenar(id, dir, "costura")}
-                cliById={cliById} dxfByRef={dxfByRef} navigate={navigate} reordenavel
-              />
-              <FilaSection
-                titulo="Em Terceiros"
-                etapa="terceiros"
-                items={refsEmEtapa(["lavanderia","estamparia","estamparia_bordado","bordado"])}
-                onReorder={() => {}}
-                cliById={cliById} dxfByRef={dxfByRef} navigate={navigate} tercById={tercById}
-              />
-            </>
+            <div className="space-y-6">
+              {PILOTO_ETAPAS_DISPONIVEIS.map((etapa) => {
+                const items = refsEmEtapa(etapa);
+                const reordenavel = !ETAPAS_COM_TERCEIRO.has(etapa);
+                return (
+                  <FilaSection
+                    key={etapa}
+                    titulo={`Fila — ${labelEtapa(etapa)}`}
+                    etapa={etapa}
+                    items={items}
+                    onReorder={(id, dir) => reordenar(id, dir, etapa)}
+                    cliById={cliById}
+                    dxfByRef={dxfByRef}
+                    navigate={navigate}
+                    tercById={tercById}
+                    reordenavel={reordenavel}
+                  />
+                );
+              })}
+            </div>
           )}
         </TabsContent>
+
       </Tabs>
 
       {/* Modal Novo Desenvolvimento */}
