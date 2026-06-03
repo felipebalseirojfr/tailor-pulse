@@ -316,7 +316,7 @@ export default function ReferenciaDetalhe() {
       </Card>
 
       {/* Section B — Ficha Técnica */}
-      <Card>
+      <Card id="ficha-tecnica" className="scroll-mt-24">
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><FileText className="h-5 w-5" /> Ficha Técnica</CardTitle>
         </CardHeader>
@@ -327,7 +327,7 @@ export default function ReferenciaDetalhe() {
       </Card>
 
       {/* Section C — Ficha de Costura */}
-      <Card>
+      <Card id="ficha-costura" className="scroll-mt-24">
         <CardHeader>
           <CardTitle className="flex items-center gap-2"><Scissors className="h-5 w-5" /> Ficha de Costura</CardTitle>
         </CardHeader>
