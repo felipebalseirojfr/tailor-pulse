@@ -257,9 +257,7 @@ export default function EtapasPilotoSection({
           <DialogHeader>
             <DialogTitle>Configurar Etapas da Piloto</DialogTitle>
             <DialogDescription>
-              {step === "selecionar"
-                ? "Selecione as etapas intermediárias adicionais. Desenvolvimento de Modelagem, Plotagem/Risco, Corte e Costura são sempre fixas no início, e Piloto Enviada ao Cliente + Aguardando Aprovação são sempre as duas últimas."
-                : "Atribua um terceiro às etapas que envolvem operação externa (opcional)."}
+              Selecione as etapas intermediárias adicionais. Desenvolvimento de Modelagem, Plotagem/Risco, Corte e Costura são sempre fixas no início, e Piloto Enviada ao Cliente + Aguardando Aprovação são sempre as duas últimas. A definição de qual terceiro recebe cada etapa é feita pelo PCP, não aqui.
             </DialogDescription>
           </DialogHeader>
 
