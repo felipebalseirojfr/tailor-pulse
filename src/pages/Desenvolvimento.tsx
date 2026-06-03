@@ -417,6 +417,7 @@ export default function Desenvolvimento() {
                               tercById={tercById}
                               onAvancar={() => avancar(r.id)}
                               onDetalhes={() => navigate(`/cadastros/referencias/${r.id}`)}
+                              onExcluir={() => setConfirmDeleteId(r.id)}
                             />
                           ))}
                         </div>
