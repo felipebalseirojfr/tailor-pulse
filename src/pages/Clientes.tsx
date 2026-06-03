@@ -941,7 +941,8 @@ export default function Clientes() {
         <TabsContent value="referencias">
           <div className="space-y-6">
             <p className="text-sm text-muted-foreground">
-              Catálogo de referências (peças desenvolvidas) com código no formato XX.YY.ZZZZ
+              Catálogo de referências (peças desenvolvidas) com código no formato XX.YY.ZZZZ.
+              <span className="ml-2 italic">Referências são criadas na aba Desenvolvimento.</span>
             </p>
             <div className="flex items-center justify-between gap-4 flex-wrap">
               <div className="flex items-center gap-3 flex-wrap">
@@ -974,9 +975,6 @@ export default function Clientes() {
                   Mostrar inativos
                 </label>
               </div>
-              <Button onClick={() => { resetNovaRef(); setDialogRefOpen(true); }} className="gap-2">
-                <Plus className="h-4 w-4" /> Nova Referência
-              </Button>
             </div>
 
             {loadingReferencias ? (
@@ -988,8 +986,8 @@ export default function Clientes() {
                   {referencias.length === 0 ? "Nenhuma referência cadastrada ainda" : "Nenhuma referência encontrada com este filtro"}
                 </p>
                 {referencias.length === 0 && (
-                  <Button onClick={() => { resetNovaRef(); setDialogRefOpen(true); }} className="mt-4 gap-2">
-                    <Plus className="h-4 w-4" /> Nova Referência
+                  <Button onClick={() => navigate("/desenvolvimento")} className="mt-4 gap-2">
+                    Ir para Desenvolvimento
                   </Button>
                 )}
               </CardContent></Card>
@@ -1050,87 +1048,7 @@ export default function Clientes() {
         </TabsContent>
       </Tabs>
 
-      {/* Modal Nova Referência */}
-      <Dialog open={dialogRefOpen} onOpenChange={(o) => { setDialogRefOpen(o); if (!o) resetNovaRef(); }}>
-        <DialogContent className="max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Nova Referência</DialogTitle>
-            <DialogDescription>O código será gerado automaticamente no formato XX.YY.ZZZZ</DialogDescription>
-          </DialogHeader>
-          <div className="space-y-4 py-2">
-            <div className="space-y-2">
-              <Label>Cliente *</Label>
-              <Select value={novaRefCliente} onValueChange={setNovaRefCliente}>
-                <SelectTrigger><SelectValue placeholder="Selecione o cliente" /></SelectTrigger>
-                <SelectContent>
-                  {clientes.map((c) => (
-                    <SelectItem key={c.id} value={c.id}>
-                      {c.nome} {c.abreviacao_2_letras ? `(${c.abreviacao_2_letras})` : "(sem abreviação)"}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {clienteSemAbrev && (
-                <div className="text-sm text-destructive flex items-center justify-between gap-2 bg-destructive/10 p-2 rounded">
-                  <span>Este cliente não tem abreviação cadastrada. Cadastre a abreviação antes de criar uma referência.</span>
-                  <Button type="button" size="sm" variant="outline" onClick={editarClienteSemAbrev}>Editar cliente</Button>
-                </div>
-              )}
-            </div>
-
-            <div className="space-y-2">
-              <Label>Tipo de Peça *</Label>
-              <Select value={novaRefTipo} onValueChange={setNovaRefTipo}>
-                <SelectTrigger><SelectValue placeholder="Selecione o tipo de peça" /></SelectTrigger>
-                <SelectContent>
-                  {tiposPecaAtivos.map((t) => (
-                    <SelectItem key={t.id} value={t.id}>{t.nome} ({t.abreviacao_2_letras})</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Descrição</Label>
-              <Input
-                value={novaRefDescricao}
-                onChange={(e) => setNovaRefDescricao(e.target.value)}
-                placeholder="Ex: Camisa Slim Manga Longa"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Modelagem Origem</Label>
-              <Select value={novaRefOrigem} onValueChange={setNovaRefOrigem}>
-                <SelectTrigger><SelectValue placeholder="Nenhuma" /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="__none__">Nenhuma</SelectItem>
-                  {referenciasAtivas.map((r) => (
-                    <SelectItem key={r.id} value={r.id}>
-                      {r.codigo} — {r.descricao || tiposById.get(r.tipo_peca_id)?.nome || "—"}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">Selecione uma referência existente cuja modelagem será reaproveitada (opcional).</p>
-            </div>
-
-            <div className="rounded-md border p-3 bg-muted/30">
-              <p className="text-xs text-muted-foreground mb-1">Código gerado:</p>
-              <p className="text-2xl font-mono font-bold tracking-widest">{codigoPreview}</p>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDialogRefOpen(false)}>Cancelar</Button>
-            <Button
-              onClick={salvarReferencia}
-              disabled={salvandoRef || !novaRefCliente || !novaRefTipo || !!clienteSemAbrev}
-            >
-              {salvandoRef ? "Criando..." : "Criar Referência"}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      {/* Modal Nova Referência removido — criação ocorre na aba Desenvolvimento */}
 
       {/* Modal Tipo de Peça */}
       <Dialog open={dialogTipoPecaOpen} onOpenChange={setDialogTipoPecaOpen}>

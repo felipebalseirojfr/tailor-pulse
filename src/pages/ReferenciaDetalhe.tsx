@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Pencil, FileText, Scissors, FileDown } from "lucide-react";
+import ModelagemDxfSection from "@/components/referencias/ModelagemDxfSection";
 
 interface Referencia {
   id: string;
@@ -309,6 +310,9 @@ export default function ReferenciaDetalhe() {
           </div>
         </CardContent>
       </Card>
+
+      {/* Section E — Modelagem DXF */}
+      <ModelagemDxfSection referenciaId={ref.id} />
     </div>
   );
 }

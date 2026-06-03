@@ -871,6 +871,63 @@ export type Database = {
           },
         ]
       }
+      modelagens_dxf: {
+        Row: {
+          arquivo_url: string
+          ativo: boolean
+          created_at: string
+          enviado_por: string | null
+          id: string
+          nome_arquivo: string
+          observacoes: string | null
+          referencia_id: string
+          tamanho_bytes: number | null
+          updated_at: string
+          versao: string | null
+        }
+        Insert: {
+          arquivo_url: string
+          ativo?: boolean
+          created_at?: string
+          enviado_por?: string | null
+          id?: string
+          nome_arquivo: string
+          observacoes?: string | null
+          referencia_id: string
+          tamanho_bytes?: number | null
+          updated_at?: string
+          versao?: string | null
+        }
+        Update: {
+          arquivo_url?: string
+          ativo?: boolean
+          created_at?: string
+          enviado_por?: string | null
+          id?: string
+          nome_arquivo?: string
+          observacoes?: string | null
+          referencia_id?: string
+          tamanho_bytes?: number | null
+          updated_at?: string
+          versao?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "modelagens_dxf_enviado_por_fkey"
+            columns: ["enviado_por"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "modelagens_dxf_referencia_id_fkey"
+            columns: ["referencia_id"]
+            isOneToOne: false
+            referencedRelation: "referencias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       monthly_targets: {
         Row: {
           created_at: string
@@ -1207,6 +1264,69 @@ export type Database = {
             columns: ["pedido_id"]
             isOneToOne: false
             referencedRelation: "pedidos"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      piloto_etapas: {
+        Row: {
+          created_at: string
+          data_inicio: string | null
+          data_inicio_prevista: string | null
+          data_termino: string | null
+          data_termino_prevista: string | null
+          id: string
+          observacoes: string | null
+          ordem: number
+          referencia_id: string
+          status: Database["public"]["Enums"]["status_etapa"]
+          terceiro_id: string | null
+          tipo_etapa: Database["public"]["Enums"]["tipo_etapa"]
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          data_inicio?: string | null
+          data_inicio_prevista?: string | null
+          data_termino?: string | null
+          data_termino_prevista?: string | null
+          id?: string
+          observacoes?: string | null
+          ordem?: number
+          referencia_id: string
+          status?: Database["public"]["Enums"]["status_etapa"]
+          terceiro_id?: string | null
+          tipo_etapa: Database["public"]["Enums"]["tipo_etapa"]
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          data_inicio?: string | null
+          data_inicio_prevista?: string | null
+          data_termino?: string | null
+          data_termino_prevista?: string | null
+          id?: string
+          observacoes?: string | null
+          ordem?: number
+          referencia_id?: string
+          status?: Database["public"]["Enums"]["status_etapa"]
+          terceiro_id?: string | null
+          tipo_etapa?: Database["public"]["Enums"]["tipo_etapa"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "piloto_etapas_referencia_id_fkey"
+            columns: ["referencia_id"]
+            isOneToOne: false
+            referencedRelation: "referencias"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "piloto_etapas_terceiro_id_fkey"
+            columns: ["terceiro_id"]
+            isOneToOne: false
+            referencedRelation: "terceiros"
             referencedColumns: ["id"]
           },
         ]
@@ -2051,6 +2171,8 @@ export type Database = {
         | "bordado"
         | "compra_de_insumos"
         | "aplicacao_travete"
+        | "desenvolvimento_modelagem"
+        | "lacre_piloto"
       unidade_medida_aviamento:
         | "peca"
         | "kg"
@@ -2254,6 +2376,8 @@ export const Constants = {
         "bordado",
         "compra_de_insumos",
         "aplicacao_travete",
+        "desenvolvimento_modelagem",
+        "lacre_piloto",
       ],
       unidade_medida_aviamento: [
         "peca",
