@@ -1,8 +1,10 @@
 // Edge function: calcular-consumo-dxf
 // Computes per-piece fabric consumption (kg + m) from an active DXF
-// and the selected tecido variation. If any required data is missing
-// or the DXF cannot be parsed, returns a structured error so the UI
-// can fall back to manual entry.
+// and the selected tecido variation. Strategy:
+//   1) Try $EXTMIN/$EXTMAX in HEADER section
+//   2) Fallback: scan ENTITIES section, compute bounding box from
+//      all group-code 10 (X) and 20 (Y) coordinate pairs.
+// Assumes DXF units = millimeters (industry standard for apparel CAD).
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
@@ -36,7 +38,6 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
     );
 
-    // 1) DXF ativo
     const { data: dxf } = await supabase
       .from("modelagens_dxf")
       .select("id, arquivo_url")
@@ -46,19 +47,15 @@ Deno.serve(async (req) => {
       .limit(1)
       .maybeSingle();
 
-    if (!dxf) {
-      return json({ ok: false, error: "no_dxf", message: "Sem DXF ativo" });
-    }
+    if (!dxf) return json({ ok: false, error: "no_dxf", message: "Sem DXF ativo" });
 
-    // 2) Tecido variação → tecido master (largura, gramatura)
     const { data: variacao } = await supabase
       .from("tecidos_variacoes")
       .select("id, tecido_id")
       .eq("id", body.tecido_variacao_id)
       .maybeSingle();
-    if (!variacao) {
-      return json({ ok: false, error: "no_tecido", message: "Tecido não encontrado" });
-    }
+    if (!variacao) return json({ ok: false, error: "no_tecido", message: "Tecido não encontrado" });
+
     const { data: tecido } = await supabase
       .from("tecidos")
       .select("largura_m, gramatura_g_m2")
@@ -66,38 +63,40 @@ Deno.serve(async (req) => {
       .maybeSingle();
     const largura_m = Number((tecido as any)?.largura_m || 0);
     const gramatura = Number((tecido as any)?.gramatura_g_m2 || 0);
-    if (!largura_m) {
-      return json({ ok: false, error: "no_width", message: "Tecido sem largura cadastrada" });
-    }
+    if (!largura_m) return json({ ok: false, error: "no_width", message: "Tecido sem largura cadastrada" });
 
-    // 3) Baixa o DXF e calcula área a partir do EXTMIN/EXTMAX (bounding box).
-    //    Parsing geométrico completo está fora de escopo — usamos bounding box
-    //    como aproximação inicial. Se o DXF não tiver EXTMIN/EXTMAX, retorna erro.
-    const { data: file } = await supabase.storage
+    const { data: file, error: dlErr } = await supabase.storage
       .from("modelagens-dxf")
       .download((dxf as any).arquivo_url);
-    if (!file) {
+    if (!file || dlErr) {
       return json({ ok: false, error: "dxf_download", message: "Erro ao baixar DXF" });
     }
     const text = await file.text();
 
-    const extMin = readPoint(text, "$EXTMIN");
-    const extMax = readPoint(text, "$EXTMAX");
-    if (!extMin || !extMax) {
-      return json({ ok: false, error: "dxf_parse", message: "DXF sem EXTMIN/EXTMAX" });
+    // Compute bbox in DXF units (assumed mm)
+    let bbox = readExtFromHeader(text);
+    let source: "header" | "entities" = "header";
+    if (!bbox) {
+      bbox = scanEntitiesBBox(text);
+      source = "entities";
     }
-    // Assume DXF em mm — converte para cm
-    const widthCm = Math.abs(extMax.x - extMin.x) / 10;
-    const heightCm = Math.abs(extMax.y - extMin.y) / 10;
-    const areaCm2 = widthCm * heightCm;
-    if (!areaCm2) {
+    if (!bbox) {
+      return json({ ok: false, error: "dxf_parse", message: "DXF sem coordenadas legíveis" });
+    }
+
+    const widthMm = Math.abs(bbox.maxX - bbox.minX);
+    const heightMm = Math.abs(bbox.maxY - bbox.minY);
+    if (!widthMm || !heightMm) {
       return json({ ok: false, error: "dxf_parse", message: "Área zero" });
     }
 
-    // 4) Consumo
+    // Convert to cm
+    const widthCm = widthMm / 10;
+    const heightCm = heightMm / 10;
+    const areaCm2 = widthCm * heightCm;
+
+    // Linear meters of fabric: area / width-of-fabric
     const larguraCm = largura_m * 100;
-    const consumo_m = (heightCm / larguraCm) * (widthCm / larguraCm); // placeholder
-    // melhor: comprimento necessário = areaTotal / larguraTecido, em metros
     const consumo_m_final = (areaCm2 / larguraCm) / 100 * (1 + MARGEM);
     const consumo_kg = gramatura
       ? (consumo_m_final * largura_m * gramatura) / 1000
@@ -110,6 +109,7 @@ Deno.serve(async (req) => {
       margem_pct: MARGEM * 100,
       consumo_m: Number(consumo_m_final.toFixed(3)),
       consumo_kg: consumo_kg ? Number(consumo_kg.toFixed(3)) : null,
+      source,
     });
   } catch (e) {
     console.error(e);
@@ -124,10 +124,77 @@ function json(payload: unknown, status = 200) {
   });
 }
 
-function readPoint(text: string, name: string): { x: number; y: number } | null {
-  // DXF header: looking for "  9\n$EXTMIN\n 10\n<x>\n 20\n<y>"
-  const re = new RegExp(`\\b9\\s*\\n\\s*\\${name}\\s*\\n\\s*10\\s*\\n\\s*(-?[0-9.eE+-]+)\\s*\\n\\s*20\\s*\\n\\s*(-?[0-9.eE+-]+)`);
-  const m = text.match(re);
-  if (!m) return null;
-  return { x: parseFloat(m[1]), y: parseFloat(m[2]) };
+// Parse DXF into [code, value] pairs (line by line).
+function* iterPairs(text: string): Generator<[number, string]> {
+  const lines = text.split(/\r?\n/);
+  for (let i = 0; i + 1 < lines.length; i += 2) {
+    const code = parseInt(lines[i].trim(), 10);
+    const value = lines[i + 1] ?? "";
+    if (!Number.isNaN(code)) yield [code, value];
+  }
+}
+
+function readExtFromHeader(text: string): { minX: number; minY: number; maxX: number; maxY: number } | null {
+  let inHeader = false;
+  let currentVar: string | null = null;
+  let minX: number | null = null, minY: number | null = null;
+  let maxX: number | null = null, maxY: number | null = null;
+
+  for (const [code, value] of iterPairs(text)) {
+    if (code === 0) {
+      // section/entity boundary — reset currentVar
+      currentVar = null;
+      if (value.trim() === "ENDSEC") inHeader = false;
+    } else if (code === 2 && !inHeader) {
+      if (value.trim() === "HEADER") inHeader = true;
+    } else if (inHeader) {
+      if (code === 9) {
+        currentVar = value.trim();
+      } else if (currentVar === "$EXTMIN") {
+        if (code === 10) minX = parseFloat(value);
+        else if (code === 20) minY = parseFloat(value);
+      } else if (currentVar === "$EXTMAX") {
+        if (code === 10) maxX = parseFloat(value);
+        else if (code === 20) maxY = parseFloat(value);
+      }
+    }
+  }
+
+  if (minX !== null && minY !== null && maxX !== null && maxY !== null) {
+    return { minX, minY, maxX, maxY };
+  }
+  return null;
+}
+
+function scanEntitiesBBox(text: string): { minX: number; minY: number; maxX: number; maxY: number } | null {
+  // Scan all (10, 20) coordinate pairs across the whole file.
+  // Group code 10 = X, 20 = Y. Tracking sections is fragile because
+  // code 2 also appears inside entities (e.g. layer/linetype names),
+  // and the bounding box of all coords matches the marker extent.
+  let minX = Infinity, minY = Infinity, maxX = -Infinity, maxY = -Infinity;
+  let pendingX: number | null = null;
+  let found = false;
+
+  for (const [code, value] of iterPairs(text)) {
+    if (code === 10) {
+      pendingX = parseFloat(value);
+    } else if (code === 20 && pendingX !== null) {
+      const x = pendingX;
+      const y = parseFloat(value);
+      if (Number.isFinite(x) && Number.isFinite(y)) {
+        if (x < minX) minX = x;
+        if (x > maxX) maxX = x;
+        if (y < minY) minY = y;
+        if (y > maxY) maxY = y;
+        found = true;
+      }
+      pendingX = null;
+    } else if (code !== 20) {
+      // Any non-20 code after a 10 breaks the pair (besides 20 which we consumed)
+      // Keep pendingX so a subsequent 20 still works — but reset if we hit another 10.
+    }
+  }
+
+  if (!found) return null;
+  return { minX, minY, maxX, maxY };
 }
