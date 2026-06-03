@@ -33,17 +33,26 @@ export default function DxfBanner({
   const [obs, setObs] = useState("");
   const [uploading, setUploading] = useState(false);
 
+  const [fotos, setFotos] = useState<{ frente: boolean; costas: boolean }>({ frente: false, costas: false });
+
   const fetchDxf = async () => {
     setLoading(true);
-    const { data } = await (supabase.from("modelagens_dxf") as any)
-      .select("id, nome_arquivo, versao, created_at")
-      .eq("referencia_id", referenciaId)
-      .eq("ativo", true)
-      .order("created_at", { ascending: false })
-      .limit(1);
+    const [{ data }, { data: ftsData }] = await Promise.all([
+      (supabase.from("modelagens_dxf") as any)
+        .select("id, nome_arquivo, versao, created_at")
+        .eq("referencia_id", referenciaId)
+        .eq("ativo", true)
+        .order("created_at", { ascending: false })
+        .limit(1),
+      (supabase.from("referencias_fotos_piloto" as any) as any)
+        .select("lado").eq("referencia_id", referenciaId),
+    ]);
     setDxf(((data as any[]) || [])[0] || null);
+    const lados = new Set(((ftsData as any[]) || []).map((r) => r.lado));
+    setFotos({ frente: lados.has("frente"), costas: lados.has("costas") });
     setLoading(false);
   };
+
 
   useEffect(() => { fetchDxf(); }, [referenciaId]);
 
