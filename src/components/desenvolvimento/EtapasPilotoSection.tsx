@@ -329,24 +329,42 @@ export default function EtapasPilotoSection({
             </DialogDescription>
           </DialogHeader>
 
-          {fichasMissing && (!fichasMissing.tecnica || !fichasMissing.costura) && (
+          {fichasMissing && (!fichasMissing.tecnica || !fichasMissing.costura || !fichasMissing.fotoFrente || !fichasMissing.fotoCostas) && (
             <div className="rounded-md border border-orange-500/40 bg-orange-500/10 p-3 text-sm space-y-2">
               <div className="flex items-start gap-2 text-orange-700 dark:text-orange-400">
                 <AlertTriangle className="h-4 w-4 shrink-0 mt-0.5" />
-                <div>
-                  <strong>Para lacrar a piloto, finalize primeiro:</strong>
-                  <div className="flex gap-2 mt-1 flex-wrap">
-                    {!fichasMissing.tecnica && (
-                      <a href="#ficha-tecnica" onClick={() => setDecisionOpen(false)} className="underline hover:no-underline">Ficha Técnica</a>
-                    )}
-                    {!fichasMissing.costura && (
-                      <a href="#ficha-costura" onClick={() => setDecisionOpen(false)} className="underline hover:no-underline">Ficha de Costura</a>
-                    )}
-                  </div>
+                <div className="space-y-1">
+                  {(!fichasMissing.tecnica || !fichasMissing.costura) && (
+                    <div>
+                      <strong>Para lacrar a piloto, finalize primeiro:</strong>
+                      <div className="flex gap-2 mt-1 flex-wrap">
+                        {!fichasMissing.tecnica && (
+                          <a href="#ficha-tecnica" onClick={() => setDecisionOpen(false)} className="underline hover:no-underline">Ficha Técnica</a>
+                        )}
+                        {!fichasMissing.costura && (
+                          <a href="#ficha-costura" onClick={() => setDecisionOpen(false)} className="underline hover:no-underline">Ficha de Costura</a>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {(!fichasMissing.fotoFrente || !fichasMissing.fotoCostas) && (
+                    <div>
+                      <strong>Para lacrar a piloto, envie as fotos:</strong>
+                      <div className="flex gap-2 mt-1 flex-wrap">
+                        {!fichasMissing.fotoFrente && (
+                          <a href="#ficha-tecnica" onClick={() => setDecisionOpen(false)} className="underline hover:no-underline">Foto Frente</a>
+                        )}
+                        {!fichasMissing.fotoCostas && (
+                          <a href="#ficha-tecnica" onClick={() => setDecisionOpen(false)} className="underline hover:no-underline">Foto Costas</a>
+                        )}
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
           )}
+
 
           {decisionMode === "inicial" ? (
             <div className="space-y-3 py-2">
