@@ -66,6 +66,7 @@ export default function ReferenciaDetalhe() {
   const [modelagemOrigemId, setModelagemOrigemId] = useState<string>("__none__");
   const [status, setStatus] = useState("em_desenvolvimento");
   const [ativo, setAtivo] = useState(true);
+  const [prazoTermino, setPrazoTermino] = useState<string>("");
 
   useEffect(() => {
     if (!id) return;
