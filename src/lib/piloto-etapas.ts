@@ -215,11 +215,12 @@ export async function avancarEtapa(referenciaId: string): Promise<{ ok: boolean;
 export async function lacrarPiloto(
   referenciaId: string,
   opts: { aprovadaComAlteracoes?: boolean; alteracoes?: string | null } = {}
-): Promise<{ ok: boolean; error?: string; fichas?: { tecnica: boolean; costura: boolean } }> {
+): Promise<{ ok: boolean; error?: string; fichas?: { tecnica: boolean; costura: boolean; fotoFrente: boolean; fotoCostas: boolean } }> {
   const fichas = await checkFichasFinalizadas(referenciaId);
-  if (!fichas.tecnica || !fichas.costura) {
-    return { ok: false, error: "Fichas obrigatórias não finalizadas", fichas };
+  if (!fichas.tecnica || !fichas.costura || !fichas.fotoFrente || !fichas.fotoCostas) {
+    return { ok: false, error: "Requisitos para lacre não atendidos", fichas };
   }
+
 
   const etapas = await fetchPilotoEtapas(referenciaId);
   const atual = etapas.find((e) => e.status === "em_andamento");
