@@ -878,6 +878,11 @@ function RefRow({ r, etapas, dxfOk, tercById, clienteNome, onAvancar, onDetalhes
             <span className="text-xs text-muted-foreground italic">—</span>
           )}
           <Button size="sm" variant="outline" onClick={onDetalhes}>Detalhes ›</Button>
+          {onExcluir && (
+            <Button size="icon" variant="ghost" className="h-8 w-8 text-destructive hover:text-destructive hover:bg-destructive/10" title="Excluir referência" onClick={(e) => { e.stopPropagation(); onExcluir(); }}>
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
         </div>
       </div>
       <EtapasStepper etapas={etapas} />
