@@ -713,6 +713,439 @@ export type Database = {
           },
         ]
       }
+      fichas_costura: {
+        Row: {
+          created_at: string
+          finalizada_em: string | null
+          id: string
+          observacoes_gerais: string | null
+          referencia_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          finalizada_em?: string | null
+          id?: string
+          observacoes_gerais?: string | null
+          referencia_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          finalizada_em?: string | null
+          id?: string
+          observacoes_gerais?: string | null
+          referencia_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fichas_costura_referencia_id_fkey"
+            columns: ["referencia_id"]
+            isOneToOne: true
+            referencedRelation: "referencias"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fichas_costura_aviamentos_grade: {
+        Row: {
+          aviamento_id: string
+          como_pregar: string | null
+          created_at: string
+          ficha_costura_id: string
+          id: string
+          localizacao: string | null
+          medidas_por_tamanho: Json
+          observacoes: string | null
+          quantidade_por_tamanho: Json
+          updated_at: string
+        }
+        Insert: {
+          aviamento_id: string
+          como_pregar?: string | null
+          created_at?: string
+          ficha_costura_id: string
+          id?: string
+          localizacao?: string | null
+          medidas_por_tamanho?: Json
+          observacoes?: string | null
+          quantidade_por_tamanho?: Json
+          updated_at?: string
+        }
+        Update: {
+          aviamento_id?: string
+          como_pregar?: string | null
+          created_at?: string
+          ficha_costura_id?: string
+          id?: string
+          localizacao?: string | null
+          medidas_por_tamanho?: Json
+          observacoes?: string | null
+          quantidade_por_tamanho?: Json
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fichas_costura_aviamentos_grade_aviamento_id_fkey"
+            columns: ["aviamento_id"]
+            isOneToOne: false
+            referencedRelation: "aviamentos"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fichas_costura_aviamentos_grade_ficha_costura_id_fkey"
+            columns: ["ficha_costura_id"]
+            isOneToOne: false
+            referencedRelation: "fichas_costura"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fichas_costura_dobras: {
+        Row: {
+          created_at: string
+          descricao: string
+          ficha_costura_id: string
+          id: string
+          medida_cm: number | null
+          observacoes: string | null
+          ordem: number
+          parte_peca: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          descricao: string
+          ficha_costura_id: string
+          id?: string
+          medida_cm?: number | null
+          observacoes?: string | null
+          ordem?: number
+          parte_peca: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string
+          ficha_costura_id?: string
+          id?: string
+          medida_cm?: number | null
+          observacoes?: string | null
+          ordem?: number
+          parte_peca?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fichas_costura_dobras_ficha_costura_id_fkey"
+            columns: ["ficha_costura_id"]
+            isOneToOne: false
+            referencedRelation: "fichas_costura"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fichas_costura_entretelas: {
+        Row: {
+          created_at: string
+          ficha_costura_id: string
+          id: string
+          localizacao: string
+          observacoes: string | null
+          ordem: number
+          tipo_entretela: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          ficha_costura_id: string
+          id?: string
+          localizacao: string
+          observacoes?: string | null
+          ordem?: number
+          tipo_entretela: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          ficha_costura_id?: string
+          id?: string
+          localizacao?: string
+          observacoes?: string | null
+          ordem?: number
+          tipo_entretela?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fichas_costura_entretelas_ficha_costura_id_fkey"
+            columns: ["ficha_costura_id"]
+            isOneToOne: false
+            referencedRelation: "fichas_costura"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fichas_costura_fotos: {
+        Row: {
+          created_at: string
+          ficha_costura_id: string
+          foto_url: string
+          id: string
+          legenda: string | null
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          ficha_costura_id: string
+          foto_url: string
+          id?: string
+          legenda?: string | null
+          ordem?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          ficha_costura_id?: string
+          foto_url?: string
+          id?: string
+          legenda?: string | null
+          ordem?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fichas_costura_fotos_ficha_costura_id_fkey"
+            columns: ["ficha_costura_id"]
+            isOneToOne: false
+            referencedRelation: "fichas_costura"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fichas_costura_linhas: {
+        Row: {
+          cor: string
+          created_at: string
+          descricao: string
+          ficha_costura_id: string
+          id: string
+          localizacao: string | null
+          numero_fio: string | null
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          cor: string
+          created_at?: string
+          descricao: string
+          ficha_costura_id: string
+          id?: string
+          localizacao?: string | null
+          numero_fio?: string | null
+          ordem?: number
+          updated_at?: string
+        }
+        Update: {
+          cor?: string
+          created_at?: string
+          descricao?: string
+          ficha_costura_id?: string
+          id?: string
+          localizacao?: string | null
+          numero_fio?: string | null
+          ordem?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fichas_costura_linhas_ficha_costura_id_fkey"
+            columns: ["ficha_costura_id"]
+            isOneToOne: false
+            referencedRelation: "fichas_costura"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fichas_costura_medidas: {
+        Row: {
+          created_at: string
+          ficha_costura_id: string
+          gradacao_obs: string | null
+          id: string
+          medidas_por_tamanho: Json
+          nome_medida: string
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          ficha_costura_id: string
+          gradacao_obs?: string | null
+          id?: string
+          medidas_por_tamanho?: Json
+          nome_medida: string
+          ordem?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          ficha_costura_id?: string
+          gradacao_obs?: string | null
+          id?: string
+          medidas_por_tamanho?: Json
+          nome_medida?: string
+          ordem?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fichas_costura_medidas_ficha_costura_id_fkey"
+            columns: ["ficha_costura_id"]
+            isOneToOne: false
+            referencedRelation: "fichas_costura"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fichas_costura_montagem: {
+        Row: {
+          created_at: string
+          descricao: string
+          ficha_costura_id: string
+          id: string
+          observacoes: string | null
+          passo: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          descricao: string
+          ficha_costura_id: string
+          id?: string
+          observacoes?: string | null
+          passo: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          descricao?: string
+          ficha_costura_id?: string
+          id?: string
+          observacoes?: string | null
+          passo?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fichas_costura_montagem_ficha_costura_id_fkey"
+            columns: ["ficha_costura_id"]
+            isOneToOne: false
+            referencedRelation: "fichas_costura"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fichas_costura_pontos: {
+        Row: {
+          created_at: string
+          ficha_costura_id: string
+          id: string
+          observacoes: string | null
+          ordem: number
+          parte_peca: string
+          tipo_ponto: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          ficha_costura_id: string
+          id?: string
+          observacoes?: string | null
+          ordem?: number
+          parte_peca: string
+          tipo_ponto: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          ficha_costura_id?: string
+          id?: string
+          observacoes?: string | null
+          ordem?: number
+          parte_peca?: string
+          tipo_ponto?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fichas_costura_pontos_ficha_costura_id_fkey"
+            columns: ["ficha_costura_id"]
+            isOneToOne: false
+            referencedRelation: "fichas_costura"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      fichas_costura_tecidos: {
+        Row: {
+          consumo_calculado_automaticamente: boolean
+          consumo_kg_por_peca: number | null
+          consumo_m_por_peca: number | null
+          created_at: string
+          ficha_costura_id: string
+          fornecido_pelo_cliente: boolean
+          id: string
+          observacoes: string | null
+          tecido_variacao_id: string
+          updated_at: string
+        }
+        Insert: {
+          consumo_calculado_automaticamente?: boolean
+          consumo_kg_por_peca?: number | null
+          consumo_m_por_peca?: number | null
+          created_at?: string
+          ficha_costura_id: string
+          fornecido_pelo_cliente?: boolean
+          id?: string
+          observacoes?: string | null
+          tecido_variacao_id: string
+          updated_at?: string
+        }
+        Update: {
+          consumo_calculado_automaticamente?: boolean
+          consumo_kg_por_peca?: number | null
+          consumo_m_por_peca?: number | null
+          created_at?: string
+          ficha_costura_id?: string
+          fornecido_pelo_cliente?: boolean
+          id?: string
+          observacoes?: string | null
+          tecido_variacao_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fichas_costura_tecidos_ficha_costura_id_fkey"
+            columns: ["ficha_costura_id"]
+            isOneToOne: false
+            referencedRelation: "fichas_costura"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fichas_costura_tecidos_tecido_variacao_id_fkey"
+            columns: ["tecido_variacao_id"]
+            isOneToOne: false
+            referencedRelation: "tecidos_variacoes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fichas_tecnicas: {
         Row: {
           colecao: string | null
