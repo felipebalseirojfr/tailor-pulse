@@ -36,12 +36,14 @@ interface Referencia {
 }
 
 const statusBadgeClass = (status: string) =>
-  status === "em_desenvolvimento"
+  status === "rascunho"
+    ? "bg-orange-500/15 text-orange-700 dark:text-orange-400 border-orange-500/30"
+    : status === "em_desenvolvimento"
     ? "bg-yellow-500/15 text-yellow-700 dark:text-yellow-400 border-yellow-500/30"
     : "bg-muted text-foreground";
 
 const statusLabel = (status: string) =>
-  status === "em_desenvolvimento" ? "Em desenvolvimento" : status;
+  status === "rascunho" ? "Rascunho" : status === "em_desenvolvimento" ? "Em desenvolvimento" : status;
 
 export default function ReferenciaDetalhe() {
   const { id } = useParams<{ id: string }>();
@@ -180,6 +182,13 @@ export default function ReferenciaDetalhe() {
           {statusLabel(ref.status)}
         </Badge>
       </div>
+
+      {ref.status === "rascunho" && (
+        <div className="rounded-md border border-orange-500/40 bg-orange-500/10 p-4 text-sm">
+          <strong className="text-orange-700 dark:text-orange-400">Rascunho não publicado.</strong>{" "}
+          Configure as etapas da piloto abaixo e clique em <strong>Salvar</strong> para publicar esta referência no painel de Desenvolvimento.
+        </div>
+      )}
 
       {/* DXF banner — visible only in development statuses */}
       {(ref.status === "em_desenvolvimento" || ref.status === "piloto_em_producao") && (

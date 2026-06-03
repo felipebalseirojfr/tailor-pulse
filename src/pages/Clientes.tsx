@@ -215,7 +215,7 @@ export default function Clientes() {
 
   const fetchReferencias = async () => {
     try {
-      const { data, error } = await (supabase.from("referencias") as any).select("*").order("codigo");
+      const { data, error } = await (supabase.from("referencias") as any).select("*").neq("status", "rascunho").order("codigo");
       if (error) throw error;
       setReferencias((data || []) as Referencia[]);
     } catch (error) {

@@ -191,12 +191,12 @@ export default function Desenvolvimento() {
       descricao: novoDesc.trim() || null,
       modelagem_origem_id: novoOrigem === "__none__" ? null : novoOrigem,
       criado_por: userData?.user?.id || null,
-      status: "aguardando", codigo: "XX.XX.0000", sequencial: 0,
+      status: "rascunho", codigo: "XX.XX.0000", sequencial: 0,
     };
     const { data, error } = await (supabase.from("referencias") as any).insert([payload]).select().single();
     setSalvando(false);
     if (error) { toast({ title: "Erro ao criar", description: error.message, variant: "destructive" }); return; }
-    toast({ title: "Desenvolvimento criado!", description: (data as any).codigo });
+    toast({ title: "Rascunho criado!", description: "Configure as etapas e clique em Salvar para publicar." });
     setDialogOpen(false);
     resetNovo();
     navigate(`/cadastros/referencias/${(data as any).id}`);
