@@ -105,10 +105,8 @@ export default function EtapasPilotoSection({
   ];
   const etapasComTerceiroSel = sequenciaFinal.filter((e) => ETAPAS_COM_TERCEIRO.has(e));
 
-  const irProximoStep = () => {
-    if (etapasComTerceiroSel.length === 0) return salvarConfig();
-    setStep("terceiros");
-  };
+  // Modelista não atribui terceiros — isso é definido pelo PCP.
+  const irProximoStep = () => salvarConfig();
 
   const salvarConfig = async () => {
     setSalvando(true);
@@ -259,9 +257,7 @@ export default function EtapasPilotoSection({
           <DialogHeader>
             <DialogTitle>Configurar Etapas da Piloto</DialogTitle>
             <DialogDescription>
-              {step === "selecionar"
-                ? "Selecione as etapas intermediárias adicionais. Desenvolvimento de Modelagem, Plotagem/Risco, Corte e Costura são sempre fixas no início, e Piloto Enviada ao Cliente + Aguardando Aprovação são sempre as duas últimas."
-                : "Atribua um terceiro às etapas que envolvem operação externa (opcional)."}
+              Selecione as etapas intermediárias adicionais. Desenvolvimento de Modelagem, Plotagem/Risco, Corte e Costura são sempre fixas no início, e Piloto Enviada ao Cliente + Aguardando Aprovação são sempre as duas últimas. A definição de qual terceiro recebe cada etapa é feita pelo PCP, não aqui.
             </DialogDescription>
           </DialogHeader>
 
@@ -310,42 +306,13 @@ export default function EtapasPilotoSection({
                 </div>
               </div>
             </div>
-          ) : (
-            <div className="space-y-3 py-2">
-              {etapasComTerceiroSel.map((et) => {
-                const opcoes = terceiros.filter((t) => t.tipo_etapa === et);
-                return (
-                  <div key={et} className="space-y-1">
-                    <Label>{labelEtapa(et)}</Label>
-                    <Select
-                      value={terceirosMap[et] || "__none__"}
-                      onValueChange={(v) => setTerceirosMap((m) => ({ ...m, [et]: v === "__none__" ? "" : v }))}
-                    >
-                      <SelectTrigger><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="__none__">Sem terceiro</SelectItem>
-                        {opcoes.length === 0 && <SelectItem value="__empty__" disabled>Nenhum terceiro cadastrado para esta etapa</SelectItem>}
-                        {opcoes.map((t) => <SelectItem key={t.id} value={t.id}>{t.nome}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+          ) : null}
 
           <DialogFooter>
-            {step === "terceiros" && (
-              <Button variant="outline" onClick={() => setStep("selecionar")}>Voltar</Button>
-            )}
             <Button variant="outline" onClick={() => setConfigOpen(false)}>Cancelar</Button>
-            {step === "selecionar" ? (
-              <Button onClick={irProximoStep}>
-                {etapasComTerceiroSel.length ? "Continuar" : "Salvar"}
-              </Button>
-            ) : (
-              <Button onClick={salvarConfig} disabled={salvando}>{salvando ? "Salvando..." : "Salvar Etapas"}</Button>
-            )}
+            <Button onClick={salvarConfig} disabled={salvando}>
+              {salvando ? "Salvando..." : "Salvar Etapas"}
+            </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
