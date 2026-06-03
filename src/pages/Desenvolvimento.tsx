@@ -64,6 +64,7 @@ export default function Desenvolvimento() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [novoCli, setNovoCli] = useState("");
   const [novoTipo, setNovoTipo] = useState("");
+  const [modoAcomp, setModoAcomp] = useState<"marca" | "ref">("marca");
   const [novoDesc, setNovoDesc] = useState("");
   const [novoOrigem, setNovoOrigem] = useState("__none__");
   const [opcoesAvancadas, setOpcoesAvancadas] = useState(false);
