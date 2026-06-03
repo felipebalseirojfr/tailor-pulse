@@ -217,6 +217,22 @@ export default function Desenvolvimento() {
     fetchAll();
   };
 
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  const excluirRef = async (refId: string) => {
+    setDeleting(true);
+    const { error } = await (supabase.from("referencias") as any).update({ ativo: false }).eq("id", refId);
+    setDeleting(false);
+    setConfirmDeleteId(null);
+    if (error) {
+      toast({ title: "Erro ao excluir referência", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Referência excluída" });
+    fetchAll();
+  };
+
   // Filas helpers
   const refsEmEtapa = (etapa: string | string[]) => {
     const set = new Set(Array.isArray(etapa) ? etapa : [etapa]);
