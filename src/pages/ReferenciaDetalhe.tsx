@@ -353,15 +353,7 @@ export default function ReferenciaDetalhe() {
       />
 
       {/* Section C — Ficha de Costura */}
-      <Card id="ficha-costura" className="scroll-mt-24">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2"><Scissors className="h-5 w-5" /> Ficha de Costura</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          <p className="text-muted-foreground">Ficha de Costura ainda não cadastrada. Em breve.</p>
-          <Button disabled title="Em breve" variant="outline">Editar Ficha de Costura</Button>
-        </CardContent>
-      </Card>
+      <FichaCosturaSection referenciaId={ref.id} onSummaryChange={setCosturaSummary} />
 
       {/* Section D — PDFs */}
       <Card>
