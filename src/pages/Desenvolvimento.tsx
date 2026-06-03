@@ -705,6 +705,7 @@ function prazoInfo(r: Referencia): { dias: number; label: string; cls: string } 
 }
 
 function RefRow({ r, etapas, dxfOk, tercById, clienteNome, onAvancar, onDetalhes }: RefRowProps) {
+  const { toast } = useToast();
   const atual = etapas.find((e) => e.status === "em_andamento");
   const concluidas = etapas.filter((e) => e.status === "concluido").length;
   const total = etapas.length;
@@ -713,6 +714,38 @@ function RefRow({ r, etapas, dxfOk, tercById, clienteNome, onAvancar, onDetalhes
   const terc = atual?.terceiro_id ? tercById.get(atual.terceiro_id) : null;
   const checkLabel = atual ? (CHECK_LABEL_POR_ETAPA[atual.tipo_etapa] || `${labelEtapa(atual.tipo_etapa)} concluído?`) : null;
   const prazo = prazoInfo(r);
+  const [uploading, setUploading] = useState(false);
+
+  const handleUploadDxf = async (file: File) => {
+    if (!file.name.toLowerCase().endsWith(".dxf")) {
+      toast({ title: "Apenas arquivos .dxf", variant: "destructive" }); return;
+    }
+    if (file.size > 50 * 1024 * 1024) {
+      toast({ title: "Máximo 50MB", variant: "destructive" }); return;
+    }
+    setUploading(true);
+    try {
+      const path = `${r.id}/${Date.now()}_${file.name}`;
+      const { error: upErr } = await supabase.storage.from("modelagens-dxf").upload(path, file);
+      if (upErr) throw upErr;
+      const { data: u } = await supabase.auth.getUser();
+      const { error } = await (supabase.from("modelagens_dxf") as any).insert([{
+        referencia_id: r.id,
+        nome_arquivo: file.name,
+        arquivo_url: path,
+        tamanho_bytes: file.size,
+        enviado_por: u?.user?.id || null,
+      }]);
+      if (error) throw error;
+      toast({ title: "DXF enviado! Etapa avançada." });
+      onAvancar();
+    } catch (e: any) {
+      toast({ title: "Erro ao enviar DXF", description: e.message, variant: "destructive" });
+    } finally {
+      setUploading(false);
+    }
+  };
+
   return (
     <div className="p-3 space-y-2">
       <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_auto] gap-3 items-start">
@@ -736,17 +769,35 @@ function RefRow({ r, etapas, dxfOk, tercById, clienteNome, onAvancar, onDetalhes
           </div>
           <Progress value={progresso} className="h-1.5" />
         </div>
-        <div className="flex items-center gap-2">
-          {atual && checkLabel ? (
+        <div className="flex items-center gap-2 flex-wrap">
+          {bloqueado ? (
             <label
-              className={`flex items-center gap-2 px-3 py-1.5 rounded-md border text-xs cursor-pointer transition-colors ${bloqueado ? "opacity-50 cursor-not-allowed" : "hover:bg-muted/50"}`}
-              title={bloqueado ? "Envie o arquivo DXF antes de marcar como concluído." : "Marcar como concluído avança para a próxima etapa"}
+              className={`flex items-center gap-2 px-3 py-1.5 rounded-md border border-primary/40 bg-primary/5 text-xs cursor-pointer hover:bg-primary/10 transition-colors ${uploading ? "opacity-60 cursor-wait" : ""}`}
+              title="Envie o .dxf — a etapa avança automaticamente"
+            >
+              <Upload className="h-3.5 w-3.5" />
+              <span>{uploading ? "Enviando..." : "Enviar DXF e avançar"}</span>
+              <input
+                type="file"
+                accept=".dxf"
+                className="hidden"
+                disabled={uploading}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (f) handleUploadDxf(f);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+          ) : atual && checkLabel ? (
+            <label
+              className="flex items-center gap-2 px-3 py-1.5 rounded-md border text-xs cursor-pointer transition-colors hover:bg-muted/50"
+              title="Marcar como concluído avança para a próxima etapa"
             >
               <input
                 type="checkbox"
                 checked={false}
-                disabled={bloqueado}
-                onChange={() => { if (!bloqueado) onAvancar(); }}
+                onChange={() => onAvancar()}
                 className="h-4 w-4 rounded border-border cursor-pointer accent-primary"
               />
               <span>{checkLabel}</span>
