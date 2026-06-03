@@ -535,7 +535,7 @@ function ExecucaoCorte({ pedidoId, onDone }: { pedidoId: string; onDone: () => v
     <div className="p-4 lg:p-8 space-y-6 max-w-4xl mx-auto">
       <div className="flex items-start justify-between gap-3">
         <div>
-          <Button variant="ghost" size="sm" onClick={() => navigate("/area-corte")} className="mb-2 -ml-2">
+          <Button variant="ghost" size="sm" onClick={() => navigate(-1)} className="mb-2 -ml-2">
             <ArrowLeft className="h-4 w-4 mr-1" /> Voltar
           </Button>
           <h1 className="text-2xl font-bold">{pedido.produto_modelo}</h1>

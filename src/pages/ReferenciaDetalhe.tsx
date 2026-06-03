@@ -151,9 +151,13 @@ export default function ReferenciaDetalhe() {
   if (!ref) {
     return (
       <div className="space-y-4">
-        <Link to="/clientes" className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
+        >
           <ArrowLeft className="h-4 w-4" /> Voltar
-        </Link>
+        </button>
         <p>Referência não encontrada.</p>
       </div>
     );
@@ -162,12 +166,13 @@ export default function ReferenciaDetalhe() {
   return (
     <div className="space-y-6">
       <div>
-        <Link
-          to="/desenvolvimento"
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
           className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
         >
-          <ArrowLeft className="h-4 w-4" /> Voltar para Desenvolvimento
-        </Link>
+          <ArrowLeft className="h-4 w-4" /> Voltar
+        </button>
       </div>
 
       <div className="flex items-start justify-between gap-4 flex-wrap">

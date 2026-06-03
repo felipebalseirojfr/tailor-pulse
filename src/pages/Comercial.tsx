@@ -28,7 +28,7 @@ export default function Comercial() {
         <Button
           variant="ghost"
           size="sm"
-          onClick={() => navigate("/")}
+          onClick={() => navigate(-1)}
           className="mt-1"
         >
           <ArrowLeft className="h-4 w-4" />
