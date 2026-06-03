@@ -579,7 +579,7 @@ function KpiCard({ label, value, alerta }: { label: string; value: number; alert
 }
 
 function FilaSection({
-  titulo, items, onReorder, cliById, dxfByRef, navigate, reordenavel, tercById,
+  titulo, items, onReorder, cliById, dxfByRef, navigate, reordenavel, tercById, onExcluir,
 }: {
   titulo: string; etapa: string;
   items: { r: Referencia; a: PilotoEtapa | null }[];
@@ -589,6 +589,7 @@ function FilaSection({
   navigate: (p: string) => void;
   reordenavel?: boolean;
   tercById?: Map<string, Terceiro | undefined>;
+  onExcluir?: (id: string) => void;
 }) {
   const handlePrint = () => {
     const win = window.open("", "_blank", "width=900,height=700");
